@@ -1,7 +1,7 @@
 ## Build steps for lax driver
 
 0. Set LAX folder variable
-    $ export LAX_DIR= <path to lax module folder>
+    $ export LAXTOPDIR= <path to lax module folder>
 
 1. Set cross-compilation environment
 	```bash
@@ -16,7 +16,7 @@
 
 2. Build rsdk_lax_driver.ko
 	```bash
-    $ cd  $LAX_DIR/LAX_host/driver/lax
+    $ cd  $LAXTOPDIR/LAX_host/driver/lax
 	# Build lax kernel module
     $  make 
 
