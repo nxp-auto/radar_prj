@@ -19,11 +19,10 @@
 /*=================================================================================================
 *                                        INCLUDE FILES
 =================================================================================================*/
+
 #ifdef __cplusplus
-/*do this after the #includes*/
 extern "C" {
 #endif
-
 
 /*=================================================================================================
 *                                      DEFINES AND MACROS
@@ -46,8 +45,7 @@ extern "C" {
  * @type:   the type of the struct this is embedded in.
  * @member: the name of the list_head within the struct.
  */
-#define LAX_LIST_ENTRY(ptr, type, member) \
-    CONTAINER_OF(ptr, type, member)
+#define LAX_LIST_ENTRY(ptr, type, member) CONTAINER_OF(ptr, type, member)
 
 /*=================================================================================================
 *                                          CONSTANTS
@@ -60,12 +58,9 @@ extern "C" {
 /*=================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 =================================================================================================*/
-struct listHead {
+typedef struct listHead {
     struct listHead *next, *prev;
-};
-
-typedef struct listHead listHead_t;
-
+}listHead_t;
 
 /*=================================================================================================
 *                                GLOBAL VARIABLE DECLARATIONS

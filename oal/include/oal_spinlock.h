@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -7,77 +7,92 @@
 #ifndef OAL_SPINLOCK_H
 #define OAL_SPINLOCK_H
 
-#include "common_stringify_macros.h"
-#include XSTR(OS/os_oal_spinlock.h)
+#include <oal_utils.h>
+#include <os_oal_spinlock.h>
 
-/* Each platform must have its own implementation for :
- *  o OAL_spinlock_t
- *  o OAL_irqspinlock_t
+/**
+ * @defgroup OAL_Spinlock OAL Spinlock
  *
- * OAL_spinlock_t    - Guards a critical section
- * OAL_irqspinlock_t - Guards a critical section in an IRQ handler
+ * @{
+ * @brief Mutual exclusion mechanism implemented with spinning
+ * @details
+ * This mechanism is used to synchronize multiple running execution entities on
+ * the same shared data. It's very similar to @ref OAL_Mutex API, the main
+ * difference being that @ref OAL_Spinlock will not sleep, it will spin in a
+ * loop instead.
+ *
+ * The spinlocks are usually used when sleeping during an operation is
+ * prohibited e.g. interrupt handlers.
+ *
+ * @see https:/en.wikipedia.org/wiki/Spinlock
  */
-
 
 __BEGIN_DECLS
 
 /**
- * @brief OAL_spin_lock_init Initialize the spinlock
+ * @brief Initialize the spinlock
  *
- * @param lock The spinlock to be initialized.
- *
- * @return 0 for success or a negative value for an error
- */
-int OAL_spin_lock_init(OAL_spinlock_t *lock);
-
-/**
- * @brief OAL_spin_lock Obtain the lock
- *
- * @param lock The lock
+ * @param[in] apLock The spinlock to be initialized.
  *
  * @return 0 for success or a negative value for an error
  */
-int OAL_spin_lock(OAL_spinlock_t *lock);
+int32_t OAL_InitSpinLock(OAL_spinlock_t *apLock);
 
 /**
- * @brief OAL_spin_unlock Release the lock
+ * @brief Obtain the lock
  *
- * @param lock The lock
+ * @param[in] apLock The lock
  *
  * @return 0 for success or a negative value for an error
  */
-int OAL_spin_unlock(OAL_spinlock_t *lock);
+int32_t OAL_LockSpin(OAL_spinlock_t *apLock);
 
 /**
- * @brief OAL_irqspin_lock_init Initialize the spinlock for IRQ handler
+ * @brief  Release the lock
  *
- * @param lock The lock to be initialized
+ * @param[in] apLock The lock
  *
  * @return 0 for success or a negative value for an error
  */
-int OAL_irqspin_lock_init(OAL_irqspinlock_t *lock);
+int32_t OAL_UnlockSpin(OAL_spinlock_t *apLock);
 
 /**
- * @brief OAL_spin_lock_irqsave Get the lock in IRQ handler
+ * @brief Initialize the spinlock for IRQ handler
  *
- * @param lock  The lock
- * @param flags A variable to store the IRQ flags
+ * @param[in] apLock The lock to be initialized
  *
  * @return 0 for success or a negative value for an error
  */
-int OAL_spin_lock_irqsave(OAL_irqspinlock_t *lock, unsigned long *flags);
+int32_t OAL_InitIRQSpinLock(OAL_irqspinlock_t *apLock);
 
 /**
- * @brief OAL_spin_unlock_irqrestore Release the lock
+ * @brief Get the lock in IRQ handler
  *
- * @param lock  The lock
- * @param flags The flags to be restored. Must use the same variable
- * as for OAL_spin_lock_irqsave call.
+ * @param[in] apLock  The lock
+ * @param[in] apFlags A variable to store the IRQ flags
  *
- * @return 
+ * @return 0 for success or a negative value for an error
  */
-int OAL_spin_unlock_irqrestore(OAL_irqspinlock_t *lock, unsigned long *flags);
+int32_t OAL_LockIRQSpin(OAL_irqspinlock_t *apLock, uint64_t *apFlags);
+
+/**
+ * @brief Release the lock
+ *
+ * @param[in] apLock  The lock
+ * @param[in] apFlags The flags to be restored. Must use the same variable
+ * as for #OAL_LockIRQSpin call.
+ *
+ * @return 0 for success or a negative value for an error
+ */
+int32_t OAL_UnlockIRQSpin(OAL_irqspinlock_t *apLock, uint64_t *apFlags);
+
+/* @} */
 
 __END_DECLS
 
+#include <legacy/oal_spinlock_1_0.h>
+
+#ifdef OAL_TRACE_API_FUNCTIONS
+#include <trace/oal_spinlock.h>
+#endif
 #endif /* OAL_SPINLOCK_H*/

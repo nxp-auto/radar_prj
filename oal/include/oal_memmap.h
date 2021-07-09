@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2020 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -7,175 +7,194 @@
 #ifndef OAL_MEMMAP_H
 #define OAL_MEMMAP_H
 
-#include "oal_utils.h"
-#include "priv_oal_memmap.h"
-#include "common_stringify_macros.h"
-#include XSTR(OS/os_oal_memmap.h)
+#include <oal_utils.h>
+#include <os_oal_memmap.h>
 
-__BEGIN_DECLS
-
-/* Unified interface for memory map operations. There are two kinds
+/**
+ * @defgroup OAL_MemoryMapping OAL Memory Mapper
+ *
+ * @{
+ * @brief Maps physical addresses
+ * @details
+ * Unified interface for memory map operations. There are two kinds
  * of mappingis from the interface's perspective: kernel and user space.
  *
  * Kernel space (KERNEL_MAP) operations are triggered by a kernel module /
  * resource manager and the USER_MAP by a user space library.
- *
- * The driver is supposed to call one of flavor of OAL_memmap function and
- * after get / set IO memory using OAL_read OAL_write functions.
  */
 
+__BEGIN_DECLS
+
+enum OALMapSource {
+	KERNEL_MAP,  ///< For kernel space operations
+	USER_MAP,    ///< For user space operations
+};
+
 /**
- * @brief OAL_memmap Bind a memory area defined by a physical address (offset)
+ * @brief Bind a memory area defined by a physical address (offset)
  * and a size to a virtual address.
  *
- * @param[in] offset The physical address
- * @param[in] size   The size to be mapped
- * @param[in] src    Mapping source
- * @see OALMapSource
+ * @param[in] aOffset The physical address
+ * @param[in] aSize   The size to be mapped
+ * @param[in] aSrc    Mapping source
  *
  * @return The virtual address
  */
 
-void *OAL_memmap(uint64_t offset, size_t size, enum OALMapSource src);
+uintptr_t OAL_MapSystemMemory(uint64_t aOffset, size_t aSize,
+                              enum OALMapSource aSrc);
 
 /**
- * @brief OAL_memunmap Unmap the memory reserved with <code>OAL_memmap</code>
+ * @brief Unmap the memory reserved with #OAL_MapSystemMemory
  *
- * @param[in] addr The virtual address
- * @param[in] size The size
- * @param[in] src  Mapping source
- * @see OALMapSource
+ * @param[in] aAddr The virtual address
+ * @param[in] aSize  The aSize
+ * @param[in] aSrc   Mapping source
+ *
+ * @return 0 if the operation succeeded, a negative value otherwise.
  */
-void OAL_memunmap(void *addr, size_t size, enum OALMapSource src);
+int32_t OAL_UnmapSystemMemory(uintptr_t aAddr, size_t aSize,
+                              enum OALMapSource aSrc);
 
 /**
  * @brief Map kernel memory
- * Kernel wrapper over OAL_memmap.
+ * Kernel wrapper over #OAL_MapSystemMemory.
  *
- * @param[in] offset The physical address
- * @param[in] size   The size to be mapped
+ * @param[in] aOffset The physical address
+ * @param[in] aSize   The aSize to be mapped
  *
  * @return The virtual address
  */
-static inline void *OAL_kmemmap(uint64_t offset, size_t size)
+static inline uintptr_t OAL_MapKernelSpace(uint64_t aOffset, size_t aSize)
 {
-	return OAL_memmap(offset, size, KERNEL_MAP);
+	return OAL_MapSystemMemory(aOffset, aSize, KERNEL_MAP);
 }
 
 /**
  * @brief Unmap kernel memory
- * Kernel wrapper over OAL_memunmap.
+ * Kernel wrapper over #OAL_UnmapSystemMemory.
  *
- * @param[in] addr The virtual address
- * @param[in] size The size
+ * @param[in] aAddr The virtual address
+ * @param[in] aSize The aSize
+ *
+ * @return 0 if the operation succeeded, a negative value otherwise.
  */
-static inline void OAL_kmemunmap(void *addr, size_t size)
+static inline int32_t OAL_UnmapKernelSpace(uintptr_t aAddr, size_t aSize)
 {
-	OAL_memunmap(addr, size, KERNEL_MAP);
+	return OAL_UnmapSystemMemory(aAddr, aSize, KERNEL_MAP);
 }
 
 /**
  * @brief Map user space memory
- * User space wrapper over OAL_memmap.
+ * User space wrapper over #OAL_MapSystemMemory.
  *
- * @param[in] offset The physical address
- * @param[in] size   The size to be mapped
+ * @param[in] aOffset The physical address
+ * @param[in] aSize   The aSize to be mapped
  *
  * @return The virtual address
  */
-static inline void *OAL_umemmap(uint64_t offset, size_t size)
+static inline uintptr_t OAL_MapUserSpace(uint64_t aOffset, size_t aSize)
 {
-	return OAL_memmap(offset, size, USER_MAP);
+	return OAL_MapSystemMemory(aOffset, aSize, USER_MAP);
 }
 
 /**
  * @brief Unmap user space memory
- * User space wrapper over OAL_memunmap.
+ * User space wrapper over #OAL_UnmapSystemMemory.
  *
- * @param[in] addr The virtual address
- * @param[in] size The size
+ * @param[in] aAddr The virtual address
+ * @param[in] aSize The aSize
+ *
+ * @return 0 if the operation succeeded, a negative value otherwise.
  */
-static inline void OAL_umemunmap(void *addr, size_t size)
+static inline int32_t OAL_UnmapUserSpace(uintptr_t aAddr, size_t aSize)
 {
-	OAL_memunmap(addr, size, USER_MAP);
+	return OAL_UnmapSystemMemory(aAddr, aSize, USER_MAP);
 }
 
 /**
- * @brief OAL_read8 Read one byte from an IO address obtained using OAL_memmap
- * and friends
+ * @brief Read one byte from an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
  *
- * @return The value read from addr
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ *
+ * @return The value read from \p aAddr
  */
-uint8_t OAL_read8(void *addr);
+uint8_t OAL_Read8(uintptr_t aAddr);
 
 /**
- * @brief OAL_read16 Read two bytes from an IO address obtained using OAL_memmap
- * and friends
+ * @brief Read two bytes from an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
  *
- * @return The value read from addr
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ *
+ * @return The value read from \p aAddr
  */
-uint16_t OAL_read16(void *addr);
+uint16_t OAL_Read16(uintptr_t aAddr);
 
 /**
- * @brief OAL_read32 Read 4 bytes from an IO address obtained using OAL_memmap
- * and friends
+ * @brief Read 4 bytes from an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
  *
- * @return The value read from addr
+ * @param[in] aAddr The address obtained using #OAL_MapSystemMemory
+ *
+ * @return The value read from \p aAddr
  */
-uint32_t OAL_read32(void *addr);
+uint32_t OAL_Read32(uintptr_t aAddr);
 
 /**
- * @brief OAL_read64 Read 8 bytes from an IO address obtained using OAL_memmap
- * and friends
+ * @brief Read 8 bytes from an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
  *
- * @return The value read from addr
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ *
+ * @return The value read from \p aAddr
  */
-uint64_t OAL_read64(void *addr);
+uint64_t OAL_Read64(uintptr_t aAddr);
 
 /**
- * @brief OAL_write8 Write one byte to an IO address obtained using OAL_memmap
- * and friends
+ * @brief Write one byte to an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
- * @param value[in] The value to be written
+ *
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ * @param[in] aValue The value to be written
  */
-void OAL_write8(void *addr, uint8_t value);
+void OAL_Write8(uintptr_t aAddr, uint8_t aValue);
 
 /**
- * @brief OAL_write16 Write two bytes to an IO address obtained using OAL_memmap
- * and friends
+ * @brief Write two bytes to an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
- * @param value[in] The value to be written
+ *
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ * @param[in] aValue The value to be written
  */
-void OAL_write16(void *addr, uint16_t value);
+void OAL_Write16(uintptr_t aAddr, uint16_t aValue);
 
 /**
- * @brief OAL_write32 Write four bytes to an IO address obtained using OAL_memmap
- * and friends
+ * @brief Write four bytes to an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
- * @param value[in] The value to be written
+ *
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ * @param[in] aValue The value to be written
  */
-void OAL_write32(void *addr, uint32_t value);
+void OAL_Write32(uintptr_t aAddr, uint32_t aValue);
 
 /**
- * @brief OAL_write64 Write four bytes to an IO address obtained using OAL_memmap
- * and friends
+ * @brief Write four bytes to an IO address obtained using #OAL_MapSystemMemory
  *
- * @param addr[in]  The address obtained using OAL_memmap
- * @param value[in] The value to be written
+ *
+ * @param[in] aAddr  The address obtained using #OAL_MapSystemMemory
+ * @param[in] aValue The value to be written
  */
-void OAL_write64(void *addr, uint64_t value);
+void OAL_Write64(uintptr_t aAddr, uint64_t aValue);
 
 __END_DECLS
 
+/* @} */
+
+#include <legacy/oal_memmap_1_0.h>
+
+#ifdef OAL_TRACE_API_FUNCTIONS
+#include <trace/oal_memmap.h>
+#endif
 #endif /* OAL_MEMMAP_H */

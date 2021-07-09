@@ -1,194 +1,101 @@
 /*
- * Copyright 2018 NXP
- * All rights reserved.
+ * Copyright 2018-2019 NXP
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * o Redistributions of source code must retain the above copyright notice, this list
- *   of conditions and the following disclaimer.
- *
- * o Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimer in the documentation and/or
- *   other materials provided with the distribution.
- *
- * o Neither the name of NXP nor the names of its
- *   contributors may be used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause
  */
+#ifndef OAL_LOG_SUPPRESS_DEBUG
 #define OAL_LOG_SUPPRESS_DEBUG
-#include "oal_log.h"
-#include "oal_driver_dispatcher.h"
-#include "oal_driver_functions.h"
-#include "oal_allocation_kernel.h"
-#include "os_oal_driver_dispatcher.h"
-#include "oal_cma_list.h"
+#endif
+#include <oal_driver_dispatcher.h>
+#include <oal_driver_functions.h>
+#include <oal_log.h>
+#include <oal_page_manager.h>
 
-uint8_t  gLoadedDevices = 0;
-uint8_t  gAutobalancedDevices = 0;
-uint32_t gDeviceAlignment[OAL_MAX_ALLOCATOR_NUM] = {0};
-
-uint32_t oalDriverDispatcher(oal_dispatcher_t *d, uint32_t func, char *in, int len)
+uint32_t OAL_DriverDispatcher(oal_dispatcher_t *apDisp, uint32_t aFuncId,
+                             uintptr_t aInData, int32_t aDataLen)
 {
 	uint32_t lRetVal = 0;
+	int32_t lIRet;
+	OAL_UNUSED_ARG(aDataLen);
 
-	switch (func)
-	{
-			///////////////////////////////////////////////////////////////////////////
-			// Allocate a new contiguous region
-		case CMD_ALLOC:
-			{
-				CMD_ALLOC_TYPE *aux;
-				pid_t lPid;
+	switch (aFuncId) {
+		case CMD_MEMORY_GET_SIZE: {
+			uint64_t *lpMemIndex = (uint64_t *)aInData;
+			uint64_t lSize       = 0;
 
-				OAL_RPCGetClientPID(d, &lPid);
+			OAL_LOG_DEBUG("OAL: GET CHUNK OAL_SIZE\n");
 
-				OAL_LOG_DEBUG("OAL: ALLOCATE\n");
-
-				aux = (CMD_ALLOC_TYPE *)in;
-
-				aux->ret_phys_pointer = oal_alloc(aux->size, aux->align, aux->chunk_id, lPid);
-				if ((aux->flags & OAL_MEMORY_FLAG_ZERO) &&
-						(aux->ret_phys_pointer != 0)) {
-					lRetVal = oalMemoryZeroisation(d,
-							aux->ret_phys_pointer,
-							aux->size);
-					if (lRetVal != 0) {
-						OAL_LOG_ERROR("Failed to zeroise");
-					}
-				}
-
-				OAL_RPCAppendReply(d, (void *)aux, sizeof(*aux));
-
-				break;
+			lIRet = OAL_GetChunkSize(*lpMemIndex, &lSize);
+			if (lIRet != 0) {
+				lRetVal = EINVAL;
+				OAL_LOG_ERROR("Failed to get chunk's (%" PRIu64
+				              ") size\n",
+				              *lpMemIndex);
 			}
 
-			///////////////////////////////////////////////////////////////////////////
-			// Free unused contiguous region
-		case CMD_FREE:
-			{
-				uint64_t *handle_pointer = (uint64_t *)in;
+			(void)OAL_RPCAppendReply(apDisp, (void *)&lSize,
+			                         sizeof(lSize));
+			break;
+		}
 
-				OAL_LOG_DEBUG("OAL: FREE\n");
-				if (oal_free_phys(*handle_pointer) != 0)
-				{
-					lRetVal = -EINVAL;
-				}
+		// Get base address
+		case CMD_MEMORY_GET_BASE: {
+			uint64_t *lpMemIndex = (uint64_t *)aInData;
+			uint64_t lBaseAddr   = 0;
 
-				break;
+			OAL_LOG_DEBUG("OAL: GET BASE ADDRESS\n");
+
+			lIRet = OAL_GetChunkBaseAddress(*lpMemIndex, &lBaseAddr);
+			if (lIRet != 0) {
+				lRetVal = EINVAL;
+				OAL_LOG_ERROR("Failed to get chunk's (%" PRIu64
+				              ") base address\n",
+				              *lpMemIndex);
 			}
-			///////////////////////////////////////////////////////////////////////////
-			// Get number of allocations
-		case CMD_INFO:
-			{
-				uint64_t allocs;
 
-				OAL_LOG_DEBUG("OAL: GET NUM ALLOCATIONS\n");
+			(void)OAL_RPCAppendReply(apDisp, (void *)&lBaseAddr,
+			                         sizeof(lBaseAddr));
 
-				allocs = oal_get_num_allocations();
-				OAL_RPCAppendReply(d, (void *)&allocs, sizeof(allocs));
+			break;
+		}
 
-				break;
+		// Get available devices
+		case CMD_MEMORY_GET_DEVICES: {
+			uint32_t lNPools = OAL_GetNumberOfPools();
+			OAL_LOG_DEBUG("OAL: GET LOADED DEVICES MASK\n");
+
+			(void)OAL_RPCAppendReply(apDisp, (void *)&lNPools,
+			                         sizeof(lNPools));
+			break;
+		}
+
+		// Get autobalanced devices
+		case CMD_MEMORY_GET_AUTOBALANCE: {
+			uint32_t lIsBalanced = 0;
+			uint32_t *lpMemIndex = (uint32_t *)aInData;
+
+			OAL_LOG_DEBUG("OAL: GET AUTOBALANCED DEVICES MASK\n");
+
+			lIRet = OAL_IsChunkAutobalanced(*lpMemIndex, &lIsBalanced);
+			if (lIRet != 0) {
+				lRetVal = EINVAL;
+				OAL_LOG_ERROR("Failed to get chunk's (%" PRIu32
+				              ") balance flag\n",
+				              *lpMemIndex);
 			}
-		case CMD_MEMORY_GET_SIZE:
-			{
-				uint64_t *aux = (uint64_t *)in;
 
-				OAL_LOG_DEBUG("OAL: GET SIZE OF DEVICE\n");
+			(void)OAL_RPCAppendReply(apDisp, (void *)&lIsBalanced,
+			                         sizeof(lIsBalanced));
+			break;
+		}
 
-				*aux = apex_allocator_get_total_size(*aux);
-				OAL_RPCAppendReply(d, (void *)aux, sizeof(*aux));
-
-				break;
-			}
-			///////////////////////////////////////////////////////////////////////////
-
-			// Get base address
-		case CMD_MEMORY_GET_BASE:
-			{
-				uint64_t *aux = (uint64_t *)in;
-
-				OAL_LOG_DEBUG("OAL: GET BASE ADDRESS\n");
-
-				*aux = apex_allocator_get_physical_base(*aux);
-				OAL_RPCAppendReply(d, (void *)aux, sizeof(*aux));
-
-				break;
-			}
-			///////////////////////////////////////////////////////////////////////////
-			// Get available devices
-		case CMD_MEMORY_GET_DEVICES:
-			{
-				uint8_t lSizeInBytes;
-
-				lSizeInBytes = gLoadedDevices;
-
-				OAL_LOG_DEBUG("OAL: GET LOADED DEVICES MASK\n");
-
-				OAL_RPCAppendReply(d, (void *)&lSizeInBytes, sizeof(lSizeInBytes));
-				break;
-			}
-			///////////////////////////////////////////////////////////////////////////
-			// Get memory size total
-		case CMD_MEMORY_SIZE_TOTAL_GET:
-			{
-				int64_t lSizeInBytes;
-
-				lSizeInBytes = oal_memorysizetotal();
-
-				OAL_LOG_DEBUG("OAL: GET TOTAL MEMORY SIZE\n");
-
-				OAL_RPCAppendReply(d, (void *)&lSizeInBytes, sizeof(lSizeInBytes));
-				break;
-			}
-			///////////////////////////////////////////////////////////////////////////
-			// Get free memory size
-		case CMD_MEMORY_SIZE_FREE_GET:
-			{
-				int64_t lSizeInBytes;
-
-				lSizeInBytes = oal_memorysizefree();
-
-				OAL_LOG_DEBUG("OAL: GET FREE MEMORY\n");
-
-				OAL_RPCAppendReply(d, (void *)&lSizeInBytes, sizeof(lSizeInBytes));
-
-				break;
-			}
-			///////////////////////////////////////////////////////////////////////////
-			// Get autobalanced devices
-		case CMD_MEMORY_GET_AUTOBALANCE:
-			{
-				uint8_t lSizeInBytes;
-
-				lSizeInBytes = gAutobalancedDevices;
-
-				OAL_LOG_DEBUG("OAL: GET AUTOBALANCED DEVICES MASK\n");
-
-				OAL_RPCAppendReply(d, (void *)&lSizeInBytes, sizeof(lSizeInBytes));
-
-				break;
-			}
-		default:
-			{
-				// Pass down to OS layer
-				lRetVal = osOalDriverDispatcher(d, func, in, len);
-			}
+		default: {
+			// Pass down to OS layer
+			lRetVal = OAL_OS_DriverDispatcher(apDisp, aFuncId,
+			                                aInData, aDataLen);
+			break;
+		}
 	}
 
 	return lRetVal;
 }
-
-
-

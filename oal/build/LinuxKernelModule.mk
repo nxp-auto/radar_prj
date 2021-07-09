@@ -1,10 +1,8 @@
-##############################################################################
-#
-# Copyright 2017-2018 NXP
+##
+# Copyright 2017-2021 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
-#
-##############################################################################
+##
 
 # Prerequisites
 #
@@ -13,72 +11,115 @@
 # MODULE_NAME - The name of the module
 # STATIC_LIB_NAME - The name of the static library
 
-ifdef STATIC_LIB_NAME
-MODULE_NAME := _dummy
+ifeq ($(origin KERNEL_DIR),undefined)
+    $(error error: KERNEL_DIR undefined. Export it before using the build system. \
+    E.g. export KERNEL_DIR=/path/to/linux/kernel/dir)
 endif
 
-define generate_lib
-$(1):
-	@echo "	[DEP] $1"
-	make -C $(dir $(1))
+ifeq ($(strip $(SRCS)),)
+    $(error "There are no source files")
+endif
+
+include $(DEV_ROOT_DIR)/build/Dependencies.mk
+include $(DEV_ROOT_DIR)/build/LinuxBuildConfig.mk
+include $(DEV_ROOT_DIR)/build/DeviceTree.mk
+
+define call_kernel_makefile
+	$(MAKE) -C $(KERNEL_DIR) \
+		KBUILD_EXTMOD="$(DRIVER_BUILD_DIR)/$(OBJDIR)/" \
+		KCPPFLAGS="$(CFLGS)" \
+		ARCH=$(ARCH) \
+		DRIVER_BUILD_DIR="$(CURDIR)/" \
+		ENABLE_CODE_COVERAGE=$(ENABLE_CODE_COVERAGE) \
+		OAL_LDFLAGS="$(LDFLAGS)" \
+		OAL_ROOT="$(DEV_ROOT_DIR)" $(1)
+
 endef
 
 # Current dir
-CDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST) )))
+CDIR                := $(dir $(realpath $(lastword $(MAKEFILE_LIST) )))
+VPATH               := $(addsuffix /, $(VPATH))
+ARCH                ?= arm64
+src                  = .
+_OBJS               := $(SRCS:.S=.o)
+CFLGS               += $(foreach includedir, $(INCDIR),-I$(includedir)) $(CDEFS)
+PYTHON              ?= python
 
-# Linux kernel Makefile works with relative paths
-VPATH := $(addsuffix /, $(VPATH))
-SRCS := $(foreach file, $(SRCS), $(foreach dir, $(VPATH), $(wildcard $(dir)/$(file))))
-SRCS := $(if $(SRCS),$(shell $(CDIR)/relative_to.sh $(DRIVER_BUILD_DIR) $(SRCS)))
+# Linux Kernel accepts dependencies with relative paths only
+_DEP_OBJECTS        := $(if $(_DEP_STATIC_LIBS),\
+                          $(shell $(PYTHON) $(CDIR)/relative_to.py \
+                                  $(abspath $(DRIVER_BUILD_DIR)/$(OBJDIR)) \
+                                  $(abspath $(_DEP_STATIC_LIBS)) \
+                                  $(abspath $(_INJECT_LIBRARY))))
+OBJS                := $(_OBJS:.c=.o) $(_DEP_OBJECTS:.a=.o)
 
-# Lock mechanism
-LOCK_FILE    := /tmp/$(notdir $(lastword $(MAKEFILE_LIST)))
-LOCK_FD      := 9
-LOCK_TIMEOUT := 2000
-ARCH         ?= arm64
+ifdef STATIC_LIB_NAME # Kernel library
+    VPATH               += $(DEV_ROOT_DIR)/build/
+    SRCS                += __dummy.c
+    MODULE_NAME         := _dummy
+    obj-m               += $(MODULE_NAME).o
+    $(MODULE_NAME)-objs := lib.a __dummy.o
+    lib-y               := $(OBJS)
+else # Kernel Module
+    obj-m               += $(MODULE_NAME).o
+    $(MODULE_NAME)-objs := $(OBJS) /../../linux-write/build-linux-kernel/liboal_kernel.o
+    ldflags-y           := $(OAL_LDFLAGS)
+endif
 
-obj-m += $(MODULE_NAME).o
 
-_OBJS := $(SRCS:.S=.o)
-OBJS := $(_OBJS:.c=.o)                                                                 \
-	$(if $(DEP_STATIC_LIBS),                                                      \
-		$(shell $(CDIR)/relative_to.sh $(DRIVER_BUILD_DIR) $(DEP_STATIC_LIBS) \
-	))
+ifeq ($(ENABLE_CODE_COVERAGE),1)
+    GCOV_PROFILE := y
+endif
 
-CFLGS = -Ulinux -DOS=linux
-CFLGS += $(foreach includedir, $(INCDIR),-I$(includedir))
+# Out of kernel context
+ifeq ($(abspath $(CURDIR)),$(abspath $(DRIVER_BUILD_DIR)))
+    OAL_STATIC_LIB := $(OBJDIR)/lib$(STATIC_LIB_NAME).a
+    OAL_KERNEL_MODULE := $(OBJDIR)/$(MODULE_NAME).ko
 
-ifdef STATIC_LIB_NAME
-$(MODULE_NAME)-objs := lib.a
-lib-y := $(OBJS)
+    .DEFAULT_GOAL = all
+    CLEAN_OBJS    = $(filter-out Makefile,$(wildcard *))
+
+    # Create targets for each dependency
+    $(foreach lib, $(_DEP_STATIC_LIBS) $(_INJECT_LIBRARY), $(eval $(call generate_lib, $(lib))))
+
+    # Guard current build folder
+    LOCAL_LOCK_FILE := $(OBJDIR)/.kern_local_lock
+
+ifdef STATIC_LIB_NAME # Kernel library
+all: $(OAL_STATIC_LIB) | $(OBJDIR)
+lib: all
+app:
 else
-$(MODULE_NAME)-objs := $(OBJS)
+all: $(OAL_KERNEL_MODULE) | $(OBJDIR)
+lib:
+app: all
+endif
 endif
 
-.PHONY: clean all $(DEP_STATIC_LIBS)
+.NOTPARALLEL:
 
-# Make sure that there is only one instance of Linux Kernel makefile
-# LOCK_FILE guards Linux Kernel makefile
-all: $(DEP_STATIC_LIBS)
-	@exec $(LOCK_FD)>$(LOCK_FILE) && flock -w $(LOCK_TIMEOUT) $(LOCK_FD) && \
-		make -C $(KERNEL_DIR) \
-			M=`pwd` \
-			KCPPFLAGS="$(CFLGS)" \
-			ARCH=$(ARCH) \
-			DRIVER_BUILD_DIR="$(CURDIR)/" \
-			-j1
-ifdef STATIC_LIB_NAME
-	mv lib.a lib$(STATIC_LIB_NAME).a
+ifndef OAL_NOINCREMENTAL_BUILD
+$(OAL_STATIC_LIB): FORCE | $(OBJDIR_MAKEFILE)
+else
+$(OAL_STATIC_LIB): $(OBJDIR_MAKEFILE)
 endif
+	$(call call_kernel_makefile)
+	@echo "	[MV] lib.a -> lib$(STATIC_LIB_NAME).a"
+	@cp $(OBJDIR)/lib.a $(OBJDIR)/lib$(STATIC_LIB_NAME).o
+	@mv $(OBJDIR)/lib.a $(OBJDIR)/lib$(STATIC_LIB_NAME).a
 
-# Create targets for each dependency
-ifndef STATIC_LIB_NAME
-$(foreach lib, $(DEP_STATIC_LIBS), $(eval $(call generate_lib, $(lib))))
-endif
+$(OAL_KERNEL_MODULE): FORCE $(_DEP_STATIC_LIBS) $(_INJECT_LIBRARY) | $(OBJDIR_MAKEFILE)
+	$(call call_kernel_makefile)
 
 clean:
-	make -C $(KERNEL_DIR) M=`pwd` ARCH=$(ARCH) clean DRIVER_BUILD_DIR="$(CURDIR)/"
-	(rm -f $(CURDIR)/*~ $(CURDIR)/Module.symvers $(CURDIR)/Module.markers $(CURDIR)/modules.order $(OBJS)) || true
+	$(call clean_objdir)
+	@echo "	[CLN] $(CLEAN_OBJS)"
+	@rm -f $(CLEAN_OBJS) $(LOCAL_LOCK_FILE) || true
 
+modules_install:
+	$(call call_kernel_makefile, modules_install)
+    
 -include $(DEV_ROOT_DIR)/build/SourceDrop.mk
 -include $(DEV_ROOT_DIR)/build/Install.mk
+
+

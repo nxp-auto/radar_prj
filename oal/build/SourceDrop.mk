@@ -1,12 +1,10 @@
-##############################################################################
-#
-# Copyright 2017-2018 NXP
+##
+# Copyright 2017-2018,2020 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
-#
-##############################################################################
+##
 
-ADDITIONAL_FILES = $(DEV_ROOT_DIR)/build/relative_to.sh
+ADDITIONAL_FILES = $(DEV_ROOT_DIR)/build/relative_to.py
 
 SAVE_VPATH    = $(addsuffix /, $(VPATH))
 RESOLVED_SRCS = $(foreach file, $(SRCS), $(foreach dir, $(SAVE_VPATH), $(realpath $(wildcard $(dir)/$(file)))))
@@ -20,7 +18,7 @@ endef
 
 define save_libs
 $(1):
-	make -C $(dir $(1)) source_drop
+	$(MAKE) -C $(dir $(1)) source_drop
 endef
 
 

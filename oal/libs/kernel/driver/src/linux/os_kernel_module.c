@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -16,79 +16,101 @@
 #include <linux/of_device.h>
 #include <linux/slab.h>
 
+#ifndef OAL_LOG_SUPPRESS_DEBUG
 #define OAL_LOG_SUPPRESS_DEBUG
-#include "oal_allocation_kernel.h"
-#include "oal_cma_list.h"
-#include "oal_comm_kernel.h"
-#include "oal_debug_out.h"
-#include "oal_driver_dispatcher.h"
-#include "oal_log.h"
-#include "oal_timespec.h"
-#include "linux/linux_device.h"
-#include "os_oal.h"
-#include "os_oal_comm_kernel.h"
+#endif
+#include <oal_comm_kernel.h>
+#include <oal_driver_dispatcher.h>
+#include <oal_kernel_memory_allocator.h>
+#include <oal_log.h>
+#include <oal_page_manager.h>
+#include <oal_timespec.h>
+#include <os_oal_comm_kernel.h>
+#include <driver_init.h>
+#include <linux/linux_device.h>
 
-#define OAL_CACHED_DEV     "oal_cached"
+#include <oal_mem_constants.h>
+
+#define OAL_CACHED_DEV "oal_cached"
 #define OAL_NON_CACHED_DEV "oal_noncached"
 
-///////////////////////////////////////////////////////////////////////////////////
-// Module devices bookkeeping
-///////////////////////////////////////////////////////////////////////////////////
+static OAL_DevFile_t gsNonCachedDevFile;
+static OAL_RPCService_t gsOALService;
+static int32_t gsOalInitErrror;
 
-static OAL_DevFile_t gNonCachedDevFile;
-static OAL_RPCService_t gOALService;
-
-////////////////////////////////////////////////////////////////////////////////
-// Memmap function
-////////////////////////////////////////////////////////////////////////////////
-static int32_t oal_mem_mmap_cached(struct file *filp, struct vm_area_struct *vma)
+int32_t static isPartOfResMem(struct vm_area_struct *apVma)
 {
-	int32_t retval = 0;
+	int32_t lRet;
+	uint64_t lPhysAddr = apVma->vm_pgoff * OAL_PAGE_SIZE;
+	uint64_t lSize     = apVma->vm_end - apVma->vm_start;
+	struct OALMemoryChunk *lpMemChunk;
 
-	vma->vm_page_prot = set_pte_bit(vma->vm_page_prot, __pgprot(PTE_DIRTY));
-
-	if (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, vma->vm_end - vma->vm_start, vma->vm_page_prot))
-	{
-		retval = -EAGAIN;
+	lRet = OAL_GetMemoryChunkBasedOnAddr(lPhysAddr, lSize, &lpMemChunk);
+	if (lRet != 0) {
+		OAL_LOG_ERROR("Cannot get the memory chunk of 0x%" PRIx64 "\n",
+		              lPhysAddr);
 	}
 
-	return retval;
+	return lRet;
 }
 
-static int32_t oal_mem_mmap_noncached(struct file *filp, struct vm_area_struct *vma)
+static int32_t oal_mem_mmap_cached(struct file *apFilp,
+                                   struct vm_area_struct *apVma)
 {
-	int32_t retval = 0;
+	int32_t lRet = 0;
 
-	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	vma->vm_page_prot = set_pte_bit(vma->vm_page_prot, __pgprot(PTE_DIRTY));
+	OAL_UNUSED_ARG(apFilp);
 
-	if (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, vma->vm_end - vma->vm_start, vma->vm_page_prot))
-	{
-		retval = -EAGAIN;
+	if (isPartOfResMem(apVma) != 0) {
+		lRet = -EINVAL;
+		goto oal_map_cahced;
 	}
 
-	return retval;
+	apVma->vm_flags |= (VM_IO | VM_DONTCOPY | VM_DONTEXPAND | VM_DONTDUMP);
+	if (remap_pfn_range(apVma, apVma->vm_start, apVma->vm_pgoff,
+	                    apVma->vm_end - apVma->vm_start,
+	                    apVma->vm_page_prot) != 0) {
+		lRet = -EAGAIN;
+	}
+
+oal_map_cahced:
+	return lRet;
 }
 
-static int nxp_oal_release(struct inode *inodep, struct file *filep)
+static int32_t oal_mem_mmap_noncached(struct file *apFilp,
+                                      struct vm_area_struct *apVma)
 {
-	cma_list_free_pid((uint32_t)task_pgrp_nr(current));
+	int32_t lRet = 0;
 
-	return 0;
+	OAL_UNUSED_ARG(apFilp);
+
+	if (isPartOfResMem(apVma) != 0) {
+		lRet = -EINVAL;
+		goto oal_map_noncahced;
+	}
+
+	/* Non-cached mapping */
+	apVma->vm_flags |= (VM_IO | VM_DONTCOPY | VM_DONTEXPAND | VM_DONTDUMP);
+	apVma->vm_page_prot = pgprot_writecombine(apVma->vm_page_prot);
+
+	if (remap_pfn_range(apVma, apVma->vm_start, apVma->vm_pgoff,
+	                    apVma->vm_end - apVma->vm_start,
+	                    apVma->vm_page_prot) != 0) {
+		lRet = -EAGAIN;
+	}
+
+oal_map_noncahced:
+	return lRet;
 }
 
-static int getReservedRegion(struct platform_device *apDev,
-		uint64_t *apStart, uint64_t *apLen, bool aInit)
+static int32_t getReservedRegion(struct platform_device *apDev,
+                                 uintptr_t *apStart, uint64_t *apLen,
+                                 uint8_t aInit)
 {
-	int lRet = 0;
+	int32_t lRet = 0;
 	struct device_node *lpMemNode;
 	void __iomem *lpVirtAddr;
 	uint64_t lRes[2];
-
-	if ((apDev == NULL) || (apStart == NULL) || (apLen == NULL)) {
-		lRet = -EINVAL;
-		goto get_res_reg_exit;
-	}
 
 	lpMemNode = of_parse_phandle(apDev->dev.of_node, "memory-region", 0);
 	if (lpMemNode == NULL) {
@@ -97,15 +119,22 @@ static int getReservedRegion(struct platform_device *apDev,
 	}
 
 	lRet = of_property_read_u64_array(lpMemNode, "reg", lRes,
-			ARRAY_SIZE(lRes));
+	                                  OAL_ARRAY_SIZE(lRes));
 	if (lRet != 0) {
 		goto release_node;
 	}
 
 	*apStart = lRes[0];
-	*apLen = lRes[1];
+	*apLen   = lRes[1];
 
-	if (aInit) {
+	if ((*apStart == 0U) || (*apLen == 0U)) {
+		OAL_LOG_ERROR("Invalid region: 0x%" PRIxPTR " - 0x%"
+			      PRIx64 "\n", *apStart, *apLen);
+		lRet = -EINVAL;
+		goto release_node;
+	}
+
+	if (aInit != 0U) {
 		lpVirtAddr = of_iomap(lpMemNode, 0);
 		if (lpVirtAddr == NULL) {
 			lRet = -ENOMEM;
@@ -125,161 +154,185 @@ get_res_reg_exit:
 	return lRet;
 }
 
-static int probeOAL(struct platform_device *apDev)
+static int32_t OAL_OS_ProbeDriver(struct platform_device *apDev)
 {
-	int lRet = 0;
+	int32_t lRet = 0;
 
-	uint64_t lResMemStart;
-	uint64_t lResMemLen;
-	uint32_t lStartID;
-	int32_t lAlignment;
-	bool lInitReg;
+	struct OAL_MemoryAllocatorRegion lResMem;
+	struct OALMemoryChunk *lpMemChunk = NULL;
+	uint64_t lSize = 0ULL;
 
-	// Get init
+	(void)strncpy(lResMem.mName, apDev->name,
+	              OAL_ARRAY_SIZE(lResMem.mName) - 1U);
+	/* String termination */
+	lResMem.mName[OAL_ARRAY_SIZE(lResMem.mName) -1U] = '\0';
+
+	/* Get init */
 	if (of_get_property(apDev->dev.of_node, "init", NULL) == NULL) {
-		lInitReg = false;
+		lResMem.mInit = 0U;
 	} else {
-		lInitReg = true;
+		lResMem.mInit = 1U;
 	}
 
-	lRet = getReservedRegion(apDev, &lResMemStart, &lResMemLen, lInitReg);
-	if (lRet) {
-		OAL_LOG_ERROR("OAL Memory range specification cannot be read."
-				"Please review reg and memory-region attributes.\n");
+	lResMem.mPhysAddr = 0ULL;
+
+	lRet =
+	    getReservedRegion(apDev, &lResMem.mPhysAddr, &lSize, lResMem.mInit);
+	if (lRet != 0) {
+		OAL_LOG_ERROR(
+		    "OAL Memory range specification cannot be read."
+		    "Please review reg and memory-region "
+		    "attributes.\n");
+		goto probe_exit;
+	}
+	lResMem.mSize = (uintptr_t)lSize;
+
+	/* Get ID */
+	lRet =
+	    of_property_read_u32(apDev->dev.of_node, "id", &lResMem.mStartID);
+	if ((lRet != 0) || (lResMem.mStartID > OAL_MAX_RESERVED_ID)) {
+		OAL_LOG_ERROR(
+		    "OAL ID cannot be read or isn't in range 0-7."
+		    "Please review id attribute.\n");
 		goto probe_exit;
 	}
 
-	// Get ID
-	lRet = of_property_read_u32(apDev->dev.of_node, "id", &lStartID);
-	if ((lRet != 0) || (lStartID < OAL_MIN_ID) || (lStartID > OAL_MAX_ID)) {
-		OAL_LOG_ERROR("OAL ID cannot be read or isn't in range 0-7."
-				"Please review id attribute.\n");
+	/* Get alignment */
+	lRet =
+	    of_property_read_u32(apDev->dev.of_node, "align", &lResMem.mAlign);
+	if (lRet != 0) {
+		OAL_LOG_ERROR(
+		    "OAL ID cannot be read or isn't in range 0-7."
+		    "Please review id attribute.\n");
 		goto probe_exit;
 	}
 
-	gLoadedDevices |= (1 << lStartID);
-
-	// Get alignment
-	lRet = of_property_read_u32(apDev->dev.of_node, "align", &lAlignment);
-	if ((lRet != 0) || (lAlignment <= 0)) {
-		OAL_LOG_ERROR("OAL ID cannot be read or isn't in range 0-7."
-				"Please review id attribute.\n");
-		goto probe_exit;
-	}
-
-	gDeviceAlignment[lStartID] = lAlignment;
-
-	// Get if the memory is autobalanced
+	/* Get if the memory is autobalanced */
 	if (of_get_property(apDev->dev.of_node, "autobalance", NULL) == NULL) {
-		gAutobalancedDevices &= ~(1 << lStartID);
+		lResMem.mAutobalance = 0U;
 	} else {
-		gAutobalancedDevices |= (1 << lStartID);
+		lResMem.mAutobalance = 1U;
 	}
 
-	apex_allocator_mmap_init(lStartID, lResMemStart, lResMemLen);
+	lRet = OAL_AddMemoryPool(&lResMem, &lpMemChunk);
+	if ((lRet != 0) || (lpMemChunk == NULL)) {
+		lRet = -1;
+		OAL_LOG_ERROR("Failed to add '%s' to memory pools\n",
+		              lResMem.mName);
+		goto probe_exit;
+	}
 
-	printk("OAL region successfully mapped %llX@%llX, Alignment: 0x%X\n",
-			lResMemLen, lResMemStart,
-			gDeviceAlignment[lStartID]);
+	lpMemChunk->mOSChunk.mStartPhysAddress = lResMem.mPhysAddr;
 
-	cma_list_init(lStartID, lResMemStart, lResMemStart + lResMemLen,
-			gDeviceAlignment[lStartID]);
+	if (lResMem.mInit != 0U) {
+		uint8_t *lpVirt;
+		OAL_PRINT("Initializing '%s'\n", lResMem.mName);
+		lpVirt = (uint8_t *)ioremap(lResMem.mPhysAddr, lResMem.mSize);
+		if (lpVirt != NULL) {
+			uint64_t lIdx;
+			for (lIdx = 0; lIdx < lResMem.mSize; lIdx += 8U) {
+				writeq(0x0ULL, lpVirt + lIdx);
+			}
+			iounmap(lpVirt);
+		} else {
+			OAL_LOG_ERROR("Failed to initialize '%s'\n",
+			              lResMem.mName);
+			lRet = -EIO;
+		}
+	}
 
-	printk("  CMA: ID %02X. Start %02llX. "
-			"End %02llX. Length %02llX. Num %02llX.\n",
-			lStartID, lResMemStart, (lResMemStart + lResMemLen),
-			lResMemLen, (lResMemLen / gDeviceAlignment[lStartID]));
 probe_exit:
+	if (lRet != 0) {
+		gsOalInitErrror = lRet;
+	}
 	return lRet;
 }
 
-static struct file_operations oal_fops_nc = {
-	.owner =    THIS_MODULE,
-	.mmap=      oal_mem_mmap_noncached,
+static const struct of_device_id gcsOALDtIds[] = {
+    {
+        .compatible = "fsl,oal-mem-reg",
+    },
+    {}};
+
+static struct platform_driver gsOALDriver = {
+    .driver = {.name           = "OS Abstraction Layer",
+               .owner          = THIS_MODULE,
+               .of_match_table = gcsOALDtIds},
+    .probe = OAL_OS_ProbeDriver,
 };
 
-
-static const struct of_device_id gOALDtIds[] = {
-	{
-		.compatible = "fsl,oal-mem-reg",
-	},
-	{}
-};
-
-
-static struct platform_driver gOALDriver = {
-	.driver = {
-		.name = "OS Abstraction Layer",
-		.owner = THIS_MODULE,
-		.of_match_table = gOALDtIds
-	},
-	.probe = probeOAL,
-};
-
-static int initOALDriver(void)
+int32_t OAL_InitializeDriver(void)
 {
-	int lRet = 0;
+	int32_t lRet = 0;
 	struct file_operations lFops;
+	static struct file_operations lsOalFopsNc = {
+	    .owner = THIS_MODULE, .mmap = oal_mem_mmap_noncached,
+	};
 
-	gOALService = OAL_RPCRegister(OAL_CACHED_DEV, oalDriverDispatcher);
-	if (gOALService == NULL) {
-		OAL_LOG_ERROR("Faield to start RPC service\n");
+	gsOALService = OAL_RPCRegister(OAL_CACHED_DEV, OAL_DriverDispatcher);
+	if (gsOALService == NULL) {
+		OAL_LOG_ERROR("Failed to start RPC service\n");
+		lRet = -EIO;
 		goto init_exit;
 	}
 
-	// Overwrite mmap and release operations
-	memset(&lFops, 0, sizeof(lFops));
+	/* Overwrite mmap and release operations */
+	(void)memset(&lFops, 0, sizeof(lFops));
 	lFops.mmap = oal_mem_mmap_cached;
-	lFops.release = nxp_oal_release;
 
-	lRet = OAL_SetCustomFileOperations(gOALService, &lFops);
+	lRet = OAL_SetCustomFileOperations(gsOALService, &lFops);
 	if (lRet != 0) {
 		OAL_LOG_ERROR("Failed to register custom file operations\n");
 		goto stop_service;
 	}
 
-	lRet = OAL_initDevFile(&gNonCachedDevFile, &oal_fops_nc, OAL_NON_CACHED_DEV);
+	lRet = OAL_InitDevFile(&gsNonCachedDevFile, &lsOalFopsNc,
+	                       OAL_NON_CACHED_DEV);
 	if (lRet != 0) {
-		OAL_LOG_ERROR("Failed to init " OAL_NON_CACHED_DEV
-				" device\n");
-		goto stop_service;
+		OAL_LOG_ERROR("Failed to init " OAL_NON_CACHED_DEV " device\n");
+		goto destroy_non_cached;
 	}
 
-	lRet = platform_driver_register(&gOALDriver);
-	if (gLoadedDevices == 0) {
-		OAL_LOG_ERROR("Failed to detect OAL nodes from device tree."
-				"Please review the setup.");
+	/* Init memory pools */
+	lRet = OAL_InitMemoryPools(1U);
+	if (lRet != 0) {
+		OAL_LOG_ERROR("Failed to initialize memory pools\n");
+		goto destroy_non_cached;
 	}
+
+	lRet = platform_driver_register(&gsOALDriver);
+	if (OAL_GetNumberOfPools() == 0U) {
+		OAL_LOG_ERROR(
+		    "Failed to detect OAL nodes from device tree."
+		    "Please review the setup.\n");
+		lRet = -EINVAL;
+		goto unregister_driver;
+	}
+
+	if (gsOalInitErrror != 0) {
+		OAL_LOG_ERROR("Failed to probe one of the nodes\n");
+		lRet = gsOalInitErrror;
+		goto unregister_driver;
+	}
+
 	goto init_exit;
 
+unregister_driver:
+	(void)platform_driver_unregister(&gsOALDriver);
+destroy_non_cached:
+	(void)OAL_DestroyDevFile(&gsNonCachedDevFile);
 stop_service:
-	(void) OAL_RPCCleanup(gOALService);
+	(void)OAL_RPCCleanup(gsOALService);
 init_exit:
 	return lRet;
 }
-module_init(initOALDriver);
 
-static void releaseOALDriver(void)
+void OAL_ReleaseDriver(void)
 {
-	int i = 0;
+	(void)OAL_InitMemoryPools(1U);
+	(void)OAL_DestroyDevFile(&gsNonCachedDevFile);
+	(void)OAL_RPCCleanup(gsOALService);
 
-	cma_list_free_all();
-	cma_list_deinit();
-
-	for (i = 0; i < OAL_MAX_ALLOCATOR_NUM; ++i)
-	{
-		apex_allocator_mmap_deinit(i);
-	}
-
-
-	(void) OAL_RPCCleanup(gOALService);
-	(void) OAL_destroyDevFile(&gNonCachedDevFile);
-
-	platform_driver_unregister(&gOALDriver);
+	platform_driver_unregister(&gsOALDriver);
 }
-module_exit(releaseOALDriver);
 
-MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("OAL kernel module for contiguous "
-		"memory allocations and its management.");
-MODULE_ALIAS("OAL");

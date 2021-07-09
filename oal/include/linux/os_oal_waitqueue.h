@@ -1,43 +1,29 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018-2019 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef OS_OAL_WAITQUEUE_H
-#define OS_OAL_WAITQUEUE_H
+#ifndef OAL_OS_WAITQUEUE_H
+#define OAL_OS_WAITQUEUE_H
 
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include "oal_utils.h"
+#include <oal_utils.h>
 
-typedef wait_queue_head_t OAL_waitqueue_t;
+__BEGIN_DECLS
 
-static inline void OAL_init_waitqueue(OAL_waitqueue_t *q)
-{
-	init_waitqueue_head(q);
-}
+#ifdef __KERNEL__
+#define OAL_OS_WAIT_EVENT(wq, condition) wait_event(wq, condition)
 
-#define os_oal_wait_event(wq, condition)    \
-	wait_event(wq, condition)
+#define OAL_OS_WAIT_EVENT_INTERRUPTIBLE(wq, condition)                         \
+	wait_event_interruptible(wq, condition)
 
-
-#define os_oal_wait_event_interruptible(wq, condition)    \
-	 wait_event_interruptible(wq, condition)
-
-#define os_oal_wait_event_timeout(wq, condition, timeout) \
+#define OAL_OS_WAIT_EVENT_TIMEOUT(wq, condition, timeout)                      \
 	wait_event_timeout(wq, condition, timeout)
 
-#define os_oal_wait_event_interruptible_timeout(wq, condition, timeout) \
+#define OAL_OS_WAIT_EVENT_INTERRUPTIBLE_TIMEOUT(wq, condition, timeout)        \
 	wait_event_interruptible_timeout(wq, condition, timeout)
 
-static inline void OAL_wake_up(OAL_waitqueue_t *wq)
-{
-	wake_up(wq);
-}
+typedef wait_queue_head_t OAL_waitqueue_t;
+#endif
 
-static inline void OAL_wake_up_interruptible(OAL_waitqueue_t *wq)
-{
-	wake_up_interruptible(wq);
-}
-
-#endif /* OS_OAL_WAITQUEUE_H */
+__END_DECLS
+#endif /* OAL_OS_WAITQUEUE_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -35,7 +35,7 @@ inv_dflush_loop:
   add x0, x0, x2
   cmp x0, x1
   b.lo    inv_dflush_loop
-  dsb ish
+  dsb sy
   ret
 
 .global flush_dcache_range

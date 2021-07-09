@@ -1,10 +1,8 @@
-##############################################################################
-#
+##
 # Copyright 2017-2018 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
-#
-##############################################################################
+##
 
 ifndef INSTALLKERNEL
 	DRIVER_BUILD_DIR := $(CURDIR)/
@@ -35,4 +33,11 @@ OAL_SOURCE_DROP ?= $(abspath $(DEV_ROOT_DIR)/../oal_sources)
 OAL_INSTALL ?= $(abspath $(DEV_ROOT_DIR)/../oal_install)
 
 -include $(DRIVER_DIR)/BUILD.mk
+
+ifneq (,$(findstring graph,$(MAKECMDGOALS)))
+ARCH ?= arm64
+-include $(DEV_ROOT_DIR)/build/CallGraph.mk
+else
 -include $(DEV_ROOT_DIR)/build/$(ODIR)/Makefile.inc
+endif
+

@@ -1,122 +1,103 @@
 /*
- * Copyright 2018 NXP
- * All rights reserved.
+ * Copyright 2018-2019 NXP
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * o Redistributions of source code must retain the above copyright notice, this list
- *   of conditions and the following disclaimer.
- *
- * o Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimer in the documentation and/or
- *   other materials provided with the distribution.
- *
- * o Neither the name of NXP nor the names of its
- *   contributors may be used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPDX-License-Identifier: BSD-3-Clause
  */
+#include <linux/cache.h>
 #include <linux/mman.h>
 #include <linux/module.h>
 
+#ifndef OAL_LOG_SUPPRESS_DEBUG
 #define OAL_LOG_SUPPRESS_DEBUG
-#include "oal_log.h"
+#endif
+
 #include "oal_driver_dispatcher.h"
 #include "oal_driver_functions.h"
+#include "oal_log.h"
 #include "os_oal_comm_kernel.h"
+#include <posix/posix_oal_driver_dispatcher.h>
 
 // Cache control functions defined in ASM
-extern void flush_dcache_range(void *pMemory, uint32_t size);
-extern void invalidate_dcache_range(void *pMemory, uint32_t size);
-extern void flush_and_invalidate_dcache_range(void *pMemory, uint32_t size);
+extern void flush_dcache_range(uintptr_t aMemory, uint32_t aSize);
+extern void invalidate_dcache_range(uintptr_t aMemory, uint32_t aSize);
+extern void flush_and_invalidate_dcache_range(uintptr_t aMemory,
+                                              uint32_t aSize);
 
-uint32_t osOalDriverDispatcher(oal_dispatcher_t *d, uint32_t func, char *in, int len)
+uint32_t OAL_OS_DriverDispatcher(oal_dispatcher_t *apDisp, uint32_t aFuncId,
+                               uintptr_t aInData, int32_t aDataLen)
 {
 	uint32_t lRetVal = 0;
 
-	switch (func)
-	{
+	switch (aFuncId) {
 		///////////////////////////////////////////////////////////////////////////
 		// Flush & Invalidate
-		case CMD_FLUSHINVALIDATE_SPECIFIC:
-			{
-				CMD_FLUSH_SPECIFIC_TYPE *aux = (CMD_FLUSH_SPECIFIC_TYPE *)in;
+		case CMD_FLUSHINVALIDATE_SPECIFIC: {
+			CMD_FLUSH_SPECIFIC_TYPE *lpDrvCmd =
+			    (CMD_FLUSH_SPECIFIC_TYPE *)aInData;
 
-				OAL_LOG_DEBUG("OAL: FLUSH & INVALIDATE ADDRESS\n");
+			OAL_LOG_DEBUG("OAL: FLUSH & INVALIDATE ADDRESS\n");
 
-				flush_and_invalidate_dcache_range((void *)aux->virtual_pointer, aux->size);
-				break;
-			}
-		case CMD_INVALIDATE_SPECIFIC:
-			{
-				CMD_FLUSH_SPECIFIC_TYPE *aux = (CMD_FLUSH_SPECIFIC_TYPE *) in;
+			flush_and_invalidate_dcache_range(
+			    lpDrvCmd->mVirtualPointer,
+			    (uint32_t)lpDrvCmd->mSize);
+			break;
+		}
 
-				OAL_LOG_DEBUG("OAL: INVALIDATE ADDRESS\n");
+		case CMD_INVALIDATE_SPECIFIC: {
+			CMD_FLUSH_SPECIFIC_TYPE *lpDrvCmd =
+			    (CMD_FLUSH_SPECIFIC_TYPE *)aInData;
 
-				invalidate_dcache_range((void *)aux->virtual_pointer, aux->size);
+			OAL_LOG_DEBUG("OAL: INVALIDATE ADDRESS\n");
 
-				break;
-			}
+			invalidate_dcache_range(lpDrvCmd->mVirtualPointer,
+			                        (uint32_t)lpDrvCmd->mSize);
 
-			///////////////////////////////////////////////////////////////////////////
-			// Flush
-		case CMD_FLUSH_SPECIFIC:
-			{
-				CMD_FLUSH_SPECIFIC_TYPE *aux = (CMD_FLUSH_SPECIFIC_TYPE *)in;
+			break;
+		}
 
-				OAL_LOG_DEBUG("OAL: FLUSH ADDRESS\n");
+		///////////////////////////////////////////////////////////////////////////
+		// Flush
+		case CMD_FLUSH_SPECIFIC: {
+			CMD_FLUSH_SPECIFIC_TYPE *lpDrvCmd =
+			    (CMD_FLUSH_SPECIFIC_TYPE *)aInData;
 
-				flush_dcache_range((void *)aux->virtual_pointer, aux->size);
+			OAL_LOG_DEBUG("OAL: FLUSH ADDRESS\n");
 
-				break;
-			}
-		default:
-			{
-				OAL_LOG_ERROR("Invalid function ID: %d\n", func);
-				lRetVal = -EINVAL;
-			}
-	}
+			flush_dcache_range(lpDrvCmd->mVirtualPointer,
+			                   (uint32_t)lpDrvCmd->mSize);
 
-	return lRetVal;
-}
+			break;
+		}
 
+		///////////////////////////////////////////////////////////////////////////
+		// Cache line
+		case CMD_GET_CACHE_LINE: {
+			uint32_t lCacheLine;
+			OAL_LOG_DEBUG("OAL: Get Cache Line\n");
+			lCacheLine = (uint32_t)cache_line_size();
 
-int oalMemoryZeroisation(oal_dispatcher_t *apDispatcher, uint64_t aPhysAddr,
-		uint64_t aSize)
-{
-	int lRetVal = 0;
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	unsigned long lVirtAddr;
+			(void)OAL_RPCAppendReply(apDisp, (void *)&lCacheLine,
+			                         sizeof(lCacheLine));
+			break;
+		}
 
-	lVirtAddr = vm_mmap(OAL_WriteGetFile(apDispatcher),
-			0,
-			aSize,
-			PROT_READ | PROT_WRITE | PROT_EXEC,
-			MAP_SHARED,
-			aPhysAddr);
-	if (lVirtAddr == 0) {
-		lRetVal = -EIO;
-	} else {
-		memset((void *)lVirtAddr, 0, aSize);
+		///////////////////////////////////////////////////////////////////////////
+		// Page size
+		case CMD_GET_PAGE_SIZE: {
+			uint32_t lPageSize;
+			OAL_LOG_DEBUG("OAL: Get Cache Line\n");
 
-		vma = find_vma(mm, lVirtAddr);
-		if (vma == NULL) {
-			lRetVal = -EIO;
-		} else {
-			flush_and_invalidate_dcache_range((void *)lVirtAddr, aSize);
-			vm_munmap(lVirtAddr, aSize);
+			lPageSize = OAL_PAGE_SIZE;
+
+			(void)OAL_RPCAppendReply(apDisp, (void *)&lPageSize,
+			                         sizeof(lPageSize));
+			break;
+		}
+
+		default: {
+			lRetVal = OAL_PosixOalDriverDispatcher(apDisp, aFuncId,
+			                                   aInData, aDataLen);
+			break;
 		}
 	}
 

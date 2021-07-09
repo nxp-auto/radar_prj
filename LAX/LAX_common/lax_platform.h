@@ -16,16 +16,10 @@
 /*==================================================================================================
 *                                        INCLUDE FILES
 ==================================================================================================*/
-#ifdef LAX_PLATFORM_RRM
+
 #include "platform_rrm.h"
 //RRM does not have address translation unit (ATU)
 #define LAX_PLATFORM_ATU 0
-#else
-#include "platform_wifi.h"
-//UAWIFI features ATU
-#define LAX_PLATFORM_ATU 1
-#endif
-
 
 
 #endif /* LAX_PLATFORM_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 NXP
+ * Copyright 2016-2020 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -7,7 +7,7 @@
 //! @file           platform_wifi.h
 //! @brief          WiFi Platform Specific Parameters
 //!
-//! WiFi VSPA/Platform Specific data widths, hard-wired connectivity, static
+//! WiFi LAX/Platform Specific data widths, hard-wired connectivity, static
 //! DMA channel mapping, etc.
 
 #ifndef PLATFORM_WIFI_H
@@ -16,19 +16,19 @@
 // -----------------------------------------------------------------------------
 //! defgroup       GROUP_PLATFORM_WIFI
 //!
-//! WiFi VSPA/Platform Specific data widths, hard-wired connectivity, static
+//! WiFi LAX/Platform Specific data widths, hard-wired connectivity, static
 //! DMA channel mapping, etc.
 //!
 //! @{
 // -----------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-//! @brief VSPA Number of AUs = 16
+//! @brief LAX Number of AUs = 16
 // ---------------------------------------------------------------------------
-#define PS_VSPA_AU_COUNT                VSPA_AU_COUNT // CW Build Pre-Processor Macro = 16
+#define PS_LAX_AU_COUNT                 VSPA_AU_COUNT // CW Build Pre-Processor Macro = 16
 
 // ---------------------------------------------------------------------------
-//! @brief VSPA Memory Sizes (make sure linker script sizes match these!)
+//! @brief LAX Memory Sizes (make sure linker script sizes match these!)
 // ---------------------------------------------------------------------------
 #define PS_PMEM_VCPU_BYTES              65536
 #define PS_PMEM_IPPU_BYTES              2048
@@ -36,20 +36,20 @@
 #define PS_DMEM_IPPU_BYTES              8192
 
 // ---------------------------------------------------------------------------
-//! @brief VSPA Supported Word Widths
+//! @brief LAX Supported Word Widths
 // ---------------------------------------------------------------------------
-#define PS_VSPA_HALF_WORD_NUM_BITS      16
-#define PS_VSPA_WORD_NUM_BITS           32
+#define PS_LAX_HALF_WORD_NUM_BITS       16
+#define PS_LAX_WORD_NUM_BITS            32
 
 // ----------------------------------------------------------------------------
 //! @brief WiFi AXI Bus Width Alignment Constants
 // ----------------------------------------------------------------------------
 #define PS_AXI_BUS_WIDTH_BITS_WIFI      256U
-#define PS_AXI_BUS_WIDTH_BITS           (PS_AXI_BUS_WIDTH_BITS_WIFI) //256
-#define PS_AXI_BUS_WIDTH_BYTES          ( (PS_AXI_BUS_WIDTH_BITS)/8 ) //32
-#define PS_AXI_BUS_WIDTH_WORD16         ( (PS_AXI_BUS_WIDTH_BITS) / (PS_VSPA_HALF_WORD_NUM_BITS) ) //16
-#define PS_AXI_BUS_WIDTH_WORD32         ( (PS_AXI_BUS_WIDTH_BITS) / (PS_VSPA_WORD_NUM_BITS) ) //8
-#define PS_AXI_BUS_WIDTH_BYTE_MASK      ( (PS_AXI_BUS_WIDTH_BYTES) - 1)
+#define PS_AXI_BUS_WIDTH_BITS           (PS_AXI_BUS_WIDTH_BITS_WIFI)    //256
+#define PS_AXI_BUS_WIDTH_BYTES          ( (PS_AXI_BUS_WIDTH_BITS)/8u )   //32
+#define PS_AXI_BUS_WIDTH_WORD16         ( (PS_AXI_BUS_WIDTH_BITS) / (PS_LAX_HALF_WORD_NUM_BITS) )   //16
+#define PS_AXI_BUS_WIDTH_WORD32         ( (PS_AXI_BUS_WIDTH_BITS) / (PS_LAX_WORD_NUM_BITS) )        //8
+#define PS_AXI_BUS_WIDTH_BYTE_MASK      ( (PS_AXI_BUS_WIDTH_BYTES) - 1u)
 #define PS_AXI_BYTE_ADDR_NOT_ALIGNED(x) ( (x) & (PS_AXI_BUS_WIDTH_BYTE_MASK) )
 
 /**
@@ -67,44 +67,44 @@
 //!
 //! (for both Rx and Tx unless otherwise specified)
 // ---------------------------------------------------------------------------
-#define PS_IQ_PAIR_SZ_BITS              32 // HP fixed: 16bit I | 16bit Q
-#define PS_IQ_PAIR_SZ_BYTES             ( (PS_IQ_PAIR_SZ_BITS) / 8 ) // 32/8 = 4
-#define PS_IQ_PAIR_SZ_WORD16            ( (PS_IQ_PAIR_SZ_BITS) / (PS_VSPA_HALF_WORD_NUM_BITS) ) // 32/16 = 2
-#define PS_IQ_PAIR_SZ_WORD32            ( (PS_IQ_PAIR_SZ_BITS) / (PS_VSPA_WORD_NUM_BITS) ) // 32/32 = 1
+#define PS_IQ_PAIR_SZ_BITS              32                              // HP fixed: 16bit I | 16bit Q
+#define PS_IQ_PAIR_SZ_BYTES             ( (PS_IQ_PAIR_SZ_BITS) / 8 )    // 32/8 = 4
+#define PS_IQ_PAIR_SZ_WORD16            ( (PS_IQ_PAIR_SZ_BITS) / (PS_LAX_HALF_WORD_NUM_BITS) )  // 32/16 = 2
+#define PS_IQ_PAIR_SZ_WORD32            ( (PS_IQ_PAIR_SZ_BITS) / (PS_LAX_WORD_NUM_BITS) )       // 32/32 = 1
 
 // ---------------------------------------------------------------------------
-//! @brief VSPA DMEM Vector/Line Width Constants
+//! @brief LAX DMEM Vector/Line Width Constants
 // ---------------------------------------------------------------------------
-#define PS_DMEM_LINE_SZ_WORD32          ( 2*(PS_VSPA_AU_COUNT) ) // 32
-#define PS_DMEM_LINE_SZ_WORD16          ( 2*(PS_DMEM_LINE_SZ_WORD32) ) // 64
-#define PS_DMEM_LINE_SZ_BYTES           ( 4*(PS_DMEM_LINE_SZ_WORD32) ) // 128
-#define PS_DMEM_LINE_SZ_BITS            ( 32*(PS_DMEM_LINE_SZ_WORD32) ) // 1024
-#define PS_DMEM_LINE_SZ_IQ_PAIR         ( (PS_DMEM_LINE_SZ_WORD32) / (PS_IQ_PAIR_SZ_WORD32 ) // 32
+#define PS_DMEM_LINE_SZ_WORD32          ( 2*(PS_LAX_AU_COUNT) )             // 32
+#define PS_DMEM_LINE_SZ_WORD16          ( 2*(PS_DMEM_LINE_SZ_WORD32) )      // 64
+#define PS_DMEM_LINE_SZ_BYTES           ( 4*(PS_DMEM_LINE_SZ_WORD32) )      // 128
+#define PS_DMEM_LINE_SZ_BITS            ( 32*(PS_DMEM_LINE_SZ_WORD32) )     // 1024
+#define PS_DMEM_LINE_SZ_IQ_PAIR         ( (PS_DMEM_LINE_SZ_WORD32) / (PS_IQ_PAIR_SZ_WORD32 )    // 32
 
 // ----------------------------------------------------------------------------
-//! @brief WiFi VSPA DMEM AXI Slave Addresses (for DMA access)
+//! @brief WiFi LAX DMEM AXI Slave Addresses (for DMA access)
 // ----------------------------------------------------------------------------
-#define PS_VSPA0_DMEM_VCPU_BASE_ADDR    0x01000000
-#define PS_VSPA0_DMEM_IPPU_BASE_ADDR    0x01100000
+#define PS_LAX0_DMEM_VCPU_BASE_ADDR     0x01000000
+#define PS_LAX0_DMEM_IPPU_BASE_ADDR     0x01100000
 
-#define PS_VSPA1_DMEM_VCPU_BASE_ADDR    0x01400000
-#define PS_VSPA1_DMEM_IPPU_BASE_ADDR    0x01500000
+#define PS_LAX1_DMEM_VCPU_BASE_ADDR     0x01400000
+#define PS_LAX1_DMEM_IPPU_BASE_ADDR     0x01500000
 
-#define PS_VSPA2_DMEM_VCPU_BASE_ADDR    0x01800000
-#define PS_VSPA2_DMEM_IPPU_BASE_ADDR    0x01900000
+#define PS_LAX2_DMEM_VCPU_BASE_ADDR     0x01800000
+#define PS_LAX2_DMEM_IPPU_BASE_ADDR     0x01900000
 
-#define PS_VSPA3_DMEM_VCPU_BASE_ADDR    0x01C00000
-#define PS_VSPA3_DMEM_IPPU_BASE_ADDR    0x01D00000
+#define PS_LAX3_DMEM_VCPU_BASE_ADDR     0x01C00000
+#define PS_LAX3_DMEM_IPPU_BASE_ADDR     0x01D00000
 
 // ---------------------------------------------------------------------------
 //! @brief WiFi FECA RAM (FRAM)
 // ---------------------------------------------------------------------------
 #define PS_FRAM_BASE_ADDR               0x00300000
-#define PS_FRAM_SZ_BYTES                0x00080000 // 512KB - TBD WIFI
+#define PS_FRAM_SZ_BYTES                0x00080000  // 512KB - TBD WIFI
 
 // ---------------------------------------------------------------------------
 //! @brief WiFi RX/TX DTE FIFO Addresses (Data Octet FIFOs)
-//! (same address from VSPA side, but reads/writes will translate to different external addresses)
+//! (same address from LAX side, but reads/writes will translate to different external addresses)
 // ---------------------------------------------------------------------------
 #define PS_TX_DTE_FIFO_ADDR             0x00020000
 #define PS_RX_DTE_FIFO_ADDR             0x00020000
@@ -307,20 +307,20 @@
 #define GET_RF_AXIQ_TX_DMA_CH(axiq,rx)  (PS_DMA_CH_AXIQ0_TX0 + (axiq)*5 + tx)
 
 // ----------------------------------------------------------------------------
-//! @brief WiFi Inter-VSPA-Communication GPout
+//! @brief WiFi Inter-LAX-Communication GPout
 // ----------------------------------------------------------------------------
-#define PS_GPOUT_IPC_TO_VSPA0           0
-#define PS_GPOUT_IPC_TO_VSPA1           1
-#define PS_GPOUT_IPC_TO_VSPA2           2
-#define PS_GPOUT_IPC_TO_VSPA3           3
+#define PS_GPOUT_IPC_TO_LAX0            0
+#define PS_GPOUT_IPC_TO_LAX1            1
+#define PS_GPOUT_IPC_TO_LAX2            2
+#define PS_GPOUT_IPC_TO_LAX3            3
 
 // ----------------------------------------------------------------------------
-//! @brief WiFi Inter-VSPA-Communication GPin
+//! @brief WiFi Inter-LAX-Communication GPin
 // ----------------------------------------------------------------------------
-#define PS_GPIN_IPC_FROM_VSPA0          0
-#define PS_GPIN_IPC_FROM_VSPA1          1
-#define PS_GPIN_IPC_FROM_VSPA2          2
-#define PS_GPIN_IPC_FROM_VSPA3          3
+#define PS_GPIN_IPC_FROM_LAX0           0
+#define PS_GPIN_IPC_FROM_LAX1           1
+#define PS_GPIN_IPC_FROM_LAX2           2
+#define PS_GPIN_IPC_FROM_LAX3           3
 
 // ----------------------------------------------------------------------------
 //! @brief WiFi RF AXIQ Config GPout
@@ -361,7 +361,7 @@
 #define PS_GPOUT_AIOP_HOST7             17
 
 // ----------------------------------------------------------------------------
-//! @brief WiFi Host AIOP-to-PHY Communication VSPA GPin
+//! @brief WiFi Host AIOP-to-PHY Communication LAX GPin
 // ----------------------------------------------------------------------------
 #define PS_GPIN_AIOP_HOST0              10
 #define PS_GPIN_AIOP_HOST1              11
@@ -379,30 +379,30 @@
 #define PS_GPOUT_AVI_WDOG_CNT           (18U)
 
 // ----------------------------------------------------------------------------
-//! @brief WiFi VSPA Debug GPout (bits 3:0 are for debug, the rest are AXI sideband)
+//! @brief WiFi LAX Debug GPout (bits 3:0 are for debug, the rest are AXI sideband)
 // ----------------------------------------------------------------------------
-#define PS_GPOUT_VSPA_DEBUG             18
-#define PS_GPOUT_VSPA_DEBUG_MASK        0x00000003
-#define PS_GPOUT_VSPA_DEBUG_BIT_0       0
-#define PS_GPOUT_VSPA_DEBUG_BIT_1       1
+#define PS_GPOUT_LAX_DEBUG              18
+#define PS_GPOUT_LAX_DEBUG_MASK         0x00000003
+#define PS_GPOUT_LAX_DEBUG_BIT_0        0
+#define PS_GPOUT_LAX_DEBUG_BIT_1        1
 
-#define PS_GPOUT_VSPA_SHARED_DEBUG_MASK 0x000003FC
-#define PS_GPOUT_VSPA_SHARED_DEBUG_BIT_0       0
-#define PS_GPOUT_VSPA_DEBUG_BIT_1       1
+#define PS_GPOUT_LAX_SHARED_DEBUG_MASK  0x000003FC
+#define PS_GPOUT_LAX_SHARED_DEBUG_BIT_0 0
+#define PS_GPOUT_LAX_DEBUG_BIT_1        1
 
 
-#define PS_GPOUT_VSPA_DEBUG_BIT_2       2
-#define PS_GPOUT_VSPA_DEBUG_BIT_3       3
+#define PS_GPOUT_LAX_DEBUG_BIT_2        2
+#define PS_GPOUT_LAX_DEBUG_BIT_3        3
 
 // ---------------------------------------------------------------------------
-//! @brief WiFi VSPA External GO Bits
+//! @brief WiFi LAX External GO Bits
 // ---------------------------------------------------------------------------
-#define PS_VSPA_EXT_GO_MASK             0x0003FC3F
+#define PS_LAX_EXT_GO_MASK              0x0003FC3F
 
-#define PS_EXT_GO_B_IPC_FROM_VSPA0      0
-#define PS_EXT_GO_B_IPC_FROM_VSPA1      1
-#define PS_EXT_GO_B_IPC_FROM_VSPA2      2
-#define PS_EXT_GO_B_IPC_FROM_VSPA3      3
+#define PS_EXT_GO_B_IPC_FROM_LAX0       0
+#define PS_EXT_GO_B_IPC_FROM_LAX1       1
+#define PS_EXT_GO_B_IPC_FROM_LAX2       2
+#define PS_EXT_GO_B_IPC_FROM_LAX3       3
 
 #define PS_EXT_GO_B_PHY_TIMER0          4
 #define PS_EXT_GO_B_PHY_TIMER1          5
@@ -416,10 +416,10 @@
 #define PS_EXT_GO_B_AIOP_HOST6          16
 #define PS_EXT_GO_B_AIOP_HOST7          17
 
-#define PS_EXT_GO_MASK_IPC_FROM_VSPA0   ( 0x1U << (PS_EXT_GO_B_IPC_FROM_VSPA0) )
-#define PS_EXT_GO_MASK_IPC_FROM_VSPA1   ( 0x1U << (PS_EXT_GO_B_IPC_FROM_VSPA1) )
-#define PS_EXT_GO_MASK_IPC_FROM_VSPA2   ( 0x1U << (PS_EXT_GO_B_IPC_FROM_VSPA2) )
-#define PS_EXT_GO_MASK_IPC_FROM_VSPA3   ( 0x1U << (PS_EXT_GO_B_IPC_FROM_VSPA3) )
+#define PS_EXT_GO_MASK_IPC_FROM_LAX0    ( 0x1U << (PS_EXT_GO_B_IPC_FROM_LAX0) )
+#define PS_EXT_GO_MASK_IPC_FROM_LAX1    ( 0x1U << (PS_EXT_GO_B_IPC_FROM_LAX1) )
+#define PS_EXT_GO_MASK_IPC_FROM_LAX2    ( 0x1U << (PS_EXT_GO_B_IPC_FROM_LAX2) )
+#define PS_EXT_GO_MASK_IPC_FROM_LAX3    ( 0x1U << (PS_EXT_GO_B_IPC_FROM_LAX3) )
 
 #define PS_EXT_GO_MASK_PHY_TIMER0       ( 0x1U << (PS_EXT_GO_B_PHY_TIMER0) )
 #define PS_EXT_GO_MASK_PHY_TIMER1       ( 0x1U << (PS_EXT_GO_B_PHY_TIMER1) )
@@ -442,10 +442,17 @@
 * @brief         CTE/SPT to LAX connections. (forced addition for platform wifi)
 *
 */
-#define SPT_LAX_EXT_GO_NUM           4U
-#define CTE_LAX_EXT_GO_NUM           4U
-#define SPT_LAX_EXT_GO_BIT_OFFSET           0U
-#define CTE_LAX_EXT_GO_BIT_OFFSET           7U
+#define SPT_LAX_EXT_GO_NUM              4U
+#define CTE_LAX_EXT_GO_NUM              4U
+#define SPT_LAX_EXT_GO_BIT_OFFSET       0U
+#define CTE_LAX_EXT_GO_BIT_OFFSET       7U
+
+/**
+* @brief          The number of LAX cores.
+* @details        The LAX subsystem may be implemented with one or more LAX cores.
+*                 The cores' IDs start from 0.
+*/
+#define RSDK_LAX_CORES_NUM 2U
 
 #endif /* PLATFORM_WIFI_H */
 //! @}
