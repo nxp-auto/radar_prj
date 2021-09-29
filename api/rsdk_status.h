@@ -41,7 +41,7 @@ extern "C" {
 /** Not API. Internal use only. */
 #define RSDK_RFE_STATUS_BASE  0x10000U
 #define RSDK_SPT_STATUS_BASE  0x11000U
-#if defined(S32R45)
+#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
 #define RSDK_DSP_STATUS_BASE  0x12000U
 #endif
 #define RSDK_CSI2_STATUS_BASE 0x13000U
@@ -254,14 +254,17 @@ typedef enum
 	RSDK_TEF82XX_SYS_SUBBANDINC_OUTOFRANGE,
 	RSDK_TEF82XX_SYS_AMPLITUDEINC_OUTOFRANGE,
 	RSDK_TEF82XX_SYS_PTR_ADDR_NULL,
+	RSDK_TEF82XX_SYS_AAFC_AUTO_NOT_SUPPORTED,
 	RSDK_TEF82XX_ALG_DUMMYERROR,
 	RSDK_TEF82XX_SPI_WRTRDCRCERROR,
 	RSDK_TEF82XX_SPI_WRTCHECKFAIL,
 	RSDK_TEF82XX_SPI_READFAIL,
 	RSDK_TEF82XX_CC_SYSCONFNOTSET,
+	RSDK_TEF82XX_CC_PTR_ADDR_NULL,
 	RSDK_TEF82XX_MIPI_DEVICE_READY_TIMEOUT,
 	RSDK_TEF82XX_MIPI_FREQCOUNTTIMEOUT,
 	RSDK_TEF82XX_MIPI_FREQCNT_OUTOFRANGE,
+	RSDK_TEF82XX_MIPI_PTR_ADDR_NULL,
 	RSDK_TEF82XX_TE_PRSAFETYDELAY,
 	RSDK_TEF82XX_TE_PRCALIBDELAY,
 	RSDK_TEF82XX_TE_RXACTIVEDELAY,
@@ -294,6 +297,7 @@ typedef enum
 	RSDK_TEF82XX_TE_PHASEOUTOFRANGE,
 	RSDK_TEF82XX_SC_PROFILE,
 	RSDK_TEF82XX_SC_OPERATING_FREQ_OUTOFRANGE,
+	RSDK_TEF82XX_SC_PTR_ADDR_NULL,
 	RSDK_TEF82XX_CAFC_FREQCNTTIMEOUT,
 	RSDK_TEF82XX_CAFC_SBOUTOFRANGE,
 	RSDK_TEF82XX_CAFC_INPUTOUTOFRANGE,
@@ -301,12 +305,22 @@ typedef enum
 	RSDK_TEF82XX_CAFC_CONFIGLOOPFILTERFAIL,
 	RSDK_TEF82XX_CAFC_LOOPBWOUTOFRANGE,
 	RSDK_TEF82XX_CAFC_PTR_ADDR_NULL,
+	RSDK_TEF82XX_CAFC_WRONGPROFILEID,
+	RSDK_TEF82XX_CAFC_AAFCKVCODVDT_TIMEOUT,
+	RSDK_TEF82XX_CAFC_VCOCALIB_AAFCFAIL,
+	RSDK_TEF82XX_CAFC_VCOCALIB_KVCODVDTFAIL,
+	RSDK_TEF82XX_CAFC_NOSTOREINPROFILESELECTED,
 	RSDK_TEF82XX_ADC_CALIBRATIONFAILED,
 	RSDK_TEF82XX_ADC_CALIBRATIONTIMEOUT,
 	RSDK_TEF82XX_ADC_CALIBRATIONCHECKNOTDONE,
 	RSDK_TEF82XX_GBIAS_DUMMY,
 	RSDK_TEF82XX_LOI_CALIBRATIONFAIL,
 	RSDK_TEF82XX_LOI_LOX3GAINCALIBRATIONFAIL,
+	RSDK_TEF82XX_LOI_LUTGAINCODE_OUTOFRANGE,
+	RSDK_TEF82XX_LOI_DIRECTGAINCODE_OUTOFRANGE,
+	RSDK_TEF82XX_LOI_CAL_BUSY,
+	RSDK_TEF82XX_LOI_CAL_ERROR,
+	RSDK_TEF82XX_LOI_PTR_ADDR_NULL,
 	RSDK_TEF82XX_MCLK_PLL_PLL_CALIBRATION_TIMEOUT,
 	RSDK_TEF82XX_MCLK_PLL_PLL_CALIBRATION_FAILED,
 	RSDK_TEF82XX_MCLK_PLL_CALIBRATION_FAILED,
@@ -314,14 +328,62 @@ typedef enum
 	RSDK_TEF82XX_MCLK_MSPC_CALIBRATION_ERROR,
 	RSDK_TEF82XX_MCLK_MSPCTIMEOUT,
 	RSDK_TEF82XX_MCLK_MSPC_CALIBCHECK_NOTFINISHED,
-	RSDK_TEF82XX_RX_LPFSETTINGERROR,
+	RSDK_TEF82XX_RX_INPUTOUTOFRANGE,
+	RSDK_TEF82XX_RX_CAL_BUSY,
+	RSDK_TEF82XX_RX1_CAL_BUSY,
+	RSDK_TEF82XX_RX2_CAL_BUSY,
+	RSDK_TEF82XX_RX3_CAL_BUSY,
+	RSDK_TEF82XX_RX4_CAL_BUSY,
+	RSDK_TEF82XX_RX_CAL_ERROR,
+	RSDK_TEF82XX_RX1_CAL_ERROR,
+	RSDK_TEF82XX_RX2_CAL_ERROR,
+	RSDK_TEF82XX_RX3_CAL_ERROR,
+	RSDK_TEF82XX_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX1_RX2_CAL_ERROR,
+	RSDK_TEF82XX_RX1_RX3_CAL_ERROR,
+	RSDK_TEF82XX_RX1_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX2_RX3_CAL_ERROR,
+	RSDK_TEF82XX_RX2_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX3_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX1_RX2_RX3_CAL_ERROR,
+	RSDK_TEF82XX_RX1_RX2_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX2_RX3_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX1_RX2_RX3_RX4_CAL_ERROR,
 	RSDK_TEF82XX_TX_DUMMYERROR,
 	RSDK_TEF82XX_TX_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_TX_PRCADCTIMEOUT,
 	RSDK_TEF82XX_TX_SENSORFITFAIL,
+	RSDK_TEF82XX_TX_CAL_BUSY,
+	RSDK_TEF82XX_TX1_CAL_BUSY,
+	RSDK_TEF82XX_TX2_CAL_BUSY,
+	RSDK_TEF82XX_TX3_CAL_BUSY,
+	RSDK_TEF82XX_TX_CAL_ERROR,
+	RSDK_TEF82XX_TX1_CAL_ERROR,
+	RSDK_TEF82XX_TX2_CAL_ERROR,
+	RSDK_TEF82XX_TX3_CAL_ERROR,
+	RSDK_TEF82XX_TX1_TX2_CAL_ERROR,
+	RSDK_TEF82XX_TX1_TX3_CAL_ERROR,
+	RSDK_TEF82XX_TX2_TX3_CAL_ERROR,
+	RSDK_TEF82XX_TX1_TX2_TX3_CAL_ERROR,
+	RSDK_TEF82XX_TX_SAFETY_BUSY,
+	RSDK_TEF82XX_TX1_SAFETY_BUSY,
+	RSDK_TEF82XX_TX2_SAFETY_BUSY,
+	RSDK_TEF82XX_TX3_SAFETY_BUSY,
+	RSDK_TEF82XX_TX_SAFETY_ERROR,
+	RSDK_TEF82XX_TX1_SAFETY_ERROR,
+	RSDK_TEF82XX_TX2_SAFETY_ERROR,
+	RSDK_TEF82XX_TX3_SAFETY_ERROR,
+	RSDK_TEF82XX_TX1_TX2_SAFETY_ERROR,
+	RSDK_TEF82XX_TX1_TX3_SAFETY_ERROR,
+	RSDK_TEF82XX_TX2_TX3_SAFETY_ERROR,
+	RSDK_TEF82XX_TX1_TX2_TX3_SAFETY_ERROR,
+	RSDK_TEF82XX_TX_PTR_ADDR_NULL,
+	RSDK_TEF82XX_TX_NOSTOREINPROFILESELECTED,
 	RSDK_TEF82XX_SSB_SIGNALNOTEXISTONSELECTEDATB,
 	RSDK_TEF82XX_GLDO_DUMMYERROR,
 	RSDK_TEF82XX_GLDO_SNSERROR,
+	RSDK_TEF82XX_GLDO_SNS_FORCEERROR,
+	RSDK_TEF82XX_GLDO_SNS_RESETERROR,
 	RSDK_TEF82XX_ATB_BISTADCTIMEOUT,
 	RSDK_TEF82XX_ATB_WRONGATBNODESELECTED,
 	RSDK_TEF82XX_OTP_FAILTOREAD,
@@ -348,6 +410,9 @@ typedef enum
 	RSDK_TEF82XX_ISM_FIT_SSB_SER_GB_GLDO_ATB_STATUS_FAILED,
 	RSDK_TEF82XX_ISM_INPUTMODE_TOGGLE_TEST_FAILED,
 	RSDK_TEF82XX_ISM_OUTPUTMODE_TOGGLE_TEST_FAILED,
+	RSDK_TEF82XX_ISM_CAL_BUSY,
+	RSDK_TEF82XX_ISM_CAL_ERROR,
+	RSDK_TEF82XX_ISM_CAL_SUCCESS,
 
     RSDK_RFE_RFBIST_RFE_MODE_NOT_SUPPORTED,               /**< TEF82XX RFE RFBist - RFBIST must be run on STANDALONE or MASTER(with one SLAVE) FE*/
     RSDK_RFE_RFBIST_ACQ_CSI2_ERRORS,                      /**< TEF82XX RFE RFBist - too many CSI2 errors on RFBist acquisition*/
@@ -367,6 +432,7 @@ typedef enum
 	RSDK_TEF82XX_RFE_PHASEROTATOR_INVALID_BPSK_SOURCE,
 
 	RSDK_TEF82XX_UNMAPED_ERROR,                            /**< Code returned by TEF82XX unmapped to rsdkStatus_t */
+	RSDK_TEF82XX_ES_VERSION_UNSUPPORTED,				   /**< Driver was build with unsupported ES (Sample) define */
 
 	RSDK_TEF82XX_PLF_INPUTOUTOFRANGE,                      /**< TEF82XX platform - input of range*/
 	RSDK_TEF82XX_PLF_GLUE_SPI_ERROR,                       /**< TEF82XX platform - SPI glue layer error*/
@@ -532,7 +598,7 @@ typedef enum
     RSDK_SPT_RET_ERR_IRQ_REG,       /**< SPT error: the irq handler was not registered. */
     RSDK_SPT_RET_ERR_UNMAP_SPT_MEM, /**< Driver error: Failed to unmap SPT registers' addresses. */
 
-#if defined(S32R45) || defined(S32R41) || defined(STRX)
+#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
     RSDK_SPT_RET_ERR_WR,            /**< SPT hw error: WR or SPR access error.
                                          WR_ACCESS_ERR_REG register value is passed to the user callback (rsdkSptIsrCb_t)*/
 #if defined(S32R45) || defined(S32R41)
@@ -565,26 +631,27 @@ typedef enum
                                         (CS_STATUS0[PS_STOP] bit was set), but the SPT Command Sequencer DMA has not completed all of its AHB bus accesses.
                                         In this case there is a short time interval after returning from RsdkSptRun() (< 1us) when Work Register access
                                         by CPU must be avoided, otherwise it can cause the system to become non-responsive. Highly unlikely. */
-#endif//defined(S32R45) || defined(S32R41) || defined(STRX)
+#endif//defined(S32R45) || defined(S32R41) || defined(SAF85XX)
     RSDK_SPT_RET_ERR_INVALID_KERNEL, /**< Driver error: detected invalid SPT kernel code, which does not start with the mandatory watermarking instruction.
                                         See also #SPT_KERNEL_WATERMARK */
     RSDK_SPT_RET_ERR_HW_RST,         /**< SPT error: hardware is in unexpected RST state */
 
     RSDK_SPT_RET_ERR_OTHER = RSDK_SPT_STATUS_BASE + 0xFFFU, /**< Any other return status not covered above.
                                        No SPT error codes should be defined with a value greater than this one.*/
-#ifdef S32R45
+#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
     RSDK_DSP_RET_ERR_CMD_INVALID = RSDK_DSP_STATUS_BASE, /**< DSP Command Error: Command ID not supported. */
 	RSDK_DSP_RET_ERR_CRC_INVALID,						 /**< DSP Command CRC Error: Recomputed CRC does not match with the received CRC */
 	RSDK_DSP_RET_ERR_CMD_NO_DATA,						  /**< DSP Command Error: New command interrupt received, but no data available in the queue. */
 	RSDK_DSP_RET_WARN_CMD_CRC_DISABLED, /**< DSP Command Warning: CRC verification is disabled. This might be intentional, or due to a communication error.*/
-	RSDK_DSP_RET_ERR_EXCEPTION,			/**< DSP Exception error. BBE32 exception context (registers exccause, exvaddr, ps, epc1) is saved to DSP_DEBUG<1..4>_REG.
+	RSDK_DSP_RET_ERR_EXCEPTION,			/**< TODO: remove? DSP Exception error. BBE32 exception context (registers exccause, exvaddr, ps, epc1) is saved to DSP_DEBUG<1..4>_REG.
 	 	 	 	 	 	 	 	 	 	 	 "exccause" register value is also passed to the user callback (rsdkSptIsrCb_t dspIsrCb).
 	 	 	 	 	 	 	 	 	 	 	 BBE32 execution is halted in the exception handler. */
 	RSDK_DSP_RET_ERR_AXI_WRITE,		/**< DSP AXI WriteErr interrupt was received. BBE32 interrupt context (exccause, exvaddr, ps, epc1) is saved to DSP_DEBUG<1..4>_REG.
 	 	 	 	 	 	 	 	 	 	 "exccause" register value is also passed to the user callback (rsdkSptIsrCb_t dspIsrCb) */
-	RSDK_DSP_RET_ERR_MPU_CONFIG,	/**< DSP MPU map configuration has enountered an error. Error code reported by the xthal_check_map() function
-										 is saved in DSP_DEBUG1_REG and passed to the user callback (rsdkSptIsrCb_t dspIsrCb).
-										 See Xtensa System Software Reference Manual for details.  */
+	RSDK_DSP_RET_ERR_MPU_CONFIG,	/**< DSP MPU map configuration has enountered an error. */
+	RSDK_DSP_RET_ERR_INT_CONFIG,    /**< DSP interrupt configuration has enountered an error. */
+	RSDK_DSP_RET_ERR_DISP_CONFIG,	/**< DSP dispatcher was not able to start its scheduling loop. It retuns to the caller. */
+	RSDK_DSP_RET_ERR_INVALID_PARAM, /**< DSP Dispatcher API error: Input parameter value or combination of values not supported. */
 	RSDK_DSP_RET_ERR_UNKNOWN = RSDK_DSP_STATUS_BASE +  + 0xFFFU,  /**< Unexpected error in DSP Dispatcher. Reason unknown.
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 No DSP error codes should be defined with a value greater than this one.*/
 #endif

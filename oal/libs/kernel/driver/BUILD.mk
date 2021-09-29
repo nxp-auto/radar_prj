@@ -1,10 +1,10 @@
 ##
-# Copyright 2017-2020 NXP
+# Copyright 2017-2021 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
 
-ifeq ($(OS), sa)
+ifneq (,$(filter sa zephyr, $(OS)))
     STATIC_LIB_NAME := oal_driver
 else
     MODULE_NAME := oal_driver
@@ -55,6 +55,12 @@ ifeq ($(OS), ghs)
                    $(DEV_ROOT_DIR)/libs/user/$(OS)-$(OAL_COMM_IMPL)/build-ghs-user/liboal_user.a
 
     INCDIR += $(DEV_ROOT_DIR)/libs/user/common/include/$(OS)
+endif
+
+ifeq ($(OS), zephyr)
+    SRCS += os_kernel_module.c                                                 \
+            os_module_probe.c                                                  \
+
 endif
 
 VPATH += $(DRIVER_DIR)/src/$(OS)                                               \

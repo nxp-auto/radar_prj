@@ -210,7 +210,13 @@ uint64_t CtePlatformModuleGetLutChecksum(void);
  * @details Low level interrupt handler for CTE driver.
  *
  */
-void CteIrqHandler(void);
+void CteIrqHandler(
+#ifdef __ZEPHYR__
+    const void *pDrv
+#else
+    void
+#endif
+);
 
 
 #ifdef __cplusplus

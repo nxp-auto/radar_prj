@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2019, 2021 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -32,8 +32,8 @@ static int32_t oal_rpc_pre_exec(const struct genl_ops *acpOps,
                                 struct genl_info *apInfo);
 
 static struct nla_policy gsOalRpcPolicy[OAL_RPC_MAX + 1] = {
-    [OAL_RPC_CALL]     = {.type = NLA_UNSPEC},
-    [OAL_RPC_REPLY]    = {.type = NLA_UNSPEC},
+    [OAL_RPC_CALL]     = {.type = NLA_NUL_STRING},
+    [OAL_RPC_REPLY]    = {.type = NLA_U32},
     [OAL_RPC_FUNC_RET] = {.type = NLA_U32},
 };
 

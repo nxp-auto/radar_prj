@@ -88,7 +88,7 @@ rsdkStatus_t SptCheckAndResetHwError(volatile struct SPT_tag *const pSptRegs, ui
         }
     }
 
-#if defined(S32R45) || defined(S32R41) || defined(STRX)
+#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
     //split in blocks of 3 checks, to avoid having code nesting level > 4
     if (status == RSDK_SUCCESS)
     {

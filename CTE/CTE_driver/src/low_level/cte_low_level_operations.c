@@ -8,10 +8,12 @@
  *                                        INCLUDE FILES
  ==================================================================================================*/
 #ifndef linux
-#include <string.h>
+    #include <string.h>
+    #include <stdint.h>
 #else
-#include "rsdk_cte_driver_module.h"
+    #include "rsdk_cte_driver_module.h"
 #endif
+
 #include "rsdk_status.h"
 #include "cte_low_level_operations.h"
 
@@ -58,8 +60,17 @@ static volatile struct CTE_tag *gspCTE = NULL;                    // the pointer
  * @details Low level interrupt handler for CTE driver.
  *
  */
-void CteIrqHandler(void)
+void CteIrqHandler(
+#ifdef __ZEPHYR__
+    const void *pParams
+#else
+    void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    (void)(pParams);
+#endif
     uint32_t cteEvents;
 
     cteEvents = gspCTE->INTSTAT.R;

@@ -231,10 +231,12 @@ typedef struct {
 
 // settings to be kept during the execution
 // only run-time necessary parameters are kept
-#if defined(S32R294) || defined(S32R45)
+#if (defined(S32R294) || defined(S32R45)) && (!defined(SAF85XX))
 extern rsdkCsi2DriverParams_t gCsi2Settings[RSDK_CSI2_MAX_UNITS];
-
 extern volatile struct MIPICSI2_REG_STRUCT *gpMipiCsi2Regs[RSDK_CSI2_MAX_UNITS];
+#else
+extern rsdkCsi2DriverParams_t gCsi2Settings;
+extern volatile struct MIPICSI2_REG_STRUCT *gpMipiCsi2Regs;
 #endif
 /*==================================================================================================
  *                                    FUNCTION PROTOTYPES

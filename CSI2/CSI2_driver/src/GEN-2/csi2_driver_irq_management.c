@@ -59,35 +59,134 @@ static void Csi2IrqHandlerPathErr(const rsdkCsi2UnitId_t iUnit);
 static void Csi2IrqHandlerRxErr(const rsdkCsi2UnitId_t iUnit);
 
 // Individual irq unit handlers for Rx errors
-static void Csi2IrqHandlerRxErr0(void);
-static void Csi2IrqHandlerRxErr1(void);
+static void Csi2IrqHandlerRxErr0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerRxErr1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+
+);
 #ifdef S32R45
-static void Csi2IrqHandlerRxErr2(void);
-static void Csi2IrqHandlerRxErr3(void);
+static void Csi2IrqHandlerRxErr2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+
+);
+static void Csi2IrqHandlerRxErr3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+
+);
 #endif
 
 // Individual irq unit handlers for Path errors
-static void Csi2IrqHandlerPathErr0(void);
-static void Csi2IrqHandlerPathErr1(void);
+static void Csi2IrqHandlerPathErr0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerPathErr1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
 #ifdef S32R45
-static void Csi2IrqHandlerPathErr2(void);
-static void Csi2IrqHandlerPathErr3(void);
+static void Csi2IrqHandlerPathErr2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerPathErr3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
 #endif
 
 // Individual irq unit handlers for Events (Rx)
-static void Csi2IrqHandlerEvents0(void);
-static void Csi2IrqHandlerEvents1(void);
+static void Csi2IrqHandlerEvents0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerEvents1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
 #ifdef S32R45
-static void Csi2IrqHandlerEvents2(void);
-static void Csi2IrqHandlerEvents3(void);
+static void Csi2IrqHandlerEvents2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerEvents3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
 #endif
 
 // Individual irq unit handlers for Tx
-static void Csi2IrqHandlerTx0(void);
-static void Csi2IrqHandlerTx1(void);
+static void Csi2IrqHandlerTx0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerTx1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
 #ifdef S32R45
-static void Csi2IrqHandlerTx2(void);
-static void Csi2IrqHandlerTx3(void);
+static void Csi2IrqHandlerTx2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
+static void Csi2IrqHandlerTx3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+);
 #endif
 
 #endif  // #ifndef linux
@@ -108,8 +207,11 @@ static rsdkStatus_t Csi2InitEventIrq(const rsdkCsi2UnitId_t iUnit, volatile stru
 // irq handlers matrix
 #ifndef linux
 
-static rsdkIrqHandler_t sgIrqHandlers[RSDK_CSI2_MAX_UNITS][RSDK_CSI2_MAX_IRQ_ID]
-    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY"))) = {
+static  rsdkIrqHandler_t    sgIrqHandlers[RSDK_CSI2_MAX_UNITS][RSDK_CSI2_MAX_IRQ_ID]
+#ifndef __ZEPHYR__
+    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY"))) 
+#endif
+        = {
         {// unit 1 handlers
          Csi2IrqHandlerRxErr0, Csi2IrqHandlerPathErr0, Csi2IrqHandlerEvents0, Csi2IrqHandlerTx0},
         {// unit 2 handlers
@@ -119,13 +221,11 @@ static rsdkIrqHandler_t sgIrqHandlers[RSDK_CSI2_MAX_UNITS][RSDK_CSI2_MAX_IRQ_ID]
          Csi2IrqHandlerRxErr2, Csi2IrqHandlerPathErr2, Csi2IrqHandlerEvents2, Csi2IrqHandlerTx2},
         {// unit 4 handlers
          Csi2IrqHandlerRxErr3, Csi2IrqHandlerPathErr3, Csi2IrqHandlerEvents3, Csi2IrqHandlerTx3}
-#endif  // #ifdef S32R45
+#endif
 };
 
-#endif  // #ifndef linux
+#endif
 
-static volatile uint8_t gsCsi2UnitFrameState[RSDK_CSI2_MAX_UNITS]
-    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY"))) = {0};
 #ifndef linux
 static uint32_t gsCsi2IrqUnitRemap[RSDK_CSI2_MAX_UNITS] = {
 #ifdef S32R294
@@ -482,7 +582,7 @@ static void Csi2IrqHandlerRxErrVC(const uint32_t vcId, const uint32_t regStat, r
     if ((regStat & (uint32_t)CSI2_IRQ_VC_ECC2_MASK) != (uint32_t)0)
     {
         pErrorS->errMaskVC[vcId] |= (uint32_t)RSDK_CSI2_ERR_PACK_ECC2;
-        inFrameEvt = RSDK_CSI2_EVT_IN_FRAME;
+        inFrameEvt = (uint8_t)RSDK_CSI2_EVT_IN_FRAME;
     }
     // ECC error - one bit
     if ((regStat & (uint32_t)CSI2_IRQ_VC_ECC1_MASK) != (uint32_t)0)
@@ -490,7 +590,7 @@ static void Csi2IrqHandlerRxErrVC(const uint32_t vcId, const uint32_t regStat, r
         pErrorS->errMaskVC[vcId] |= (uint32_t)RSDK_CSI2_ERR_PACK_ECC1;  // set the mask first
         regV = pRegs->RX_VC[vcId].ERRPOS.B.ERRPOS;
         pErrorS->eccOneBitErrPos[vcId] = (uint8_t)regV;  // copy the appropriate value
-        inFrameEvt = RSDK_CSI2_EVT_IN_FRAME;
+        inFrameEvt = (uint8_t)RSDK_CSI2_EVT_IN_FRAME;
     }
     // CRC error
     if ((regStat & (uint32_t)CSI2_IRQ_VC_CRC_MASK) != (uint32_t)0)
@@ -499,7 +599,7 @@ static void Csi2IrqHandlerRxErrVC(const uint32_t vcId, const uint32_t regStat, r
         regV = pRegs->CRC_REGISTER.R;
         pErrorS->expectedCRC[vcId] = (uint16_t)(regV >> 16u);  // save both, expected CRC
         pErrorS->receivedCRC[vcId] = (uint16_t)(regV);         //      & received CRC
-        inFrameEvt = RSDK_CSI2_EVT_IN_FRAME;
+        inFrameEvt = (uint8_t)RSDK_CSI2_EVT_IN_FRAME;
     }
     // Frame sync error
     if ((regStat & (uint32_t)CSI2_IRQ_VC_FSYN_MASK) != (uint32_t)0)
@@ -515,7 +615,7 @@ static void Csi2IrqHandlerRxErrVC(const uint32_t vcId, const uint32_t regStat, r
         {  // get the pachet ID only if the correct VC
             pErrorS->invalidPacketID[vcId] = (uint8_t)(regV & 0x3fu);
         }
-        inFrameEvt = RSDK_CSI2_EVT_IN_FRAME;
+        inFrameEvt = (uint8_t)RSDK_CSI2_EVT_IN_FRAME;
     }
     // Frame sync error
     if ((regStat & (uint32_t)CSI2_IRQ_VC_FDAT_MASK) != (uint32_t)0)
@@ -625,8 +725,17 @@ static
  * @brief       Interrupt handler for unit 0/ PHY error irq.
  *
  */
-static void Csi2IrqHandlerRxErr0(void)
+static void Csi2IrqHandlerRxErr0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerRxErr(RSDK_CSI2_UNIT_0);
 }
 /* Csi2IrqHandlerRxErr0 *************************/
@@ -636,8 +745,18 @@ static void Csi2IrqHandlerRxErr0(void)
  * @brief       Interrupt handler for unit 1/ PHY error irq.
  *
  */
-static void Csi2IrqHandlerRxErr1(void)
+static void Csi2IrqHandlerRxErr1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerRxErr(RSDK_CSI2_UNIT_1);
 }
 /* Csi2IrqHandlerRxErr1 *************************/
@@ -649,8 +768,17 @@ static void Csi2IrqHandlerRxErr1(void)
  * @brief       Interrupt handler for unit 2/ PHY error irq.
  *
  */
-static void Csi2IrqHandlerRxErr2(void)
+static void Csi2IrqHandlerRxErr2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerRxErr(RSDK_CSI2_UNIT_2);
 }
 /* Csi2IrqHandlerRxErr2 *************************/
@@ -660,8 +788,17 @@ static void Csi2IrqHandlerRxErr2(void)
  * @brief       Interrupt handler for unit 3/ PHY error irq.
  *
  */
-static void Csi2IrqHandlerRxErr3(void)
+static void Csi2IrqHandlerRxErr3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerRxErr(RSDK_CSI2_UNIT_3);
 }
 /* Csi2IrqHandlerRxErr3 *************************/
@@ -779,8 +916,17 @@ static
  * @brief       Irq handler for unit 0/ errors in protocol & packet level irq.
  *
  */
-static void Csi2IrqHandlerPathErr0(void)
+static void Csi2IrqHandlerPathErr0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerPathErr(RSDK_CSI2_UNIT_0);
 }
 /* Csi2IrqHandlerPathErr0 *************************/
@@ -790,8 +936,17 @@ static void Csi2IrqHandlerPathErr0(void)
  * @brief       Irq handler for unit 1/ errors in protocol & packet level irq.
  *
  */
-static void Csi2IrqHandlerPathErr1(void)
+static void Csi2IrqHandlerPathErr1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerPathErr(RSDK_CSI2_UNIT_1);
 }
 /* Csi2IrqHandlerPathErr1 *************************/
@@ -803,8 +958,17 @@ static void Csi2IrqHandlerPathErr1(void)
  * @brief       Irq handler for unit 2/ errors in protocol & packet level irq.
  *
  */
-static void Csi2IrqHandlerPathErr2(void)
+static void Csi2IrqHandlerPathErr2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerPathErr(RSDK_CSI2_UNIT_2);
 }
 /* Csi2IrqHandlerPathErr2 *************************/
@@ -814,8 +978,17 @@ static void Csi2IrqHandlerPathErr2(void)
  * @brief       Irq handler for unit 3/ errors in protocol & packet level irq.
  *
  */
-static void Csi2IrqHandlerPathErr3(void)
+static void Csi2IrqHandlerPathErr3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerPathErr(RSDK_CSI2_UNIT_3);
 }
 /* Csi2IrqHandlerPathErr3 *************************/
@@ -998,6 +1171,11 @@ static uint32_t Csi2ProcessChannelFrameEnd(volatile struct MIPICSI2_REG_STRUCT *
 static uint32_t Csi2ProcessVcEvents(rsdkCsi2DriverParams_t *pDriverState, rsdkCsi2Report_t *errorS,
                                     const rsdkCsi2UnitId_t iUnit, uint32_t *pCallState, uint32_t *pOptFlag)
 {
+    static volatile uint8_t gsCsi2UnitFrameState[RSDK_CSI2_MAX_UNITS]
+    #ifndef __ZEPHYR__
+        __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")))
+    #endif
+            = {0};
     uint32_t                             vcId;  // virtual channel ID
     uint32_t                             toCall, maskW, maskEv, regStat, optionalFlags;
     uint32_t                             vcIdFe;
@@ -1190,8 +1368,17 @@ static
  * @brief       Irq handler for unit 0/ events irq.
  *
  */
-static void Csi2IrqHandlerEvents0(void)
+static void Csi2IrqHandlerEvents0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerEvents(RSDK_CSI2_UNIT_0);
 }
 /* Csi2IrqHandlerEvents0 *************************/
@@ -1201,8 +1388,17 @@ static void Csi2IrqHandlerEvents0(void)
  * @brief       Irq handler for unit 1/ events irq.
  *
  */
-static void Csi2IrqHandlerEvents1(void)
+static void Csi2IrqHandlerEvents1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerEvents(RSDK_CSI2_UNIT_1);
 }
 /* Csi2IrqHandlerEvents1 *************************/
@@ -1214,8 +1410,17 @@ static void Csi2IrqHandlerEvents1(void)
  * @brief       Irq handler for unit 2/ events irq.
  *
  */
-static void Csi2IrqHandlerEvents2(void)
+static void Csi2IrqHandlerEvents2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerEvents(RSDK_CSI2_UNIT_2);
 }
 /* Csi2IrqHandlerEvents2 *************************/
@@ -1225,8 +1430,17 @@ static void Csi2IrqHandlerEvents2(void)
  * @brief       Irq handler for unit 3/ events irq.
  *
  */
-static void Csi2IrqHandlerEvents3(void)
+static void Csi2IrqHandlerEvents3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerEvents(RSDK_CSI2_UNIT_3);
 }
 /* Csi2IrqHandlerEvents3 *************************/
@@ -1254,8 +1468,17 @@ static void Csi2IrqHandlerTx(const rsdkCsi2UnitId_t iUnit)
  * @brief       Irq handler for unit 0/ tx level irq.
  *
  */
-static void Csi2IrqHandlerTx0(void)
+static void Csi2IrqHandlerTx0(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerTx(RSDK_CSI2_UNIT_0);
 }
 /* Csi2IrqHandlerTx0 *************************/
@@ -1265,8 +1488,17 @@ static void Csi2IrqHandlerTx0(void)
  * @brief       Irq handler for unit 1/ tx level irq.
  *
  */
-static void Csi2IrqHandlerTx1(void)
+static void Csi2IrqHandlerTx1(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerTx(RSDK_CSI2_UNIT_1);
 }
 /* Csi2IrqHandlerTx1 *************************/
@@ -1278,8 +1510,17 @@ static void Csi2IrqHandlerTx1(void)
  * @brief       Irq handler for unit 2/ tx level irq.
  *
  */
-static void Csi2IrqHandlerTx2(void)
+static void Csi2IrqHandlerTx2(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerTx(RSDK_CSI2_UNIT_2);
 }
 /* Csi2IrqHandlerTx2 *************************/
@@ -1289,8 +1530,17 @@ static void Csi2IrqHandlerTx2(void)
  * @brief       Irq handler for unit 3/ tx level irq.
  *
  */
-static void Csi2IrqHandlerTx3(void)
+static void Csi2IrqHandlerTx3(
+#ifdef __ZEPHYR__
+        const void * pParams
+#else
+        void
+#endif
+)
 {
+#ifdef __ZEPHYR__
+    UNUSED_ARG(pParams);
+#endif
     Csi2IrqHandlerTx(RSDK_CSI2_UNIT_3);
 }
 /* Csi2IrqHandlerTx3 *************************/

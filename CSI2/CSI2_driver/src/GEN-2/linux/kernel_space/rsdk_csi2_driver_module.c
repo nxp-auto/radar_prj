@@ -242,7 +242,7 @@ static int RsdkCsi2Probe(struct platform_device *pPlatDev)
     err = RsdkCsi2GetDtsProperties(pNode, &pRsdkCsi2Dev->dtsInfo);
     if (err < 0)
     {
-        kzfree(pRsdkCsi2Dev);
+        kvfree(pRsdkCsi2Dev);
         (void)pr_err("RsdkCsi2Probe: MIPICSI2 DTS entry parse failed.\n");
         err = -EINVAL;
     }
@@ -291,7 +291,7 @@ static int RsdkCsi2Probe(struct platform_device *pPlatDev)
         }
         if (err < 0)
         {
-            kzfree(pRsdkCsi2Dev);
+            kvfree(pRsdkCsi2Dev);
         }
     } // if (err < 0)
 
@@ -352,7 +352,7 @@ static int RsdkCsi2Probe(struct platform_device *pPlatDev)
             //revert previous actions:
             device_destroy(gspRsdkCsi2Class, devNo);
             cdev_del(&pRsdkCsi2Dev->cdevRef);
-            kzfree(pRsdkCsi2Dev);
+            kvfree(pRsdkCsi2Dev);
         }
     } // if (err == 0)
 
@@ -418,7 +418,7 @@ static int RsdkCsi2Probe(struct platform_device *pPlatDev)
             iounmap(pRsdkCsi2Dev->pMemMapVirtAddr);
             device_destroy(gspRsdkCsi2Class, devNo);
             cdev_del(&pRsdkCsi2Dev->cdevRef);
-            kzfree(pRsdkCsi2Dev);
+            kvfree(pRsdkCsi2Dev);
         }
     } // if (err == 0)
 
@@ -462,7 +462,7 @@ static int RsdkCsi2Remove(struct platform_device *pOfpDev)
     iounmap(pRsdkCsi2Dev->pMemMapVirtAddr);
     device_destroy(gspRsdkCsi2Class, MKDEV(gsNumRsdkCsi2Major, gsNumRsdkCsi2Minor + pRsdkCsi2Dev->dtsInfo.devId));
     cdev_del(&pRsdkCsi2Dev->cdevRef);
-    kzfree(pRsdkCsi2Dev);
+    kvfree(pRsdkCsi2Dev);
 
     return 0;
 }

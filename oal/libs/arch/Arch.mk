@@ -1,5 +1,5 @@
 ##
-# Copyright 2018-2019 NXP
+# Copyright 2018-2019, 2021 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -18,6 +18,11 @@ ifeq ($(OS), sa)
 		arch_oal_timer.c                    \
 		sa_oal_timer.c                      \
 		arch_oal_cache.c                    \
+
+endif
+
+ifeq ($(OS), zephyr)
+	SRCS += arch_oal_cache.c                    \
 
 endif
 

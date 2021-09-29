@@ -1,5 +1,5 @@
 ##
-# Copyright 2017-2020 NXP
+# Copyright 2017-2021 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -81,7 +81,7 @@ CFLAGS += $(CDEFS)              \
 	-Wjump-misses-init      \
 	$(COMMON_WARNING_FLAGS) \
 
-CXXFLAGS = $(CDEFS)             \
+CXXFLAGS += $(CDEFS)             \
 	-pedantic               \
 	-std=gnu++0x            \
 	$(COMMON_WARNING_FLAGS) \

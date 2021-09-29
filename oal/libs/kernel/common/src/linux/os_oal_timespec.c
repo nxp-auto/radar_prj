@@ -1,10 +1,11 @@
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2019, 2021 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include <linux/ktime.h>
 #include <linux/timekeeping.h>
+#include <linux/version.h>
 
 #include "oal_timespec.h"
 
@@ -36,12 +37,19 @@ sleep_exit:
 int32_t OAL_GetTime(OAL_Timespec_t *apTm)
 {
 	int32_t lRet = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
 	struct timespec lTs;
-
+#else
+	struct timespec64 lTs;
+#endif
 	if (apTm == NULL) {
 		lRet = -EINVAL;
 	} else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
 		getnstimeofday(&lTs);
+#else
+		ktime_get_real_ts64(&lTs);
+#endif
 		apTm->mSec  = lTs.tv_sec;
 		apTm->mNsec = lTs.tv_nsec;
 	}

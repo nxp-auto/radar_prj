@@ -1,11 +1,12 @@
 /*
- * Copyright 2018 NXP
+ * Copyright 2018, 2021 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <oal_bottom_half.h>
 #include <oal_log.h>
+#include <oal_bottom_half.h>
+#include <linux/version.h>
 
 int32_t OAL_InitializeBottomHalf(struct OAL_BottomHalf *apBtHalf,
                                  OAL_BottomHalfFunction_t aCallback,
@@ -15,7 +16,12 @@ int32_t OAL_InitializeBottomHalf(struct OAL_BottomHalf *apBtHalf,
 	if (apBtHalf == NULL) {
 		lRet = -1;
 	} else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
 		DECLARE_TASKLET(lTasklet, aCallback, aCallbackArg);
+#else
+		DECLARE_TASKLET_OLD(lTasklet, aCallback);
+#endif
+
 		apBtHalf->mTasklet = lTasklet;
 	}
 

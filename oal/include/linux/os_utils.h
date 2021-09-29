@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2019, 2021 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -32,19 +32,6 @@
 
 #ifndef OAL_PAGE_SIZE
 #define OAL_PAGE_SIZE (PAGE_SIZE)
-#endif
-
-#ifndef __HAVE_ARCH_STRLEN
-static inline __kernel_size_t strlen(const char *acpString)
-{
-	__kernel_size_t lLen = 0;
-	while (*acpString != '\0') {
-		acpString++;
-		lLen++;
-	}
-
-	return lLen;
-}
 #endif
 
 typedef long intptr_t;

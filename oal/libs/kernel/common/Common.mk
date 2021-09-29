@@ -22,6 +22,7 @@ SRCS += oal_static_pool.c                                  \
         oal_bitset.c                                       \
         oal_byteorder.c                                    \
         oal_endianness.c                                   \
+        oal_page_manager.c                                 \
 
 
 ifeq ($(OAL_DONT_USE_FDT),)
@@ -106,7 +107,34 @@ ifeq ($(OS), sa)
 endif
 
 ifeq ($(OS), zephyr)
-    SRCS += zephyr_service.c
+    VPATH += $(COMMON_DIR)/src/posix                              \
+             $(COMMON_DIR)/../../kernel/common/src/$(OS)          \
+             $(DEV_ROOT_DIR)/libs/user/common/src/posix           \
+
+    INCDIR += $(DEV_ROOT_DIR)/include                             \
+              $(COMMON_DIR)/include/posix                         \
+              $(DEV_ROOT_DIR)/libs/kernel/common/include          \
+              $(DEV_ROOT_DIR)/libs/kernel/common/include/$(OS)    \
+              $(DEV_ROOT_DIR)/libs/kernel/driver/include/$(OS)    \
+
+    SRCS += zephyr_service.c                                \
+            oal_add_reserved_mem.c                          \
+            os_oal_memmap.c                                 \
+            os_oal_condvar.c                                \
+            posix_oal_completion.c                          \
+            os_oal_timespec.c                               \
+            os_oal_mutex.c                                  \
+            os_oal_thread.c                                 \
+            os_oal_spinlock.c                               \
+            posix_oal_uptime.c                              \
+            os_oal_atomic.c                                 \
+            os_oal_timer.c                                  \
+            posix_oal_waitqueue.c                           \
+            os_oal_bottomhalf.c                             \
+
+    ifeq ($(OAL_DONT_USE_FDT),)
+        SRCS += oal_devtree_utils.c
+    endif
 endif
 
 override CDEFS += -DOAL_FUNC_IMPLEMENTATION

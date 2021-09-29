@@ -115,7 +115,7 @@ static inline rsdkCsi2VirtChnlId_t GetVirtChnlId(uint32_t chnl)
     }
     gpRsdkCsi2Device[unitId]->irqWriteP = pWrite;
     (void)OAL_WakeUpInterruptible(&(gpRsdkCsi2Device[unitId]->irqWaitQ));
- }
+}
 
 /*******************************************************************************/
 /**
@@ -295,7 +295,7 @@ static uint32_t RsdkCsi2RpcDispatcherE(oal_dispatcher_t *d, uint32_t func, uintp
             gpRsdkCsi2Device[unitId]->irqReadP = (pRead + 1) % RSDK_CSI2_ERROR_QUEUE_LEN;   // error processed
             if(rez != 0u)
             {
-                rez = RSDK_CSI2_DRV_ERR_COPY_DATA_ERROR;        // signal the copy error
+                rez = (uint32_t)RSDK_CSI2_DRV_ERR_COPY_DATA_ERROR;        // signal the copy error
             }
             break;
         }

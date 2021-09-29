@@ -74,21 +74,34 @@ extern "C" {
  ==================================================================================================*/
 // Copy for CSI2 actual params, to use if reset needed.
 static rsdkCsi2InitParams_t gsCsi2UnitParamCopy[RSDK_CSI2_MAX_UNITS]
-    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")));
+#ifndef __ZEPHYR__
+    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")))
+#endif
+    ;
 // Counter for received frames.
 static volatile uint32_t gsCsi2FramesCounter[RSDK_CSI2_MAX_UNITS][RSDK_CSI2_MAX_VC]
-    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")));
+#ifndef __ZEPHYR__
+    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")))
+#endif
+    ;
 
 /*==================================================================================================
  *                                      GLOBAL CONSTANTS
  ==================================================================================================*/
 // Pointer to MIPICSI2 memory map
 volatile struct MIPICSI2_REG_STRUCT *gpMipiCsi2Regs[RSDK_CSI2_MAX_UNITS]
-    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")));
+#ifndef __ZEPHYR__
+    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY")))
+#endif
+    ;
 
 // settings to be kept during the execution
 // only run-time necessary parameters are kept
-rsdkCsi2DriverParams_t gCsi2Settings[RSDK_CSI2_MAX_UNITS] __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY"))) = {
+rsdkCsi2DriverParams_t gCsi2Settings[RSDK_CSI2_MAX_UNITS] 
+#ifndef __ZEPHYR__
+    __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY"))) 
+#endif
+        = {
     {.driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED, RSDK_CSI2_STAT_NO},
     {.driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED, RSDK_CSI2_STAT_NO},
 #ifdef S32R45
@@ -877,47 +890,40 @@ static rsdkStatus_t Csi2ModuleInit(const rsdkCsi2UnitId_t csi2UnitNum, const rsd
     uint8_t                              lVal0, lVal1, lVal2, lVal3, lVal4, lVal5;  // temporary values
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_INIT_STEP1, (uint32_t)CSI2_SEQ_BEGIN);
-    if (csi2UnitNum >= RSDK_CSI2_MAX_UNITS)
+    rez = RSDK_SUCCESS;
+    // check first to have UNIT_1 used/initialized before UNIT_0
+#ifdef S32R294
+    if (csi2UnitNum == RSDK_CSI2_UNIT_0)
     {
-        rez = RSDK_CSI2_DRV_WRG_UNIT_ID;  // an unit number too big
+        pDriverState = &gCsi2Settings[(uint8_t)RSDK_CSI2_UNIT_1];
+        if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)  // unit 1 not initialized
+        {
+            rez = RSDK_CSI2_DRV_ERR_UNIT_1_MUST_BE_FIRST;
+        }
+    }
+#elif defined(S32R45)
+    if (csi2UnitNum == RSDK_CSI2_UNIT_1)
+    {
+        pDriverState = &gCsi2Settings[(uint8_t)RSDK_CSI2_UNIT_0];
+        if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)     // unit 0 not initialized
+        {
+            rez = RSDK_CSI2_DRV_ERR_UNIT_0_MUST_BE_FIRST;
+        }
     }
     else
     {
-        rez = RSDK_SUCCESS;
-        // check first to have UNIT_1 used/initialized before UNIT_0
-#ifdef S32R294
-        if (csi2UnitNum == RSDK_CSI2_UNIT_0)
+        if (csi2UnitNum == RSDK_CSI2_UNIT_3)
         {
-            pDriverState = &gCsi2Settings[(uint8_t)RSDK_CSI2_UNIT_1];
-            if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)  // unit 1 not initialized
+            pDriverState = &gCsi2Settings[(uint8_t)RSDK_CSI2_UNIT_2];
+            if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)  // unit 3 not initialized
             {
-                rez = RSDK_CSI2_DRV_ERR_UNIT_1_MUST_BE_FIRST;
+                rez = RSDK_CSI2_DRV_ERR_UNIT_2_MUST_BE_FIRST;
             }
         }
-#elif defined(S32R45)
-        if (csi2UnitNum == RSDK_CSI2_UNIT_1)
-        {
-            pDriverState = &gCsi2Settings[(uint8_t)RSDK_CSI2_UNIT_0];
-            if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)     // unit 0 not initialized
-            {
-                rez = RSDK_CSI2_DRV_ERR_UNIT_0_MUST_BE_FIRST;
-            }
-        }
-        else
-        {
-            if (csi2UnitNum == RSDK_CSI2_UNIT_3)
-            {
-                pDriverState = &gCsi2Settings[(uint8_t)RSDK_CSI2_UNIT_2];
-                if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)  // unit 3 not initialized
-                {
-                    rez = RSDK_CSI2_DRV_ERR_UNIT_2_MUST_BE_FIRST;
-                }
-            }
-        }
+    }
 #else
 #error "Wrong or no defined platform"
 #endif
-    } // if (csi2UnitNum >= RSDK_CSI2_MAX_UNITS)
     if (rez == RSDK_SUCCESS)
     {
         pDriverState = &gCsi2Settings[(uint8_t)csi2UnitNum];
@@ -1099,7 +1105,7 @@ static rsdkStatus_t Csi2ModuleInit(const rsdkCsi2UnitId_t csi2UnitNum, const rsd
                 }
 
                 // step 21 - Configure noext_burnin_res_cal_rw
-                pRegs->DPHY_CALTYPE_CNTRL.B.NOEXT_BURNIN_RES_CAL_RW = 1u;  // no external resistor
+                pRegs->DPHY_CALTYPE_CNTRL.B.NOEXT_BURNIN_RES_CAL_RW = 0u;  // external resistor
 
                 Csi2WaitLoop(5);                     // step 22 - wait for 5ns
                 pRegs->DPHY_RSTCFG.B.SHUTDWNZ = 1u;  // step 23 - set SHUTDWNZ
@@ -1628,7 +1634,7 @@ rsdkStatus_t Csi2PlatformModuleInit(const rsdkCsi2UnitId_t unitId, const rsdkCsi
                 dataRange = (uint64_t)pVcDriverState->pVCParams->bufNumLines;
                 dataRange *= (uint64_t)pVcDriverState->pVCParams->bufLineLen;
                 // map the data, for statistics usage/computation
-                pVcDriverState->pVirtData = ioremap_nocache((uintptr_t)pVcDriverState->pVCParams->pBufData, 
+                pVcDriverState->pVirtData = ioremap_cache((uintptr_t)pVcDriverState->pVCParams->pBufData, 
                         dataRange + 0x100UL);
             }
         }
@@ -1675,12 +1681,14 @@ rsdkStatus_t Csi2PlatformRxStop(const rsdkCsi2UnitId_t unitId)
     rsdkCsi2DriverParams_t *pDriverState;
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_RX_STOP, (uint32_t)CSI2_SEQ_BEGIN);
+#ifndef linux
     if ((uint8_t)unitId >= (uint8_t)RSDK_CSI2_MAX_UNITS)
     {
         rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
     }
     else
     {
+#endif
         pDriverState = &gCsi2Settings[(uint8_t)unitId];
         if ((pDriverState->driverState != CSI2_DRIVER_STATE_ON) &&
             (pDriverState->driverState != CSI2_DRIVER_STATE_STOP))
@@ -1708,7 +1716,9 @@ rsdkStatus_t Csi2PlatformRxStop(const rsdkCsi2UnitId_t unitId)
                 pDriverState->driverState = CSI2_DRIVER_STATE_STOP;  // unit stopped
             }
         }
+#ifndef linux
     }
+#endif
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_RX_STOP, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
@@ -1737,12 +1747,14 @@ rsdkStatus_t Csi2PlatformRxStart(const rsdkCsi2UnitId_t unitId)
     rsdkCsi2DriverParams_t *pDriverState;
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_RX_START, (uint32_t)CSI2_SEQ_BEGIN);
+#ifndef linux
     if ((uint8_t)unitId >= (uint8_t)RSDK_CSI2_MAX_UNITS)
     {
         rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
     }
     else
     {
+#endif
         pDriverState = &gCsi2Settings[(uint8_t)unitId];
         rez = RSDK_SUCCESS;  //default - success result
         switch (pDriverState->driverState)
@@ -1768,7 +1780,9 @@ rsdkStatus_t Csi2PlatformRxStart(const rsdkCsi2UnitId_t unitId)
                 rez = RSDK_CSI2_DRV_WRG_STATE;
                 break;
         }
+#ifndef linux
     }
+#endif
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_RX_START, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
@@ -1797,12 +1811,14 @@ rsdkStatus_t Csi2PlatformPowerOff(const rsdkCsi2UnitId_t unitId)
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_POWER_OFF, (uint32_t)CSI2_SEQ_BEGIN);
     rez = RSDK_SUCCESS;
 
+#ifndef linux
     if ((uint8_t)unitId >= (uint8_t)RSDK_CSI2_MAX_UNITS)
     {
         rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
     }
     else
     {
+#endif
         pDriverState = &gCsi2Settings[(uint8_t)unitId];
         if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)
         {
@@ -1827,7 +1843,9 @@ rsdkStatus_t Csi2PlatformPowerOff(const rsdkCsi2UnitId_t unitId)
                 }
             }
         }
+#ifndef linux
     }
+#endif
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_POWER_OFF, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
@@ -1856,12 +1874,14 @@ rsdkStatus_t Csi2PlatformPowerOn(const rsdkCsi2UnitId_t unitId)
     rsdkCsi2DriverParams_t *pDriverState;
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_POWER_ON, (uint32_t)CSI2_SEQ_BEGIN);
+#ifndef linux
     if ((uint8_t)unitId >= (uint8_t)RSDK_CSI2_MAX_UNITS)
     {
         rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
     }
     else
     {
+#endif
         pDriverState = &gCsi2Settings[(uint8_t)unitId];
         if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)
         {
@@ -1879,7 +1899,9 @@ rsdkStatus_t Csi2PlatformPowerOn(const rsdkCsi2UnitId_t unitId)
                 rez = RSDK_CSI2_DRV_WRG_STATE;  // the driver was not initialized before
             }
         }
+#ifndef linux
     }
+#endif
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_POWER_OFF, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
@@ -1911,10 +1933,12 @@ rsdkStatus_t Csi2PlatformGetInterfaceStatus(const rsdkCsi2UnitId_t unitId)
     
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_IFACE_STAT, 
                                                                 (uint32_t)CSI2_SEQ_BEGIN);
+#ifndef linux
     if (((int8_t)unitId < (int8_t)RSDK_CSI2_UNIT_0) || ((int8_t)unitId >= (int8_t)RSDK_CSI2_MAX_UNITS))
     {
         rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
     }
+#endif
     if ((rez == RSDK_SUCCESS) && ((gpMipiCsi2Regs[(uint8_t)unitId] == NULL) ||
                                   (gCsi2Settings[(uint8_t)unitId].driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)))
     {
@@ -1967,17 +1991,22 @@ rsdkStatus_t Csi2PlatformGetLaneStatus(const rsdkCsi2UnitId_t unitId, const uint
     uint32_t           regStat;
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_LANE_STAT, (uint32_t)CSI2_SEQ_BEGIN);
+#ifndef linux
     if ((uint8_t)unitId >= (uint8_t)RSDK_CSI2_MAX_UNITS)
     {
         rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
     }
-    else if ((uint32_t)laneNr >= (uint32_t)RSDK_CSI2_MAX_LANE)
+    else 
+#endif
     {
-        rez = RSDK_CSI2_DRV_INVALID_LANES_NR;  // Incorrect lane number.
-    }                                          //if (laneNr <= (uint32_t) RSDK_CSI2_MAX_LANE_NUMBER)
-    else
-    {
-        rez = Csi2PlatformGetInterfaceStatus(unitId);
+        if ((uint32_t)laneNr >= (uint32_t)RSDK_CSI2_MAX_LANE)
+        {
+            rez = RSDK_CSI2_DRV_INVALID_LANES_NR;  // Incorrect lane number.
+        }                                          //if (laneNr <= (uint32_t) RSDK_CSI2_MAX_LANE_NUMBER)
+        else
+        {
+            rez = Csi2PlatformGetInterfaceStatus(unitId);
+        }
     }
     if ((rez == RSDK_CSI2_DRV_STATE_ON) && (gCsi2Settings[(uint8_t)unitId].driverState != CSI2_DRIVER_STATE_ON))
     {

@@ -88,7 +88,7 @@ extern "C" {
 #define INTC_IRQ_OFFSET_SPT_DMA (223)
 
 //--------------------------------------------------
-#elif defined(STRX)
+#elif defined(SAF85XX)
 //--------------------------------------------------
 
 #define MEM_ERR_STATUS_W1C_MASK (0x10114506u)
@@ -100,7 +100,7 @@ extern "C" {
 #define CS_EVTREG1_MASK (0xFFFFFFFFu)  //32 event lines from SPT to CPU
 #define DSP_ERR_INFO_REG_MASK (0xFFFFFFFFu)
 
-//NO SOURCE AVAILABLE TO CHECK FOR STRX! TODO ...
+//NO SOURCE AVAILABLE TO CHECK FOR SAF85XX! TODO ...
 //interrupt IDs in the GIC500:
 #define INTC_IRQ_OFFSET_SPT_DSP_ERR (220)
 #define INTC_IRQ_OFFSET_SPT_EVT1 (221)

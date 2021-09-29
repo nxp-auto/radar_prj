@@ -544,7 +544,7 @@ static void LaxIllegalopIrqHandler(lldLaxControl_t *pLaxCtrl)
 *                      LAX command launch or data buffer transfer in a LAX graph); RSDK_LAX_EVENT_DMA_FLAG_XFRERR is the
 *                      user-space event generated in this case
 *
-*                   Note: isQueuedDmaReq flag is used to identify interrupts resulting from DMA transfers originating from the driver’s
+*                   Note: isQueuedDmaReq flag is used to identify interrupts resulting from DMA transfers originating from the driverâ€™s
 *                   DMA Request Queue and thus DMATransmit should be called to process the next request in the queue
 *
 * @param[in]        pLaxCtrl    Pointer to lldLaxControl_t structure

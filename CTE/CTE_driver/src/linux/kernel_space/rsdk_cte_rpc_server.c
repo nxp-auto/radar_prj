@@ -231,7 +231,7 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
 	rez = (uint32_t)CtePlatformModuleInit(&llInitParams, pUInt64);
 	
 	
-	kzfree(pTmp);
+	kvfree(pTmp);
     return(rez);
 }
 

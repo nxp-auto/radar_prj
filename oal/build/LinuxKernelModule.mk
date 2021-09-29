@@ -1,5 +1,5 @@
 ##
-# Copyright 2017-2021 NXP
+# Copyright 2017-2020 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -32,7 +32,7 @@ define call_kernel_makefile
 		DRIVER_BUILD_DIR="$(CURDIR)/" \
 		ENABLE_CODE_COVERAGE=$(ENABLE_CODE_COVERAGE) \
 		OAL_LDFLAGS="$(LDFLAGS)" \
-		OAL_ROOT="$(DEV_ROOT_DIR)" $(1)
+		OAL_ROOT="$(DEV_ROOT_DIR)"
 
 endef
 
@@ -62,7 +62,7 @@ ifdef STATIC_LIB_NAME # Kernel library
     lib-y               := $(OBJS)
 else # Kernel Module
     obj-m               += $(MODULE_NAME).o
-    $(MODULE_NAME)-objs := $(OBJS) /../../linux-write/build-linux-kernel/liboal_kernel.o
+    $(MODULE_NAME)-objs := $(OBJS)
     ldflags-y           := $(OAL_LDFLAGS)
 endif
 
@@ -116,10 +116,6 @@ clean:
 	@echo "	[CLN] $(CLEAN_OBJS)"
 	@rm -f $(CLEAN_OBJS) $(LOCAL_LOCK_FILE) || true
 
-modules_install:
-	$(call call_kernel_makefile, modules_install)
-    
 -include $(DEV_ROOT_DIR)/build/SourceDrop.mk
 -include $(DEV_ROOT_DIR)/build/Install.mk
-
 

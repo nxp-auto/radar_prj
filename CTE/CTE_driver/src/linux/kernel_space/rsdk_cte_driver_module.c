@@ -227,7 +227,7 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
     err = RsdkCteGetDtsProperties(pNode, &pRsdkCteDev->dtsInfo);
     if (err < 0)
     {
-        kzfree(pRsdkCteDev);
+        kvfree(pRsdkCteDev);
         (void)pr_err("RsdkCteProbe: CTE DTS entry parse failed.\n");
         err = -EINVAL;
     }
@@ -273,7 +273,7 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
         }
         if (err < 0)
         {
-            kzfree(pRsdkCteDev);
+            kvfree(pRsdkCteDev);
         }
     }
 
@@ -322,7 +322,7 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
             //revert previous actions:
             device_destroy(gspRsdkCteClass, devNo);
             cdev_del(&pRsdkCteDev->cdevRef);
-            kzfree(pRsdkCteDev);
+            kvfree(pRsdkCteDev);
         }
     }
 
@@ -360,7 +360,7 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
             iounmap(pRsdkCteDev->pMemMapVirtAddr);
             device_destroy(gspRsdkCteClass, devNo);
             cdev_del(&pRsdkCteDev->cdevRef);
-            kzfree(pRsdkCteDev);
+            kvfree(pRsdkCteDev);
         }
     }
 
@@ -402,7 +402,7 @@ static int RsdkCteRemove(struct platform_device *ofpdev)
     iounmap(pRsdkCteDev->pMemMapVirtAddr);
     device_destroy(gspRsdkCteClass, MKDEV(gsNumRsdkCteMajor, gsNumRsdkCteMinor + pRsdkCteDev->dtsInfo.devId));
     cdev_del(&pRsdkCteDev->cdevRef);
-    kzfree(pRsdkCteDev);
+    kvfree(pRsdkCteDev);
 
     return 0;
 }

@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-
 _RSDK_ROOTPATH := ../../..
 	
 RSDK_ABS_ROOTPATH := $(PWD)/$(_RSDK_ROOTPATH)
