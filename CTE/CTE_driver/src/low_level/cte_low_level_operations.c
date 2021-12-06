@@ -1222,14 +1222,14 @@ rsdkStatus_t CtePlatformModuleInit(const rsdkCteInitParams_t *pCteInitParams, ui
                     SRC_1.CTE_CTRL_REG.B.MIPICSI2_ID = (uint32_t)pCteInitParams->cteMode.cteWorkingParam0.cteCsi2Unit;
                     SRC_1.CTE_CTRL_REG.B.VC_ID = (uint32_t)pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc;
 #endif // #ifdef linux
-#elif defined(S32R294)
-                    MCB.MISC0.B.CTE_SPT_SYNC_MIPI_SEL = (uint32_t) pCteInitParams->cteMode.cteWorkingParam0.cteCsi2Unit;
-                    MCB.MISC0.B.CTE_SPT_SYNC_MIPI0_SEL = (uint32_t) pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc;
-                    MCB.MISC0.B.CTE_SPT_SYNC_MIPI1_SEL = (uint32_t) pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc;
-                    MCB.MISC1.B.MIPI_CTEI_SYNC_SPT_CTEO_SEL = 1u;       // when this bit is set, RFS/RCS signals of SPT
-                    // are not coming anymore from CSI2 directly, but from CTE
-                    MCB.MISC1.B.START_INDICATION = (uint32_t) pCteInitParams->cteMode.workingMode -
-                            (uint32_t) RSDK_CTE_SLAVE_EXTERNAL;
+
+
+
+
+
+
+
+
 #endif
                     gspCTE->CNTRL.B.RFS_DLY = (uint32_t) pCteInitParams->cteMode.cteWorkingParam0.cteInternalRfsDelay;
                     gspCTE->CNTRL.B.RCS_DLY = (uint32_t) pCteInitParams->cteMode.cteWorkingParam1.cteInternalRcsDelay;

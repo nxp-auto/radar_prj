@@ -66,14 +66,14 @@ rsdkStatus_t SptCheckAndResetHwError(volatile struct SPT_tag *const pSptRegs, ui
             HW_WRITE(pSptRegs->HIST_OVF_STATUS1.R, HIST_OVF_W1C_MASK);
             status = RSDK_SPT_RET_ERR_HIST_OVF1;
         }
-#if defined(S32R294)
-        else if (HW_READ(pSptRegs->DMA_ERR_STATUS.R) != 0u)
-        {
-            *errInfo = HW_READ(pSptRegs->DMA_ERR_STATUS.R);
-            HW_WRITE(pSptRegs->DMA_ERR_STATUS.R, DMA_ERR_STATUS_W1C_MASK);
-            status = RSDK_SPT_RET_ERR_DMA;
-        }
-#elif defined(S32R45)
+
+
+
+
+
+
+
+#if   defined(S32R45)
         else if (HW_READ(pSptRegs->HW2_ACC_ERR_STATUS.R) != 0u)
         {
             *errInfo = HW_READ(pSptRegs->HW2_ACC_ERR_STATUS.R);

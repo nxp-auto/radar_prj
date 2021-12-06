@@ -328,6 +328,8 @@ typedef enum
 	RSDK_TEF82XX_MCLK_MSPC_CALIBRATION_ERROR,
 	RSDK_TEF82XX_MCLK_MSPCTIMEOUT,
 	RSDK_TEF82XX_MCLK_MSPC_CALIBCHECK_NOTFINISHED,
+	RSDK_TEF82XX_MCLK_MSPCCHEK_TIMEOUT,
+	RSDK_TEF82XX_MCLK_PTR_ADDR_NULL,
 	RSDK_TEF82XX_RX_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_RX_CAL_BUSY,
 	RSDK_TEF82XX_RX1_CAL_BUSY,
@@ -379,7 +381,9 @@ typedef enum
 	RSDK_TEF82XX_TX1_TX2_TX3_SAFETY_ERROR,
 	RSDK_TEF82XX_TX_PTR_ADDR_NULL,
 	RSDK_TEF82XX_TX_NOSTOREINPROFILESELECTED,
+	RSDK_TEF82XX_TX_POUT_VGA_REDUCETX_NOTSUPPORTED,
 	RSDK_TEF82XX_SSB_SIGNALNOTEXISTONSELECTEDATB,
+	RSDK_TEF82XX_SSB_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_GLDO_DUMMYERROR,
 	RSDK_TEF82XX_GLDO_SNSERROR,
 	RSDK_TEF82XX_GLDO_SNS_FORCEERROR,
@@ -418,6 +422,7 @@ typedef enum
     RSDK_RFE_RFBIST_ACQ_CSI2_ERRORS,                      /**< TEF82XX RFE RFBist - too many CSI2 errors on RFBist acquisition*/
 	RSDK_RFE_RFBIST_ACQ_TIMEOUT,                      	  /**< TEF82XX RFE RFBist - timeout expired on RFBist frame(s) acquisition*/
 	RSDK_RFE_RFBIST_ACQ_TIMER_ERROR,                      /**< TEF82XX RFE RFBist - setting timer error*/
+	RSDK_RFE_RFBIST_ADC_DATA_BUFF_NOT_CONFIGURED,		  /**< TEF82XX RFE RFBist - Adc data buff (Frame Optional Params) not configured */
 	RSKD_TEF82XX_RFBIST_FREQUENCY_FAILURE,                /**< TEF82XX RFE RFBist - RFBIST_FREQUENCY_FAILURE*/
 	RSDK_TEF82XX_RFBIST_MAGNITUDE_FAILURE,                /**< TEF82XX RFE RFBist - RFBIST_MAGNITUDE_FAILURE*/
 	RSKD_TEF82XX_RFBIST_PHASE_FAILURE,                    /**< TEF82XX RFE RFBist - RFBIST_PHASE_FAILURE*/
@@ -475,6 +480,7 @@ typedef enum
     RSDK_CSI2_DRV_INVALID_EVT_REQ,          /**< Wrong line end request : bufNumLinesTrigger is 0 */
     RSDK_CSI2_DRV_INVALID_VC_PARAMS,        /**< Invalid data type specification */
     RSDK_CSI2_DRV_INVALID_DC_PARAMS,        /**< Invalid DC params compensation specification */
+    RSDK_CSI2_DRV_INVALID_INIT_PARAMS,      /**< Invalid params for DPHY initialization */
     RSDK_CSI2_DRV_TOO_SMALL_BUFFER,         /**< The buffer provided is too small for the requested data */
     RSDK_CSI2_DRV_NO_SAMPLE_PER_CHIRP,      /**< Samples per chirp incorrect (null) */
     RSDK_CSI2_DRV_NO_CHIRPS_PER_FRAME,      /**< Chirps per frame incorrect (null) */
@@ -493,6 +499,7 @@ typedef enum
 
     RSDK_CSI2_DRV_SW_RESET_ERROR,           /**< Hardware error to reset sequence. */
     RSDK_CSI2_DRV_CALIBRATION_TIMEOUT,      /**< Autocalibration error. */
+    RSDK_CSI2_DRV_TIMER_ERROR,              /**< Timer error waiting for STOP state on data lanes at initialization   */
     RSDK_CSI2_DRV_HW_RESPONSE_ERROR,        /**< Incorrect hardware response  */
     RSDK_CSI2_DRV_NOT_INIT,                 /**< CSI2 driver not initialized */
 
@@ -614,6 +621,8 @@ typedef enum
     RSDK_SPT_RET_ERR_HW2_ACC, /**< SPT hw error: tried to execute an instruction with illegal operands or configuration, related to the 2nd instances
                                   of the SPT Accelerator modules (e.g. FFT2, MAXS2 etc). Triggers an ECS interrupt.
                                   HW2_ACC_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
+#endif//defined(S32R45)
+#endif//defined(S32R45) || defined(S32R41)
     RSDK_SPT_RET_WARN_DRV_BUSY,     /**< Driver API warning: an API call is already in progress on another thread */
     RSDK_SPT_RET_ERR_API_INIT_LOCK_FAIL,    /**< Driver API error: could not init mutex for controlling multithreaded API call sequence */
     RSDK_SPT_RET_ERR_API_ENTER_LOCK_FAIL,   /**< Driver API error: could not lock mutex for controlling multithreaded API call sequence */
@@ -624,8 +633,6 @@ typedef enum
     RSDK_SPT_RET_ERR_THR_TERM,  /**< Driver API error: could not terminate the thread used for detecting OS kernel event in user space*/
     RSDK_SPT_RET_ERR_OAL_COMM_INIT,  /**< Driver API error: could not initialize OAL communication channel for transmitting OS kernel events to user space*/
     RSDK_SPT_RET_ERR_CHECK_WATERMARK,       /**< Driver error: Failed to check if the watermark instruction is placed at the start of the kernel code. */
-#endif//defined(S32R45)
-#endif//defined(S32R45) || defined(S32R41)
 #else
     RSDK_SPT_RET_WARN_CS_AHB_BUSY, /**< Warning: during a 'blocking' call, the Driver has detected that the SPT has reached a STOP instruction
                                         (CS_STATUS0[PS_STOP] bit was set), but the SPT Command Sequencer DMA has not completed all of its AHB bus accesses.

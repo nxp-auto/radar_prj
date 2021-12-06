@@ -15,13 +15,11 @@
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
-#ifdef S32R274
-#include "rsdk_S32R274.h"
-#elif defined(S32R372)
-#include "rsdk_S32R372.h"
-#elif defined(S32R294)
-#include "rsdk_S32R294.h"
-#elif defined(S32R45)
+
+
+
+
+#if   defined(S32R45)
 #include "rsdk_S32R45.h"
 #else
 #error "Platform not defined, or incorrect definition."
@@ -45,14 +43,14 @@ extern "C" {
  *
  */
 
-#define CSI2_PHYC_RTERM_SEL_LPR     0   // MIPICSI2_PHYC register, RTERM_SEL field, Low Power Receive.
-#define CSI2_PHYC_RTERM_SEL_LPCD    1   // MIPICSI2_PHYC register, RTERM_SEL field, Low Power Contention Detector.
-#define CSI2_PHYC_PDRX_POWER_ON     0   // MIPICSI2_PHYC register, PDRX field, Power down disabled.
-#define CSI2_PHYC_PDRX_POWER_OFF    1   // MIPICSI2_PHYC register, PDRX field, Power down enabled.
+#define CSI2_PHYC_RTERM_SEL_LPR     0           // MIPICSI2_PHYC register, RTERM_SEL field, Low Power Receive.
+#define CSI2_PHYC_RTERM_SEL_LPCD    1           // MIPICSI2_PHYC register, RTERM_SEL field, Low Power Contention Detector.
+#define CSI2_PHYC_PDRX_POWER_ON     0           // MIPICSI2_PHYC register, PDRX field, Power down disabled.
+#define CSI2_PHYC_PDRX_POWER_OFF    1           // MIPICSI2_PHYC register, PDRX field, Power down enabled.
 
-#define CSI2_CLKCS_HSRA_OFF         0   // MIPICSI2_CLKCS register, HSRA field, DDR clock not being received
-                                        //  on the clock lane currently.
-#define CSI2_CLKCS_HSRA_ON          1   // MIPICSI2_CLKCS register, HSRA field, Clock lane is receiving DDR clock.
+#define CSI2_CLKCS_HSRA_OFF         0           // MIPICSI2_CLKCS register, HSRA field, DDR clock not being received
+                                                //  on the clock lane currently.
+#define CSI2_CLKCS_HSRA_ON          1           // MIPICSI2_CLKCS register, HSRA field, Clock lane is receiving DDR clock.
 
 #define CSI2_LAN_CS_MARK        (1UL << 5u) // MIPICSI2_LANxCS register, DxULMA field, Data lane in Mark state.
 #define CSI2_LAN_CS_ULPA        (1UL << 4u) // MIPICSI2_LANxCS register, DxULPA field, Data lane ULPS active.
@@ -71,6 +69,7 @@ extern "C" {
 
 #define CSI2_SR_SOFRST_MASK     (1UL << 31u)    // MIPICSI2_SR register, SOFRST field, soft reset requested.
 #define CSI2_SR_GNSPR_MASK      (1UL << 11u)    // MIPICSI2_SR register, GNSPR field, No Generic Short Packet received.
+#define CSI2_CBUF0_ENA_MASK     (1UL << 8u)    	// Bit for enabling the buffer 0
 
 #define CSI2_ERRPPREG_INVID_BIT     0x20u   // MIPICSI2_ERRPPREG register, INVID field, Invalid data type detected.
 #define CSI2_ERRPPREG_CRCERR_BIT    0x10u   // MIPICSI2_ERRPPREG register, CRCERR field, CRC error.
@@ -103,7 +102,7 @@ extern "C" {
 #define RSDK_CSI2_FLUSH_CNT_FREQ_LIMIT      200U    // the limit for flash_cnt limit (200MHz)
 #define RSDK_CSI2_LINE_STAT_LENGTH          80U     // the length of statistic data
 #define RSDK_CSI2_INVALID_UINT8             0xffu   // the biggest uint8_t
-#define RSDK_CSI2_MAX_WAIT_FOR_STOP         1000000 // maximum time to wait for stop state
+#define RSDK_CSI2_MAX_WAIT_FOR_STOP         1200    // maximum time to wait for stop state [us]
 #define RSDK_CSI2_FIRST_BUF_LINE_NUM        1u      // the invalid value for the buffer line
 #define RSDK_CSI2_CHIRP_NOT_STARTED         0u      // value for first chirp line received
 
@@ -129,7 +128,7 @@ extern "C" {
 #define RsdkTraceLogEvent(a, b, c)
 #endif
 
-#ifdef S32R45
+#if defined(S32R45) || defined(S32R41)
 #define MIPICSI2_REG_STRUCT MIPICSI2_tag
 #else
 #define MIPICSI2_REG_STRUCT CSI_tag
@@ -191,7 +190,6 @@ typedef struct {
  *
  */
 typedef struct {
-    uint8_t     eventsMask;                     // Rx events to be called back
     uint16_t    outputDataMode;                 // the mode data is output in the buffer and other information
                                                 // about input data, see rsdk_csi2_driver_api.h file :
                                                 // "various parameters concerning input data for outputDataMode"
@@ -221,17 +219,18 @@ typedef struct {
 
     // VC level working params
     rsdkCsi2VCDriverState_t    workingParamVC[RSDK_CSI2_MAX_VC];
+    // MetaData working params
+    rsdkCsi2MetaDataParams_t*  pMDParams[RSDK_CSI2_MAX_VC];
 }rsdkCsi2DriverParams_t;
 
 
 /*==================================================================================================
  *                                GLOBAL VARIABLE DECLARATIONS
  ==================================================================================================*/
-// clang-format on
 
 // settings to be kept during the execution
 // only run-time necessary parameters are kept
-#if (defined(S32R294) || defined(S32R45)) && (!defined(SAF85XX))
+#if (defined(S32R294) || defined(S32R45) || defined(S32R41)) && (!defined(STRX))
 extern rsdkCsi2DriverParams_t gCsi2Settings[RSDK_CSI2_MAX_UNITS];
 extern volatile struct MIPICSI2_REG_STRUCT *gpMipiCsi2Regs[RSDK_CSI2_MAX_UNITS];
 #else
@@ -400,7 +399,7 @@ uint32_t Csi2PlatformGetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataTyp
  */
 uint32_t Csi2PlatformGetFramesCounter(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId);
 
-#if defined(S32R45) || defined(S32R294)
+#if defined(S32R45) || defined(S32R294) || defined(S32R41)
 /**
  * @brief       Get the real channels number of the VC..
  *
@@ -421,6 +420,24 @@ uint8_t Csi2PlatformGetChannelNum(const rsdkCsi2VCDriverState_t *pVCState);
  *
  */
 void Csi2PlatformIncFramesCounter(const rsdkCsi2UnitId_t unitId, const uint32_t vcId);
+
+
+/**
+ * @brief       Procedure to change the callback for a specific interrupt
+ * @details     The procedure set for the specified unit and interrupt ID a new callback pointer
+ * @note        The callback pointer is checked only to not be NULL
+ *
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 ,
+                                                                    \endif \ref RSDK_CSI2_MAX_UNITS )
+ * @param[in] irqId     - interrupt ID &isin; [ \ref RSDK_ , \ref RSDK_CSI2_MAX_VC )
+ * @param[in] pCallback - pointer to the new callback
+ *
+ * @return      RSDK_SUCCESS - if driver status is correct and all in-parameters are correct
+ *
+ */
+rsdkStatus_t    Csi2PlatformSetCallback(const rsdkCsi2UnitId_t unitId, const rsdkCsi2IrqId_t irqId,
+        rsdkCsi2IsrCb_t pCallback);
+
 
 /**
  * @brief       Procedure to get the buffer start for the next frame.
@@ -465,3 +482,5 @@ rsdkStatus_t Csi2GetFirstLinePos(const rsdkCsi2UnitId_t unitId, const rsdkCsi2Vi
 #endif
 
 #endif /*CSI2_DRIVER_PLATFORM_SPECIFIC_H*/
+
+// clang-format on

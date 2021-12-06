@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 NXP
+ * Copyright 2016-2021 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -24,22 +24,27 @@ extern "C" {
  *                                      DEFINES AND MACROS
  ==================================================================================================*/
 // clang-format off
-#ifdef PLATFORM_VDK
-#define CSI2_IRQ_RX_BASE_ID_GIC         205         // irq number for CSI2 Rx error interrupt, unit 0
-#define CSI2_IRQ_PATH_BASE_ID_GIC       206         // irq number for CSI2 Path error interrupt, unit 0
-#define CSI2_IRQ_EVENT_BASE_ID_GIC      204         // irq number for CSI2 events interrupt, unit 0
-#define CSI2_IRQ_TX_BASE_ID_GIC         207         // irq number for CSI2 Tx error interrupt, unit 0
-#elif defined(S32R45)
+#if defined(S32R45)
 #define CSI2_IRQ_RX_BASE_ID_GIC         204         // irq number for CSI2 Rx error interrupt, unit 0
 #define CSI2_IRQ_PATH_BASE_ID_GIC       205         // irq number for CSI2 Path error interrupt, unit 0
 #define CSI2_IRQ_EVENT_BASE_ID_GIC      206         // irq number for CSI2 events interrupt, unit 0
 #define CSI2_IRQ_TX_BASE_ID_GIC         207         // irq number for CSI2 Tx error interrupt, unit 0
-#elif defined(S32R294)
-#define CSI2_IRQ_RX_BASE_ID_GIC         758         // irq number for CSI2 Rx error interrupt, unit 0
-#define CSI2_IRQ_PATH_BASE_ID_GIC       759         // irq number for CSI2 Path error interrupt, unit 0
-#define CSI2_IRQ_EVENT_BASE_ID_GIC      760         // irq number for CSI2 events interrupt, unit 0
-#define CSI2_IRQ_TX_BASE_ID_GIC         761         // irq number for CSI2 Tx error interrupt, unit 0
-#endif // #ifdef PLATFORM_VDK
+#define CSI2_IRQ_MAP_GAP                4           // gap between the similar irq numbers
+
+
+
+
+
+
+
+
+
+
+
+
+#else
+#error "No platform defined."
+#endif
 
 #define CSI2_IRQ_RX_BASE_ID             0           // irq number for CSI2 Rx error interrupt, in unit irq array
 #define CSI2_IRQ_PATH_BASE_ID           1           // irq number for CSI2 Path error interrupt, in unit irq array
@@ -52,6 +57,12 @@ extern "C" {
 #define CSI2_IRQ_GENERIC_PHY_ERR_ESC   0x00021084u  // all esc errors
 #define CSI2_IRQ_GENERIC_PHY_ERR_NSYN  0x00010842u  // all multibit sync errors
 #define CSI2_IRQ_GENERIC_PHY_ERR_SYN   0x00008421u  // all sync pattern errors
+
+// masks for unit CHNL_INTRS errors
+#define CSI2_WR_INTRS_BUFFOVF           0x2u        // AXI transaction overflow
+#define CSI2_WR_INTRS_ERRRESP           0x1u        // error response
+#define CSI2_CHNL_INTRS_BUFFOVF         0x2u        // internal buffer overflow
+#define CSI2_CHNL_INTRS_LINEDONE        0x1u        // LINEDONE signal
 
 // masks for VC PnP errors
 #define CSI2_IRQ_VC_ECC1_MASK           0x01u       // ECC one bit error
@@ -73,24 +84,14 @@ extern "C" {
 #define CSI2_IRQ_EVT_NEXT_START_NOT_0   0x80000000u // internal mask for not aligned frame start
 
 // elements for statistics
-#ifdef PLATFORM_VDK
-#define CSI2_STAT_CHANNEL_SUM_ADJUST    0x1         // divider for the channel samples sum
-#define CSI2_STAT_DC_OFFSET_ADJUST      0x1         // multiplier for the channel statistic value
-#else
 #define CSI2_STAT_CHANNEL_SUM_ADJUST    0x1         // divider for the channel samples sum
 #define CSI2_STAT_DC_OFFSET_ADJUST      0x4         // multiplier for the channel statistic value
-#endif
 
-#ifdef PLATFORM_VDK
-#define CSI2_TOGGLE_BITS_MASK           0xfffu       // mask for toggle bits
-#else
 #define CSI2_TOGGLE_BITS_MASK           0xfff0u      // mask for toggle bits
-#endif
 #define CSI2_FE_MASK_VC_0               2u          // mask for FE flag on VC 0
 #define CSI2_VC_NUM_TOTALBITS           3u          // bits length for VC number
 #define CSI2_VC_NUM_BITSMASK            0x7u        // mask for VC number (only the lowest part)
 
-// clang-format on
 
 /*==================================================================================================
 *                                         EXTERN DECLARATIONS
@@ -144,7 +145,9 @@ extern void Csi2IrqHandlerRxErr(const rsdkCsi2UnitId_t iUnit);
 
 #endif  // linux
 
-#endif /* RSDK_CSI2M_IRQ_H_ */
+#endif /* RSDK_CSI2_IRQ_MANAGEMENT_H */
+
+// clang-format on
 
 #ifdef __cplusplus
 }

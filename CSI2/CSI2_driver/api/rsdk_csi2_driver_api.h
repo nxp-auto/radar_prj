@@ -89,59 +89,51 @@ extern "C" {
                                                   * The CRC expected value is reported in rsdkCsi2Report_t::expectedCRC,
                                                   * and the received one in rsdkCsi2Report_t::receivedCRC           */
 #define RSDK_CSI2_ERR_PACK_ID       (1UL << 11u) /**< Packet error - ID error, the received ID is reported in
-                                                  * rsdkCsi2Report_t::invalidPacketID.                        */
+                                                  * rsdkCsi2Report_t::invalidPacketID.                              */
 
 //<!-- protocol level errors ------------- -->
-#define RSDK_CSI2_ERR_LINE_LEN      (1UL << 13u) /**< Line length error.                                      */
-#define RSDK_CSI2_ERR_LINE_CNT      (1UL << 14u) /**< Line count error.                                       */
+#define RSDK_CSI2_ERR_LINE_LEN      (1UL << 13u) /**< Line length error.                                            */
+#define RSDK_CSI2_ERR_LINE_CNT      (1UL << 14u) /**< Line count error.                                             */
+#define RSDK_CSI2_ERR_LINE_LEN_MD   (1UL << 15u) /**< Line length error.                                            */
+#define RSDK_CSI2_ERR_LINE_CNT_MD   (1UL << 16u) /**< Line count error.                                             */
 
 
 //<!-- miscellaneous errors  ------------- -->
-#define RSDK_CSI2_ERR_HS_EXIT       (1UL << 15u) /**< RDP error, High Speed exit error (EXIT_HS_ERROR)        */
-#define RSDK_CSI2_ERR_FIFO          (1UL << 16u) /**< RDP error, internal FIFO error (FIFO_OVERFLOW_ERROR)    */
-#define RSDK_CSI2_ERR_BUF_OVERFLOW  (1UL << 17u) /**< RDP error, internal buffer overrun (BUFFOVF)            */
-#define RSDK_CSI2_ERR_AXI_OVERFLOW  (1UL << 18u) /**< RDP error, AXI buffer overrun (BUFFOVFAXI)              */
-#define RSDK_CSI2_ERR_AXI_RESPONSE  (1UL << 19u) /**< RDP error, AXI response error (ERRRESP)                 */
+#define RSDK_CSI2_ERR_HS_EXIT       (1UL << 17u) /**< RDP error, High Speed exit error (EXIT_HS_ERROR)              */
+#define RSDK_CSI2_ERR_FIFO          (1UL << 18u) /**< RDP error, internal FIFO error (FIFO_OVERFLOW_ERROR)          */
+#define RSDK_CSI2_ERR_BUF_OVERFLOW  (1UL << 19u) /**< RDP error, internal buffer overrun (BUFFOVF)                  */
+#define RSDK_CSI2_ERR_AXI_OVERFLOW  (1UL << 20u) /**< RDP error, AXI buffer overrun (BUFFOVFAXI)                    */
+#define RSDK_CSI2_ERR_AXI_RESPONSE  (1UL << 21u) /**< RDP error, AXI response error (ERRRESP)                       */
 
 //<!-- spurious interrupts ------------- -->
-#define RSDK_CSI2_ERR_SPURIOUS_PHY  (1UL << 20u) /**< Spurious error at PHY level.                            */
-#define RSDK_CSI2_ERR_SPURIOUS_PKT  (1UL << 21u) /**< Spurious error at Packet level.                         */
-#define RSDK_CSI2_ERR_SPURIOUS_EVT  (1UL << 22u) /**< Spurious error at Data level.                           */
-
-
-//<!-- Defined for future use, when Tx will be used ------ -->
-#define RSDK_CSI2_TX_PKT           (1UL << 25u)  /**< TX error, undefined data type (PKTCMDERR)               */
-#define RSDK_CSI2_TX_COMPLETION    (1UL << 26u)  /**< TX, transmission completion (IOCS)                      */
-#define RSDK_CSI2_TX_TA_START      (1UL << 27u)  /**< TX, turnaround started (ONGOINGTA)                      */
-#define RSDK_CSI2_TX_TA_END_MS     (1UL << 28u)  /**< TX, turnaround completed, master to slave (ONGOINGTA)   */
-#define RSDK_CSI2_TX_TA_END_SM     (1UL << 29u)  /**< TX, turnaround completed, slave to master (ONGOINGTA)   */
-
+#define RSDK_CSI2_ERR_SPURIOUS_PHY  (1UL << 22u) /**< Spurious error at PHY level.                                  */
+#define RSDK_CSI2_ERR_SPURIOUS_PKT  (1UL << 23u) /**< Spurious error at Packet level.                               */
+#define RSDK_CSI2_ERR_SPURIOUS_EVT  (1UL << 24u) /**< Spurious error at Data level.                                 */
 
 //<!-- Masking parameters for CSI2 callback - events requesting/reporting -------------- -->
-#define RSDK_CSI2_EVT_FRAME_START       (1UL << 0u) /**< Frame start event (FS)                                 */
-#define RSDK_CSI2_EVT_FRAME_END         (1UL << 1u) /**< Frame end event (FE)                                   */
-#define RSDK_CSI2_EVT_SHORT_PACKET      (1UL << 2u) /**< Generic short packet received (GNSP)                   */
-#define RSDK_CSI2_EVT_LINE_END          (1UL << 3u) /**< Line end event (LINEDONE)                              */
-#ifdef S32R294
-#define RSDK_CSI2_EVT_SKEW_CALIB        (1UL << 4u) /**< Final calibration event (RXSKEWCALHS)                  */
-#endif
-#define RSDK_CSI2_EVT_BIT_NOT_TOGGLE    (1UL << 5u) /**< Bit not toggled on a channel,
-                                                     * reported in rsdkCsi2Report_t::notToggledBits.            */
-#define RSDK_CSI2_EVT_NEXT_START_NOT_0  (1UL << 6u) /**< Bit signaling that the next frame start will not be at
-                                                     * the beginning of the buffer*/
-#define RSDK_CSI2_EVT_IN_FRAME          (1UL << 7u) /**< Frame already started at the call moment               */
+#define RSDK_CSI2_EVT_FRAME_START       (1UL << 0u) /**< Frame start event (FS)                                     */
+#define RSDK_CSI2_EVT_FRAME_END         (1UL << 1u) /**< Frame end event (FE)                                       */
+#define RSDK_CSI2_EVT_SHORT_PACKET      (1UL << 2u) /**< Generic short packet received (GNSP)                       */
+#define RSDK_CSI2_EVT_LINE_END          (1UL << 3u) /**< Line end event (LINEDONE)                                  */
+
+
+
+
+
+#define RSDK_CSI2_EVT_BIT_NOT_TOGGLE    (1UL << 6u) /**< Bit not toggled on a channel,
+                                                     * reported in rsdkCsi2Report_t::notToggledBits.                */
 
  //<!-- Specific min/max API working parameters. ------------- -->
-#define RSDK_CSI2_MIN_NR_LANES                  1u      /**< Minimum number of physical lanes to be used        */
-#define RSDK_CSI2_MIN_VC_BUF_NR_LINES           1u      /**< Minimum number of VC to be defined                 */
-#define RSDK_CSI2_MAX_ANTENNA_NR                4u      /**< Maximum number of receiving channels (real/complex)*/
+#define RSDK_CSI2_MIN_NR_LANES                  1u      /**< Minimum number of physical lanes to be used            */
+#define RSDK_CSI2_MIN_VC_BUF_NR_LINES           1u      /**< Minimum number of VC to be defined                     */
+#define RSDK_CSI2_MAX_ANTENNA_NR                4u      /**< Maximum number of receiving channels (real/complex)    */
 
 //<!-- Frequency limits for each platform --------------- -->
-#define RSDK_CSI2_MAX_RX_FREQ                   2500u   /**< Max. 2.5Gbps input data for \b S32R45/S32R294      */
-#define RSDK_CSI2_MAX_TX_FREQ                   2500u   /**< Max. 2.5Gbps output data for \b S32R45/S32R294     */
+#define RSDK_CSI2_MAX_RX_FREQ                   2500u   /**< Max. 2.5Gbps input data for \b S32R45/S32R294          */
+#define RSDK_CSI2_MAX_TX_FREQ                   2500u   /**< Max. 2.5Gbps output data for \b S32R45/S32R294         */
 
-#define RSDK_CSI2_MIN_RX_FREQ                   80u     /**< Min. 80Mbps input data for \b S32R45/S32R294       */
-#define RSDK_CSI2_MIN_TX_FREQ                   80u     /**< Min. 80Mbps output data for \b S32R45/S32R294      */
+#define RSDK_CSI2_MIN_RX_FREQ                   80u     /**< Min. 80Mbps input data for \b S32R45/S32R294           */
+#define RSDK_CSI2_MIN_TX_FREQ                   80u     /**< Min. 80Mbps output data for \b S32R45/S32R294          */
 
 
 //<!-- Specific masking parameters for S32R45/S32R294 CSI2 programming. -------- -->
@@ -172,29 +164,29 @@ extern "C" {
 #define RSDK_CSI2_MAX_VAL_SIGNED           0x7ff8      /**< Definition for maximum signed sample value               */
 
 //<!-- Identifiers for GPIO/SDMA (external triggers) events to be handled --------- -->
-#define RSDK_CSI2_REQ_ETRG_EVT_FRAME_START      0x00u   /**< Default, frame start will do a GPIO trigger        */
-#define RSDK_CSI2_REQ_ETRG_EVT_FRAME_END        0x10u   /**< Trigger at frame end                               */
-#define RSDK_CSI2_REQ_ETRG_EVT_CHIRP_START      0x20u   /**< Trigger at chirp start                             */
-#define RSDK_CSI2_REQ_ETRG_EVT_CHIRP_END        0x30u   /**< Trigger at chirp end                               */
-#define RSDK_CSI2_REQ_ETRG_EVT_PACK_EMBD        0x00u   /**< Default, trigger on embedded data reception start  */
-#define RSDK_CSI2_REQ_ETRG_EVT_PACK_USER        0x04u   /**< Trigger on user data packet                        */
-#define RSDK_CSI2_REQ_ETRG_EVT_PACK_RAW         0x08u   /**< Trigger on RAW packet reception                    */
-#define RSDK_CSI2_REQ_ETRG_EVT_PACK_RGB         0x0cu   /**< Trigger on RGB data packet                         */
-#define RSDK_CSI2_REQ_ETRG_EVT_ERR_LINECNT      0x00u   /**< Default, trigger on line count error               */
-#define RSDK_CSI2_REQ_ETRG_EVT_ERR_LINLEN       0x01u   /**< Trigger on line length error                       */
-#define RSDK_CSI2_REQ_ETRG_EVT_ERR_CRCECC       0x02u   /**< Trigger on CRC or ECC error                        */
-#define RSDK_CSI2_REQ_ETRG_EVT_ERR_NOSYNC       0x03u   /**< Trigger on synchronization missing                 */
-#define RSDK_CSI2_REQ_ETRG_EVT_TRND_MTS         0x80u   /**< Trigger on master to slave turnaround              */
-#define RSDK_CSI2_REQ_ETRG_EVT_TRND_STM         0x40u   /**< Trigger on slave to master turnaround              */
+#define RSDK_CSI2_REQ_ETRG_EVT_FRAME_START      0x00u   /**< Default, frame start will do a GPIO trigger            */
+#define RSDK_CSI2_REQ_ETRG_EVT_FRAME_END        0x10u   /**< Trigger at frame end                                   */
+#define RSDK_CSI2_REQ_ETRG_EVT_CHIRP_START      0x20u   /**< Trigger at chirp start                                 */
+#define RSDK_CSI2_REQ_ETRG_EVT_CHIRP_END        0x30u   /**< Trigger at chirp end                                   */
+#define RSDK_CSI2_REQ_ETRG_EVT_PACK_EMBD        0x00u   /**< Default, trigger on embedded data reception start      */
+#define RSDK_CSI2_REQ_ETRG_EVT_PACK_USER        0x04u   /**< Trigger on user data packet                            */
+#define RSDK_CSI2_REQ_ETRG_EVT_PACK_RAW         0x08u   /**< Trigger on RAW packet reception                        */
+#define RSDK_CSI2_REQ_ETRG_EVT_PACK_RGB         0x0cu   /**< Trigger on RGB data packet                             */
+#define RSDK_CSI2_REQ_ETRG_EVT_ERR_LINECNT      0x00u   /**< Default, trigger on line count error                   */
+#define RSDK_CSI2_REQ_ETRG_EVT_ERR_LINLEN       0x01u   /**< Trigger on line length error                           */
+#define RSDK_CSI2_REQ_ETRG_EVT_ERR_CRCECC       0x02u   /**< Trigger on CRC or ECC error                            */
+#define RSDK_CSI2_REQ_ETRG_EVT_ERR_NOSYNC       0x03u   /**< Trigger on synchronization missing                     */
+#define RSDK_CSI2_REQ_ETRG_EVT_TRND_MTS         0x80u   /**< Trigger on master to slave turnaround                  */
+#define RSDK_CSI2_REQ_ETRG_EVT_TRND_STM         0x40u   /**< Trigger on slave to master turnaround                  */
 
 //<!-- Identifiers for GPIO/SDMA (external triggers) enablements ----------- -->
 #define RSDK_CSI2_REQ_ETRG_ENA_ON_ERROR         0x01u   /**< Enable external trigger on VC error
-                                                         *  (linecount, line len, crc/ecc, no sync)             */
-#define RSDK_CSI2_REQ_ETRG_ENA_ON_PACKET        0x02u   /**< Enable external trigger on VC packet received      */
-#define RSDK_CSI2_REQ_ETRG_ENA_ON_PF            0x04u   /**< Enable external trigger on VC packet and frame     */
+                                                         *  (linecount, line len, crc/ecc, no sync)                 */
+#define RSDK_CSI2_REQ_ETRG_ENA_ON_PACKET        0x02u   /**< Enable external trigger on VC packet received          */
+#define RSDK_CSI2_REQ_ETRG_ENA_ON_PF            0x04u   /**< Enable external trigger on VC packet and frame         */
 
 #define RSDK_CSI2_VC_BUFF_STATISTICS            80u     /**< The necessary buffer length for channels statistics
-                                                         * at chirp buffer end                                  */
+                                                         * at chirp buffer end                                      */
 
 /** @}*/
 
@@ -238,16 +230,17 @@ Enumerations data types usage :
  *
  */
 typedef enum {
-    RSDK_CSI2_DATA_TYPE_EMBD      = 0x12u,         /**< type embedded           */
-    RSDK_CSI2_DATA_TYPE_YUV422_8  = 0x1Eu,         /**< YUV422 - 8 bits         */
-    RSDK_CSI2_DATA_TYPE_YUV422_10 = 0x1Fu,         /**< YUV422 - 10 bits        */
-    RSDK_CSI2_DATA_TYPE_RGB565    = 0x22u,         /**< RGB565                  */
-    RSDK_CSI2_DATA_TYPE_RGB888    = 0x24u,         /**< RGB888                  */
-    RSDK_CSI2_DATA_TYPE_RAW8      = 0x2Au,         /**< RAW-8                   */
-    RSDK_CSI2_DATA_TYPE_RAW10     = 0x2Bu,         /**< RAW-10                  */
-    RSDK_CSI2_DATA_TYPE_RAW12     = 0x2Cu,         /**< RAW-12  - radar default */
-    RSDK_CSI2_DATA_TYPE_RAW14     = 0x2Du,         /**< RAW-14                  */
-    RSDK_CSI2_DATA_TYPE_USR0      = 0x30u,         /**< user defined data ...   */
+    RSDK_CSI2_DATA_TYPE_EMBD      = 0x12u,         /**< type embedded                                               */
+    RSDK_CSI2_DATA_TYPE_YUV422_8  = 0x1Eu,         /**< YUV422 - 8 bits                                             */
+    RSDK_CSI2_DATA_TYPE_YUV422_10 = 0x1Fu,         /**< YUV422 - 10 bits                                            */
+    RSDK_CSI2_DATA_TYPE_RGB565    = 0x22u,         /**< RGB565                                                      */
+    RSDK_CSI2_DATA_TYPE_RGB888    = 0x24u,         /**< RGB888                                                      */
+    RSDK_CSI2_DATA_TYPE_RAW8      = 0x2Au,         /**< RAW-8                                                       */
+    RSDK_CSI2_DATA_TYPE_RAW10     = 0x2Bu,         /**< RAW-10                                                      */
+    RSDK_CSI2_DATA_TYPE_RAW12     = 0x2Cu,         /**< RAW-12  - radar default                                     */
+    RSDK_CSI2_DATA_TYPE_RAW14     = 0x2Du,         /**< RAW-14                                                      */
+    RSDK_CSI2_DATA_TYPE_RAW16     = 0x2Eu,         /**< RAW-16                                                      */
+    RSDK_CSI2_DATA_TYPE_USR0      = 0x30u,         /**< user defined data ...                                       */
     RSDK_CSI2_DATA_TYPE_USR1      = 0x31u,
     RSDK_CSI2_DATA_TYPE_USR2      = 0x32u,
     RSDK_CSI2_DATA_TYPE_USR3      = 0x33u,
@@ -255,25 +248,25 @@ typedef enum {
     RSDK_CSI2_DATA_TYPE_USR5      = 0x35u,
     RSDK_CSI2_DATA_TYPE_16_FROM_8 = 0x36u,         /**< specific RSDK data type; data will be received as RAW8 data,
                                                         but the output will be as 16 bits data,
-                                                        one sample will have 2 bytes of data */
-    RSDK_CSI2_DATA_TYPE_USR7      = 0x37u,         /**< ... user defined data  */
+                                                        one sample will have 2 bytes of data                        */
+    RSDK_CSI2_DATA_TYPE_USR7      = 0x37u,         /**< ... user defined data                                       */
     // up here - normal MIPI-CSI2 data types
     // down here, special "data types" for auxiliary data
     // it must not be specified for the buffer to receive the normal data
     // it must be specified only for auxiliary buffer to receive auxiliary data and must be
     // similar to the RSDK_CSI2_VC_BUF_5TH_CH_... mask specified for outputDataMode
-    RSDK_CSI2_DATA_TYPE_AUX_0_NO_DROP           = 0x40u,  /**< auxiliary, mode 0, no drop, mask*/
+    RSDK_CSI2_DATA_TYPE_AUX_0_NO_DROP           = 0x40u,  /**< auxiliary, mode 0, no drop, mask                     */
     RSDK_CSI2_DATA_TYPE_R12_A0_NO_DROP          = 0x6Cu,  /**< RAW12 + auxiliary, mode 0, no drop, <b>type to use</b>*/
-    RSDK_CSI2_DATA_TYPE_AUX_0_DR_1OF2           = 0x80u,  /**< auxiliary, mode 0, drop 1 of 2, mask*/
+    RSDK_CSI2_DATA_TYPE_AUX_0_DR_1OF2           = 0x80u,  /**< auxiliary, mode 0, drop 1 of 2, internal mask        */
     RSDK_CSI2_DATA_TYPE_R12_A0_DR_1OF2          = 0xACu,  /**< RAW12 + auxiliary, mode 0, drop 1 of 2, 
-                                                                                                    <b>type to use</b>*/
-    RSDK_CSI2_DATA_TYPE_AUX_0_DR_3OF4           = 0xc0u,  /**< auxiliary, mode 0, drop 3 of 4, mask*/
+                                                                     <b>type to use</b>                             */
+    RSDK_CSI2_DATA_TYPE_AUX_0_DR_3OF4           = 0xc0u,  /**< auxiliary, mode 0, drop 3 of 4, internal mask        */
     RSDK_CSI2_DATA_TYPE_R12_A0_DR_3OF4          = 0xECu,  /**< RAW12 + auxiliary, mode 0, drop 3 of 4, 
-                                                                                                    <b>type to use</b>*/
-    RSDK_CSI2_DATA_TYPE_AUX_1_NO_DROP           = 0x100u, /**< auxiliary, mode 1, no drop, mask*/
+                                                                     <b>type to use</b>                             */
+    RSDK_CSI2_DATA_TYPE_AUX_1_NO_DROP           = 0x100u, /**< auxiliary, mode 1, no drop, internal mask            */
     RSDK_CSI2_DATA_TYPE_R12_A1_NO_DROP          = 0x12Cu, /**< RAW12 + auxiliary, mode 1, no drop, <b>type to use</b>*/
 
-    RSDK_CSI2_DATA_TYPE_MAX                     = 0x13fu, /**< stream type maximum, not used */
+    RSDK_CSI2_DATA_TYPE_MAX                     = 0x13fu, /**< stream type maximum, not to be used                  */
 
 }rsdkCsi2DataStreamType_t;
 
@@ -285,13 +278,13 @@ typedef enum {
  */
 typedef enum
 {
-    RSDK_CSI2_UNIT_0 = 0,           /**< First unit (MIPICSI2_0)    */
-    RSDK_CSI2_UNIT_1,               /**< Second unit (MIPICSI2_1)   */
+    RSDK_CSI2_UNIT_0 = 0,           /**< First unit (MIPICSI2_0)                                                    */
+    RSDK_CSI2_UNIT_1,               /**< Second unit (MIPICSI2_1)                                                   */
     #if defined(S32R45)
-        RSDK_CSI2_UNIT_2,           /**< Third unit (MIPICSI2_2)    */
-        RSDK_CSI2_UNIT_3,           /**< Fourth unit (MIPICSI2_3)   */
+        RSDK_CSI2_UNIT_2,           /**< Third unit (MIPICSI2_2)                                                    */
+        RSDK_CSI2_UNIT_3,           /**< Fourth unit (MIPICSI2_3)                                                   */
     #endif
-    RSDK_CSI2_MAX_UNITS             /**< The units limit, to not use in procedure call */
+    RSDK_CSI2_MAX_UNITS             /**< The units limit, to not use in procedure call                              */
 }rsdkCsi2UnitId_t;
 
 
@@ -302,11 +295,11 @@ typedef enum
  */
 typedef enum
 {
-    RSDK_CSI2_VC_0 = 0,             /**< Virtual Channel 0                                  */
-    RSDK_CSI2_VC_1,                 /**< Virtual Channel 1                                  */
-    RSDK_CSI2_VC_2,                 /**< Virtual Channel 2                                  */
-    RSDK_CSI2_VC_3,                 /**< Virtual Channel 3                                  */
-    RSDK_CSI2_MAX_VC                /**< Virtual channels number limit for Csi2 unit, to not use in procedure call */
+    RSDK_CSI2_VC_0 = 0,             /**< Virtual Channel 0                                                          */
+    RSDK_CSI2_VC_1,                 /**< Virtual Channel 1                                                          */
+    RSDK_CSI2_VC_2,                 /**< Virtual Channel 2                                                          */
+    RSDK_CSI2_VC_3,                 /**< Virtual Channel 3                                                          */
+    RSDK_CSI2_MAX_VC                /**< Virtual channels number limit for Csi2 unit, to not use in procedure call  */
 }rsdkCsi2VirtChnlId_t;
 
 
@@ -317,13 +310,11 @@ typedef enum
  */
 typedef enum
 {
-    RSDK_CSI2_LANE_0 = 0,           /**< first lane / one lane  */
-    RSDK_CSI2_LANE_1,               /**< second lane / two lanes */
-#if defined(S32R294) || defined(S32R45)
-    RSDK_CSI2_LANE_2,               /**< third lane / three lanes */
-    RSDK_CSI2_LANE_3,               /**< fourth lane / four lanes */
-#endif
-    RSDK_CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call  */
+    RSDK_CSI2_LANE_0 = 0,           /**< first lane / one lane                                                      */
+    RSDK_CSI2_LANE_1,               /**< second lane / two lanes                                                    */
+    RSDK_CSI2_LANE_2,               /**< third lane / three lanes                                                   */
+    RSDK_CSI2_LANE_3,               /**< fourth lane / four lanes                                                   */
+    RSDK_CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call                */
 }rsdkCsi2LaneEnum_t;
 
 
@@ -355,64 +346,83 @@ typedef enum {
  *
  */
 typedef enum {
-    RSDK_CSI2_STAT_NO = 0u,             /**< Statistics not managed                                         */
-    RSDK_CSI2_STAT_EVERY_LINE = 1u,     /**< Statistics management after every line received                */
+    RSDK_CSI2_STAT_NO = 0u,             /**< Statistics not managed                                                 */
+    RSDK_CSI2_STAT_EVERY_LINE = 1u,     /**< Statistics management after every line received                        */
     RSDK_CSI2_STAT_AT_FE,               /**< Statistics management at Frame End. \if (S32R45_DOCS || S32R294_DOCS)
                                          * All statistics in the receiving buffer (according to \ref bufNumLines for
-                                         * the Virtual Channel) will be processed \endif                    */
-    RSDK_CSI2_STAT_LAST_LINE,           /**< Statistics management only for the last line received          */
-    RSDK_CSI2_STAT_MAX                  /**< Statistics max limit, to not be used in application            */
+                                         * the Virtual Channel) will be processed \endif                            */
+    RSDK_CSI2_STAT_LAST_LINE,           /**< Statistics management only for the last line received                  */
+    RSDK_CSI2_STAT_MAX                  /**< Statistics max limit, to not be used in application                    */
 }rsdkCsi2AutoDCComputeTime_t;
 
 
-#if defined(SAF85XX)
 /**
- * @brief       This type is defining the way the buffer pointer could be reset if some lines are rejected.
- * @details     For SAF85XX is possible to specify how the buffer pointer is reset in case of data error.
- *              If no lines are rejected, this value is not relevant, only if at least one line is rejected.
+ * @brief       Initialization options for DPHY layer
+ * @details     There are few options for DPHY initialization which application can ask.
+ *              The two main options are : calibration speed-up and STOP state on data lanes at init time
  *
  */
 typedef enum {
-    RSDK_CSI2_BUF_RESET_NO = 0u,        /**< Buffer pointer is not reset; if a line is rejected, the data is written 
-                                         * in buffer using the next buffer line. For correct management of the data, 
-                                         * application must use one of RsdkCsi2GetFirstByteOffset or 
-                                         * RsdkCsi2GetFirstLinePos functions to detect where the next frame "start". */
-    RSDK_CSI2_BUF_RESET_FS,             /**< Buffer pointer is reset to 0 after Frame Start, so each frame will start 
-                                         * at line 0 in the defined buffer; no other checks are necessary            */
-    RSDK_CSI2_BUF_RESET_BL,             /**< Buffer pointer is reset to the normal buffer position at Frame Start, 
-                                         * as all lines were written into the buffer. As formula, 
-                                         * if at the start of the "current" frame the pointer buffer is to line S, 
-                                         * the frame have F lines and the buffer have B lines, with or without errors,
-                                         * the next frame will start at ((S + F) % B) line in the buffer.            */
-    RSDK_CSI2_BUF_RESET_MAX             /**< Buffer reset max limit, to not be used in application                   */
-}rsdkCsi2BufferPointerReset_t;
+    RSDK_CSI2_DPHY_INIT_SIMPLE = 0u,    /**< Normal calibration , no STOP state to be reached                       */
+    RSDK_CSI2_DPHY_INIT_SHORT_CALIB,    /**< Short calibration, with previous calibration values,
+                                         * no STOP state to be reached                                              */
+    RSDK_CSI2_DPHY_INIT_W_STOP_STATE,   /**< Normal calibration, STOP state to be reached in about 1.2ms or
+                                         * initialization error reported                                            */
+    RSDK_CSI2_DPHY_INIT_SHORT_AND_STOP = RSDK_CSI2_DPHY_INIT_SHORT_CALIB | RSDK_CSI2_DPHY_INIT_W_STOP_STATE,
+                                        /**< Short calibration, STOP state to be reached in about 1.2ms             */
+    RSDK_CSI2_DPHY_INIT_MAX = RSDK_CSI2_DPHY_INIT_SHORT_AND_STOP + 1,
+                                        /**< Init max limit, not to be used in application                          */
+}rsdkCsi2DphyInitOptions_t;
 
 
-/**
- * @brief       Enum for ADC header/footer management.
- * @details     SAF85XX offer, only for ADC input, the possibility to receive and record some header/footer data.
- *              The data is recorded at the end of each chirp data, according to the Statistics management.
- *
- */
-typedef enum {
-    RSDK_CSI2_ADC_NO = 0u,              /**< No ADC Header/Footer data recorded. 
-                                         * The buffer line length must not provide space for this.                   */
-    RSDK_CSI2_ADC_H_ONLY,               /**< No Statistics, only ADC data header recorder. 
-                                         * The buffer line must be at least (chirp_data + 16 bytes).                 */
-    RSDK_CSI2_ADC_F_ONLY,               /**< No Statistics, only ADC data footer recorder. 
-                                         * The buffer line must be at least (chirp_data + 16 bytes).                 */
-    RSDK_CSI2_ADC_HF,                   /**< No Statistics, both ADC data header & footer recorder. 
-                                         * The buffer line must be at least (chirp_data + 16 bytes).                 */
-    RSDK_CSI2_ADC_H_STAT,               /**< Statistics and ADC data header recorder. 
-                                         * The buffer line must be at least (chirp_data + 96 bytes).                 */
-    RSDK_CSI2_ADC_F_STAT,               /**< Statistics and ADC data footer recorder. 
-                                         * The buffer line must be at least (chirp_data + 96 bytes).                 */
-    RSDK_CSI2_ADC_HF_STAT,              /**< Statistics and ADC data header & footer recorder. 
-                                         * The buffer line must be at least (chirp_data + 96 bytes).                 */
-    RSDK_CSI2_STAT_MAX                  /**< ADC data management max limit, to not be used in application            */
-}rsdkCsi2AutoDCComputeTime_t;
 
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -421,11 +431,11 @@ typedef enum {
  *
  */
 typedef enum {
-    RSDK_CSI2_RX_ERR_IRQ_ID = 0,    /**< IRQ ID for Receive errors (D-PHY related)                      */
-    RSDK_CSI2_PATH_ERR_IRQ_ID,      /**< IRQ ID for Receive Data Path and Protocol errors               */
-    RSDK_CSI2_EVENTS_IRQ_ID,        /**< IRQ ID for Events and line errors interrupt                    */
-    RSDK_CSI2_TX_ERR_IRQ_ID,        /**< IRQ ID for Tournaround and Transmit errors                     */
-    RSDK_CSI2_MAX_IRQ_ID            /**< Maximum IRQ ID for platform, to not use in procedure call      */
+    RSDK_CSI2_RX_ERR_IRQ_ID = 0,    /**< IRQ ID for Receive errors (D-PHY related)                                  */
+    RSDK_CSI2_PATH_ERR_IRQ_ID,      /**< IRQ ID for Receive Data Path and Protocol errors                           */
+    RSDK_CSI2_EVENTS_IRQ_ID,        /**< IRQ ID for Events and line errors interrupt                                */
+    RSDK_CSI2_TX_ERR_IRQ_ID,        /**< IRQ ID for Tournaround and Transmit errors                                 */
+    RSDK_CSI2_MAX_IRQ_ID            /**< Maximum IRQ ID for platform, to not use in procedure call                  */
 }rsdkCsi2IrqId_t;
 
 
@@ -451,10 +461,12 @@ typedef struct {
  *
  */
 typedef struct {
-    uint16_t    linePoz;            /**< The first line with length problem (if line/chirp length error) or the total
-                                     * number of lines received (if number of lines error)  */
-    uint16_t    lineLength;         /**< The received length (different from the expected one), valid only if line
-                                     * length error is signaled */
+    uint32_t    linePoz;            /**< The first line with length problem (if line/chirp length error) or the total
+                                     * number of lines received (if number of lines error),
+                                     * LSB - 16 bits for RadarData flow, MSB - 16 bits for MetaData flow            */
+    uint32_t    lineLength;         /**< The received length (different from the expected one), valid only if line
+                                     * length error is signaled,
+                                     * LSB - 16 bits for RadarData flow, MSB - 16 bits for MetaData flow            */
 } rsdkCsi2LineLenErr_t;
 
 
@@ -482,35 +494,35 @@ typedef struct {
                                                  * \b 1 \endif                                                       */
     uint16_t    bufLineLen;                     /**< The available line length in buffer, per line (16 bytes aligned)
                                                  * must include 80 supplementary bytes for line/chirp statistics     */
-#if defined(SAF85XX)
-    rsdkCsi2BufferPointerReset_t bufReset;      /**< How to manage the buffer pointer if data lines are 
-                                                 * not written into the buffer */
-#endif
+
+
+
+
     uint16_t    outputDataMode;                 /**< The mode data is output in the buffer and other information
                                                  * about input data, see above : RSDK_CSI2_VC_BUF_... family definitions
                                                  * i.e. \ref RSDK_CSI2_VC_BUF_COMPLEX_DATA.
                                                  * This parameter must be identical for data buffer and for
-                                                 * correspondent auxiliary buffer.               */
-    void        *pBufData;                      /**< Pointer to data buffer (16 bytes aligned), physical address     */
+                                                 * correspondent auxiliary buffer.                                  */
+    void        *pBufData;                      /**< Pointer to data buffer (16 bytes aligned), physical address    */
     int16_t     offsetCompReal[RSDK_CSI2_MAX_CHANNEL];
                                                 /**< Channel offset compensation for real part,<br>
                                                  * \ref RSDK_CSI2_OFFSET_AUTOCOMPUTE => auto config_DC,<br>
                                                  * any other = compensation (0 => no compensation).<br>
-                                                 * The compensation must be specified at AD input level (12 bits).   */
+                                                 * The compensation must be specified at AD input level (12 bits).  */
     int16_t     offsetCompImg[RSDK_CSI2_MAX_CHANNEL];
                                                 /**< Channel offset compensation for imaginary part, see
                                                  * \ref offsetCompReal  */
     uint8_t     gpio1Mask, gpio2Mask;           /**< masks for GPIO trigger handling (see RSDK_CSI2_REQ_ETRG_EVT_...
                                                  * family, i.e. \ref RSDK_CSI2_REQ_ETRG_EVT_FRAME_START); to be
                                                  * functional, the triggers must be enabled (see \ref  gpio1EnaMask and
-                                                 * \ref gpio2EnaMask                                                 */
+                                                 * \ref gpio2EnaMask                                                */
     uint8_t     gpio1EnaMask, gpio2EnaMask;     /**< Mask for GPIO triggers enablement (see RSDK_CSI2_REQ_ETRG_ENA_...
                                                  * family, i.e. \ref RSDK_CSI2_REQ_ETRG_ENA_ON_ERROR); must be set
-                                                 * correctly to have external trigger of the related events.         */
+                                                 * correctly to have external trigger of the related events.        */
     uint8_t     sdma1Mask, sdma2Mask;           /**< masks for SDMA trigger handling (see RSDK_CSI2_REQ_ETRG_EVT_...
                                                  * family, i.e. \ref RSDK_CSI2_REQ_ETRG_EVT_FRAME_START); to be
                                                  * functional, the triggers must be enabled (see \ref  sdma1EnaMask and
-                                                 * \ref sdma2EnaMask)                                                */
+                                                 * \ref sdma2EnaMask)                                               */
     uint8_t     sdma1EnaMask, sdma2EnaMask;     /**< masks for SDMA trigger handling (see RSDK_CSI2_REQ_ETRG_EVT_...
                                                  * family, i.e. \ref RSDK_CSI2_REQ_ETRG_EVT_FRAME_START); to be
                                                  * functional, the triggers must be enabled (see \ref  sdma1EnaMask and
@@ -520,6 +532,33 @@ typedef struct {
                                                  * vcEventsReq. It correspond to RM - Table 81-7 -
                                                  * LINEDONE field and cap. 81.8.41                                  */
 }rsdkCsi2VCParams_t;
+
+/**
+ * @brief       Structure for VirtualChannel configuration of metadata.
+ * @details     The structure hold all necessary parameters to initialize the reception of other kind of data than
+ *              radar data. The main purpose of this structure is to transmit the necessary information
+ *              to manage the MetaData sent by the Radar Front-End after the data frame was sent.
+ *
+ * @note        There is possible to use only one metadata flow for each front-end Virtual Channel.
+ *              The data is written into the buffer in the received order.
+ *
+ */
+typedef struct {
+    rsdkCsi2DataStreamType_t  streamDataType;   /**< Data type to be received                                       */
+    uint8_t     vcEventsReq;                    /**< Mask for IRQ requested events for MetaData; only
+                                                 * RSDK_CSI2_EVT_FRAME_END is accepted                              */
+
+    uint16_t    expectedNumBytes;               /**< Expected line length, in bytes, for receiving data             */
+    uint16_t    expectedNumLines;               /**< Expected number of lines/chirps per frame                      */
+    uint16_t    bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
+                                                 * statistics to be received in buffer, at least 1<br>
+                                                 * \if (S32R45_DOCS || S32R294_DOCS) @note For internal software
+                                                 * reasons, (\ref expectedNumLines % \ref bufNumLines ) must not be
+                                                 * \b 1 \endif                                                      */
+    uint16_t    bufLineLen;                     /**< The available line length in buffer, per line (16 bytes aligned)
+                                                 * must include 80 supplementary bytes for line/chirp statistics    */
+    void        *pBufData;                      /**< Pointer to data buffer (16 bytes aligned), physical address    */
+}rsdkCsi2MetaDataParams_t;
 
 
 /**
@@ -536,12 +575,12 @@ typedef struct {
                                                      * - PHY level errors, i.e. \ref RSDK_CSI2_ERR_PHY_SYNC
                                                      * - packet errors, i.e. \ref RSDK_CSI2_ERR_PACK_ECC1
                                                      * \endif                                                       */
-    uint32_t    errMaskVC[RSDK_CSI2_MAX_VC];        /**< The cumulated masks for signaled errors at VC level;<br>
+    uint32_t    errMaskVC[RSDK_CSI2_MAX_VC];        /**< The cumulated masks for signaled errors at RadarData level;<br>
                                                      * \if (S32R45_DOCS || S32R294_DOCS)  the possible masks are for:
                                                      * - line errors definitions, i.e. \ref RSDK_CSI2_ERR_LINE_LEN
                                                      * - all other miscelaneous
                                                      * \endif                                                       */
-    uint8_t     evtMaskVC[RSDK_CSI2_MAX_VC];        /**< Events mask for VCs, according to the requested events as
+    uint8_t     evtMaskVC[RSDK_CSI2_MAX_VC];        /**< Events mask for RadarData, according to the requested events as
                                                      * required at initialization - rsdkCsi2VCParams_t->vcEventsReq<br>
                                                      * the possible masks are defined by:
                                                      * - events masks :
@@ -554,7 +593,7 @@ typedef struct {
                                                      *  \ref RSDK_CSI2_EVT_NEXT_START_NOT_0
                                                      *  \endif                                                      */
     uint8_t     invalidPacketID[RSDK_CSI2_MAX_VC];  /**< The wrong packet ID received, reported if \ref
-                                                     * RSDK_CSI2_ reported                               */
+                                                     * RSDK_CSI2_ reported                                          */
     uint8_t     eccOneBitErrPos[RSDK_CSI2_MAX_VC];  /**< The recovered position for ECC one bit error, if \ref
                                                      * RSDK_CSI2_ERR_PACK_ECC1 reported                             */
     uint16_t    expectedCRC[RSDK_CSI2_MAX_VC];      /**< Computed CRC for received data, if \ref RSDK_CSI2_ERR_PACK_CRC
@@ -596,6 +635,12 @@ typedef struct {
     uint8_t     numLanesRx;                     /**< Number of lanes used to receive data; use \ref rsdkCsi2LaneEnum_t
                                                  *  to configure this. \if SAF85XX_DOCS For SAF85XX only two lanes 
                                                  * are available to use. \endif */
+#if defined(S32R294) || defined(S32R45) || defined(S32R41)
+    rsdkCsi2DphyInitOptions_t   initOptions;    /**< Specific initialization options for the unit, required by
+                                                 * the application :
+                                                 * - simple/normal calibration or quick/short calibration
+                                                 * - wait for 5us or not wait for STOP states on data lanes         */
+#endif
     rsdkCsi2LaneEnum_t     lanesMapRx[RSDK_CSI2_MAX_LANE]; /**< Lanes mapping :
                                                  *  - first byte - the physical lane to be used as lane 1,
                                                  *  - second byte - the physical lane to be used as lane 2,
@@ -612,7 +657,7 @@ typedef struct {
                                                  * and \ref RSDK_CSI2_MAX_RX_FREQ), in Mbps.                        
                                                  * \if SAF85XX_DOCS For SAF85XX, this parameter define the data source :
                                                  * if 0, the source is RFE/ADC, 
-                                                 * if not 0, the source is external MIPICSI2-DPHY-Rx \endif */
+                                                 * if not 0, the source is external MIPICSI2-DPHY-Rx \endif         */
     rsdkCsi2VCParams_t      *pVCconfig[RSDK_CSI2_MAX_VC];   /**< pointers to VC configurations; ignored if NULL.
                                                             * At least VC 0 must be configured. */
     rsdkCsi2VCParams_t      *pAuxConfig[RSDK_CSI2_MAX_VC];  /**< pointers to VC configurations, for auxiliary data only;
@@ -623,6 +668,12 @@ typedef struct {
                                                             * RSDK_CSI2_VC_BUF_FIFTH_CH_ON, it is assumed auxiliary data 
                                                             * type 0; so, for auxiliary data type 1 the buffer must be 
                                                             * configured, even the data is not used. */
+    rsdkCsi2MetaDataParams_t    *pMetaData[RSDK_CSI2_MAX_VC];   /**< pointers to VC configurations for other data
+                                                            * to be received on the other channels, with no
+                                                            * statistics support, mainly for MetaData; ignored if NULL.
+                                                            * It is not a must to use one of these for normal
+                                                            * application, but if used it must be correlated with the
+                                                            * Virtual Channel of the appropriate RadarData.         */
     rsdkCsi2IsrCb_t         pCallback[RSDK_CSI2_MAX_IRQ_ID];    /**< the necessary callbacks :
                                                  * <table>
                             * <tr><td>errors in receive path</td><td>\ref RSDK_CSI2_RX_ERR_IRQ_ID</td></tr>
@@ -835,7 +886,8 @@ rsdkStatus_t RsdkCsi2GetLaneStatus(const rsdkCsi2UnitId_t unitId, const uint32_t
  *
  * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
- * @param[in] vcId      - VC ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC )
+ * @param[in] vcId      - VC ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC * 2 ), the second half
+ *                          of the interval is for MetaData frames counters
  *
  * @return uint32_t - the current frames counter
  *
@@ -867,7 +919,7 @@ uint32_t    RsdkCsi2GetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType
         const uint32_t samplesPerChirp, const uint8_t autoStatistics);
 
 
-#if defined(S32R294) || defined(SAF85XX)
+#if defined(S32R294) || defined(SAF85XX) || defined(S32R41) || defined(S32R45)
 /**
  * @brief       Procedure to get the buffer start for the next frame.
  * @details     The procedure returns the offset from the buffer start
@@ -908,30 +960,46 @@ rsdkStatus_t    RsdkCsi2GetFirstByteOffset(const rsdkCsi2UnitId_t unitId, const 
 rsdkStatus_t    RsdkCsi2GetFirstLinePos(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId,
         uint32_t *pFirstLine);
 
-
-#if defined(SAF85XX)
 /**
- * @brief       Procedure to get the buffer start for the next frame.
- * @details     The procedure returns the buffer line
- *                  where the first line of the frame will be written.
- *              The procedure must be called after the previous frame was received,
- *                  but before the start of the expected frame.
- * @note        To get the exact address, must be used the buffer line length
- *                  declared in the unit initialization parameters (rsdkCsi2VCParams_t::bufLineLen).
+ * @brief       Procedure to change the callback for a specific interrupt
+ * @details     The procedure set for the specified unit and interrupt ID a new callback pointer
+ * @note        The callback pointer is checked only to not be NULL
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 ,
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
- * @param[in] vcId      - VC ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC )
- * @param[in] pFirstLine - pointer to a uint32_t which will receive the real first line position
+ * @param[in] irqId     - interrupt ID &isin; [ \ref RSDK_ , \ref RSDK_CSI2_MAX_VC )
+ * @param[in] pCallback - pointer to the new callback
  *
- * @return      RSDK_SUCCESS - if driver status is correct; the frame first line index is passed to pFirstLine
- *              error if the driver is in an inappropriate state; pOffset is not updated
+ * @return      RSDK_SUCCESS - if driver status is correct and all in-parameters are correct
  *
  */
-rsdkStatus_t    RsdkCsi2GetFirstLinePos(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId,
-        uint32_t *pFirstLine);
+rsdkStatus_t    RsdkCsi2SetCallback(const rsdkCsi2UnitId_t unitId, const rsdkCsi2IrqId_t irqId,
+        rsdkCsi2IsrCb_t pCallback);
 
-#endif // #if defined(SAF85XX)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif // #if defined(S32R294) || defined(SAF85XX)
 

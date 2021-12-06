@@ -15,18 +15,18 @@ Umbrella header which in turn includes all OAL support for RSDK modules
 /*==================================================================================================
 *                                        INCLUDE FILES
 ==================================================================================================*/
-#define RSDK_OSENV_SA                            \
-    (!(defined(__linux__) || defined(__QNX__) || \
-       defined(__INTEGRITY)))  //identifies stand-alone build option (no OS support)
+#include "rsdk_osenv.h"
 
-#if (!RSDK_OSENV_SA)
+
+#if !defined(__ZEPHYR__)
 #include "oal_memmap.h"
+#endif
 #include "oal_comm.h"
 #include "rsdk_status.h"
-#else
-#include <stdint.h>
-#include <stddef.h>
-#endif
+
+
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,9 +37,9 @@ extern "C" {
 ==================================================================================================*/
 #define UNUSED_ARG(ARG) (void)(ARG)
 
-#if (RSDK_OSENV_SA)
-#define OAL_SPT_PRINT(fmt, ...)
-#else
+
+
+
 #ifdef OAL_PRINT_ENABLE
 #define OAL_SPT_PRINT(fmt, ...) \
     printf(fmt, ##__VA_ARGS__); \
@@ -50,7 +50,7 @@ extern "C" {
 
 #define SPT_OAL_COMM_CHANNEL1_NAME "SptIrqCap"  //max 10 characters?
 #define SPT_OAL_COMM_CHANNEL2_NAME "SptNonBlk"
-#endif
+
 
 #ifdef HW_MOCK
 extern uint32_t hw_read(uint32_t reg);
@@ -65,7 +65,7 @@ extern uint32_t fake_reg;
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
-#if (!RSDK_OSENV_SA)
+
 typedef enum
 {
     SPT_OAL_RPC_WAIT_FOR_IRQ = 1,
@@ -88,11 +88,11 @@ typedef struct
     rsdkStatus_t           isrStatus;
     uint32_t               errInfo;
 } evtSharedData_t;
-#endif
+
 /*==================================================================================================
 *                                    FUNCTION PROTOTYPES
 ==================================================================================================*/
-#if (RSDK_OSENV_SA)
+#if ((RSDK_OSENV_SA) || defined(__ZEPHYR__))
 //RSDK custom implementation of OAL services, as a workaround until deciding to use the OAL "sa" support
 
 static inline uintptr_t OAL_MapUserSpace(uint64_t offset, size_t size)
@@ -108,6 +108,7 @@ static inline int32_t OAL_UnmapUserSpace(uintptr_t addr, size_t size)
     UNUSED_ARG(size);
     return 0;
 }
+
 #endif
 
 #ifdef __cplusplus
