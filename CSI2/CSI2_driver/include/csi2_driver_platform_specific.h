@@ -21,6 +21,8 @@
 
 #if   defined(S32R45)
 #include "rsdk_S32R45.h"
+
+
 #else
 #error "Platform not defined, or incorrect definition."
 #endif
@@ -52,6 +54,12 @@ extern "C" {
                                                 //  on the clock lane currently.
 #define CSI2_CLKCS_HSRA_ON          1           // MIPICSI2_CLKCS register, HSRA field, Clock lane is receiving DDR clock.
 
+
+
+
+
+
+
 #define CSI2_LAN_CS_MARK        (1UL << 5u) // MIPICSI2_LANxCS register, DxULMA field, Data lane in Mark state.
 #define CSI2_LAN_CS_ULPA        (1UL << 4u) // MIPICSI2_LANxCS register, DxULPA field, Data lane ULPS active.
 #define CSI2_LAN_CS_STOP        (1UL << 3u) // MIPICSI2_LANxCS register, DxSTOP field, Data lane in stop state.
@@ -60,49 +68,56 @@ extern "C" {
                                             //  data being driven.
 #define CSI2_LAN_CS_RXVALH      (1UL << 0u) // MIPICSI2_LANxCS register, RXVALH field, Valid High Speed data on.
 
+
 #define CSI2_RESCS_CALIB_BIT    (1UL << 5u) // MIPICSI2_RESCS register, Calibration complete field
 #define CSI2_RESCS_NOCAL_BIT    (1UL << 0u) // MIPICSI2_RESCS register, NOCAL field, manually done calibration
 
-#define CSI2_RESCS_NOCAL_AUTO       0U      // request for autocalibration
-#define CSI2_RESCS_NOCAL_MAN        1U      // manual calibration
-#define CSI2_RESCS_CALCOM_COMPLETE  1U      // calibration complete
+#define CSI2_RESCS_NOCAL_AUTO       0U          // request for autocalibration
+#define CSI2_RESCS_NOCAL_MAN        1U          // manual calibration
+#define CSI2_RESCS_CALCOM_COMPLETE  1U          // calibration complete
 
-#define CSI2_SR_SOFRST_MASK     (1UL << 31u)    // MIPICSI2_SR register, SOFRST field, soft reset requested.
-#define CSI2_SR_GNSPR_MASK      (1UL << 11u)    // MIPICSI2_SR register, GNSPR field, No Generic Short Packet received.
-#define CSI2_CBUF0_ENA_MASK     (1UL << 8u)    	// Bit for enabling the buffer 0
+#define CSI2_SR_SOFRST_MASK         (1UL << 31u)    // MIPICSI2_SR register, SOFRST field, soft reset requested.
+#define CSI2_SR_GNSPR_MASK          (1UL << 11u)    // MIPICSI2_SR register, Generic Short Packet received.
+#define CSI2_CBUF0_ENA_MASK         (1UL << 8u)    	// Bit for enabling the buffer 0
 
-#define CSI2_ERRPPREG_INVID_BIT     0x20u   // MIPICSI2_ERRPPREG register, INVID field, Invalid data type detected.
-#define CSI2_ERRPPREG_CRCERR_BIT    0x10u   // MIPICSI2_ERRPPREG register, CRCERR field, CRC error.
-#define CSI2_ERRPPREG_ERFDAT_BIT    8u      // MIPICSI2_ERRPPREG register, ERFDAT field, Frame data error.
-#define CSI2_ERRPPREG_ERFSYN_BIT    4u      // MIPICSI2_ERRPPREG register, ERFSYN field, Frame data synchro error.
-#define CSI2_ERRPPREG_ECCTWO_BIT    2u      // MIPICSI2_ERRPPREG register, ECCTWO field, ECC double bit error.
-#define CSI2_ERRPPREG_ECCONE_BIT    1u      // MIPICSI2_ERRPPREG register, ECCONE field, ECC single bit error.
+#define CSI2_ERRPPREG_INVID_BIT     0x20u       // MIPICSI2_ERRPPREG register, INVID field, Invalid data type detected.
+#define CSI2_ERRPPREG_CRCERR_BIT    0x10u       // MIPICSI2_ERRPPREG register, CRCERR field, CRC error.
+#define CSI2_ERRPPREG_ERFDAT_BIT    8u          // MIPICSI2_ERRPPREG register, ERFDAT field, Frame data error.
+#define CSI2_ERRPPREG_ERFSYN_BIT    4u          // MIPICSI2_ERRPPREG register, ERFSYN field, Frame data synchro error.
+#define CSI2_ERRPPREG_ECCTWO_BIT    2u          // MIPICSI2_ERRPPREG register, ECCTWO field, ECC double bit error.
+#define CSI2_ERRPPREG_ECCONE_BIT    1u          // MIPICSI2_ERRPPREG register, ECCONE field, ECC single bit error.
 
-#define CSI2_ERRPHY_ERRSY_BIT       1u      // MIPICSI2_ERRPHY register, lane synchronization error
-#define CSI2_ERRPHY_NOSYN_BIT       2u      // MIPICSI2_ERRPHY register, no lane synchronization error
-#define CSI2_ERRPHY_ERRESC_BIT      4u      // MIPICSI2_ERRPHY register, lane escape sequence error
-#define CSI2_ERRPHY_ERRSYES_BIT     8u      // MIPICSI2_ERRPHY register, lane escape synchronization error
-#define CSI2_ERRPHY_ERRCTRL_BIT     0x10u   // MIPICSI2_ERRPHY register, lane control error
-#define CSI2_ERRPHY_LANE_SHIFT      5u      // MIPICSI2_ERRPHY register, shift between two consecutive lanes
+#define CSI2_ERRPHY_ERRSY_BIT       1u          // MIPICSI2_ERRPHY register, lane synchronization error
+#define CSI2_ERRPHY_NOSYN_BIT       2u          // MIPICSI2_ERRPHY register, no lane synchronization error
+#define CSI2_ERRPHY_ERRESC_BIT      4u          // MIPICSI2_ERRPHY register, lane escape sequence error
+#define CSI2_ERRPHY_ERRSYES_BIT     8u          // MIPICSI2_ERRPHY register, lane escape synchronization error
+#define CSI2_ERRPHY_ERRCTRL_BIT     0x10u       // MIPICSI2_ERRPHY register, lane control error
+#define CSI2_ERRPHY_LANE_SHIFT      5u          // MIPICSI2_ERRPHY register, shift between two consecutive lanes
 
-#define CSI2_RXEN_RXEN_DISABLED     0   // MIPICSI2_RXEN register, RXEN field, Rx disabled.
-#define CSI2_RXEN_RXEN_ENABLED      1   // MIPICSI2_RXEN register, RXEN field, Rx enabled.
+#define CSI2_RXEN_RXEN_DISABLED     0           // MIPICSI2_RXEN register, RXEN field, Rx disabled.
+#define CSI2_RXEN_RXEN_ENABLED      1           // MIPICSI2_RXEN register, RXEN field, Rx enabled.
 
-#define CSI2_INTRS_LINCNTERR_BIT    8u  // MIPICSI2_INTRS register, LINCNTERR field, no line count error.
-#define CSI2_INTRS_LINLENERR_BIT    4u  // MIPICSI2_INTRS register, LINLENERR bit
-#define CSI2_INTRS_FRAME_END_BIT    2u  // MIPICSI2_INTRS register, frame end bit
-#define CSI2_INTRS_FRAME_STR_BIT    1u  // MIPICSI2_INTRS register, frame start bit
+#define CSI2_INTRS_LINCNTERR_BIT    8u          // MIPICSI2_INTRS register, LINCNTERR field, no line count error.
+#define CSI2_INTRS_LINLENERR_BIT    4u          // MIPICSI2_INTRS register, LINLENERR bit
+#define CSI2_INTRS_FRAME_END_BIT    2u          // MIPICSI2_INTRS register, frame end bit
+#define CSI2_INTRS_FRAME_STR_BIT    1u          // MIPICSI2_INTRS register, frame start bit
 
-#define CSI2_INTERRUPT_ENABLE       1   // Activation of interrupt generation for the specific error.
-#define CSI2_INTERRUPT_DISABLE      0   // Disactivation of interrupt generation for the specific error.
-#define CSI2_CLEAR_ONE_BIT          1   // Clear one data bit in special register. */
+#define CSI2_INTERRUPT_ENABLE       1           // Activation of interrupt generation for the specific error.
+#define CSI2_INTERRUPT_DISABLE      0           // Disactivation of interrupt generation for the specific error.
+#define CSI2_CLEAR_ONE_BIT          1           // Clear one data bit in special register. */
 
-#define CSI2_ERROR_REPORTED         1   // General value to signal an error in interface register.
+#define CSI2_ERROR_REPORTED         1           // General value to signal an error in interface register.
 
 #define RSDK_CSI2_FLUSH_CNT_FREQ_LIMIT      200U    // the limit for flash_cnt limit (200MHz)
 #define RSDK_CSI2_LINE_STAT_LENGTH          80U     // the length of statistic data
 #define RSDK_CSI2_INVALID_UINT8             0xffu   // the biggest uint8_t
+
+
+
+
+
 #define RSDK_CSI2_MAX_WAIT_FOR_STOP         1200    // maximum time to wait for stop state [us]
+
 #define RSDK_CSI2_FIRST_BUF_LINE_NUM        1u      // the invalid value for the buffer line
 #define RSDK_CSI2_CHIRP_NOT_STARTED         0u      // value for first chirp line received
 
@@ -130,6 +145,8 @@ extern "C" {
 
 #if defined(S32R45) || defined(S32R41)
 #define MIPICSI2_REG_STRUCT MIPICSI2_tag
+
+
 #else
 #define MIPICSI2_REG_STRUCT CSI_tag
 #endif
@@ -151,6 +168,12 @@ typedef enum {
     CSI2_INTRS_MAX                              // masks limit
 }csi2IntrsBit_t;
 
+typedef enum {
+    CSI2_DATA_PATH_INTERNAL = 0u,               // internal path for Packet Processor
+    CSI2_DATA_PATH_EXTERNAL,                    // external path for Packet Processor
+    CSI2_DATA_PATH_MAX                          // data flow limit
+}csi2DataPath_t;
+
 /*==================================================================================================
  *                                STRUCTURES AND OTHER TYPEDEFS
  ==================================================================================================*/
@@ -160,12 +183,12 @@ typedef enum {
  *
  */
 typedef struct __attribute__((__packed__)) {
-    uint32_t channelSumScr;         // chirp channel sum, scrambled :
-                                    //  in memory (LSB+1)(LSB)(MSB)(MSB-1)
-                                    //  must be translated to (signed)(MSB,MSB-1,LSB+1,LSB)
-    int16_t channelMin;             // chirp channel min
-    int16_t channelMax;             // chirp channel max
-    uint16_t channelBitToggle;      // chirp channel bit toggle
+    uint32_t channelSumScr;             // chirp channel sum, scrambled :
+                                        //  in memory (LSB+1)(LSB)(MSB)(MSB-1)
+                                        //  must be translated to (signed)(MSB,MSB-1,LSB+1,LSB)
+    int16_t channelMin;                 // chirp channel min
+    int16_t channelMax;                 // chirp channel max
+    uint16_t channelBitToggle;          // chirp channel bit toggle
 }rsdkCsi2ChChirpStat_t;
 
 
@@ -175,12 +198,12 @@ typedef struct __attribute__((__packed__)) {
  *
  */
 typedef struct {
-    int64_t channelSum;             // chirp channel sum
-    int16_t channelMin;             // chirp channel min
-    int16_t channelMax;             // chirp channel max
-    uint16_t channelBitToggle;      // chirp channel bit toggle
-    int16_t channelDC;              // current channel DC offset
-    int16_t reqChannelDC;           // current channel DC offset
+    int64_t channelSum;                 // chirp channel sum
+    int16_t channelMin;                 // chirp channel min
+    int16_t channelMax;                 // chirp channel max
+    uint16_t channelBitToggle;          // chirp channel bit toggle
+    int16_t channelDC;                  // current channel DC offset
+    int16_t reqChannelDC;               // current channel DC offset
 }rsdkCsi2ChFrameStat_t;
 
 
@@ -221,6 +244,9 @@ typedef struct {
     rsdkCsi2VCDriverState_t    workingParamVC[RSDK_CSI2_MAX_VC];
     // MetaData working params
     rsdkCsi2MetaDataParams_t*  pMDParams[RSDK_CSI2_MAX_VC];
+
+
+
 }rsdkCsi2DriverParams_t;
 
 
@@ -230,9 +256,13 @@ typedef struct {
 
 // settings to be kept during the execution
 // only run-time necessary parameters are kept
-#if (defined(S32R294) || defined(S32R45) || defined(S32R41)) && (!defined(STRX))
+#if (defined(S32R294) || defined(S32R45) || defined(S32R41))
 extern rsdkCsi2DriverParams_t gCsi2Settings[RSDK_CSI2_MAX_UNITS];
 extern volatile struct MIPICSI2_REG_STRUCT *gpMipiCsi2Regs[RSDK_CSI2_MAX_UNITS];
+
+
+
+
 #else
 extern rsdkCsi2DriverParams_t gCsi2Settings;
 extern volatile struct MIPICSI2_REG_STRUCT *gpMipiCsi2Regs;
@@ -385,7 +415,11 @@ rsdkStatus_t Csi2PlatformGetLaneStatus(const rsdkCsi2UnitId_t unitId, const uint
  *
  */
 uint32_t Csi2PlatformGetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType, const uint32_t numChannels,
-                                          const uint32_t samplesPerChirp, const uint8_t autoStatistics);
+                                          const uint32_t samplesPerChirp, const uint8_t autoStatistics
+
+
+
+                                          );
 
 /**
  * @brief       The function return the current frames counter
@@ -399,7 +433,6 @@ uint32_t Csi2PlatformGetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataTyp
  */
 uint32_t Csi2PlatformGetFramesCounter(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId);
 
-#if defined(S32R45) || defined(S32R294) || defined(S32R41)
 /**
  * @brief       Get the real channels number of the VC..
  *
@@ -421,7 +454,7 @@ uint8_t Csi2PlatformGetChannelNum(const rsdkCsi2VCDriverState_t *pVCState);
  */
 void Csi2PlatformIncFramesCounter(const rsdkCsi2UnitId_t unitId, const uint32_t vcId);
 
-
+#if !defined(linux)
 /**
  * @brief       Procedure to change the callback for a specific interrupt
  * @details     The procedure set for the specified unit and interrupt ID a new callback pointer
@@ -437,6 +470,8 @@ void Csi2PlatformIncFramesCounter(const rsdkCsi2UnitId_t unitId, const uint32_t 
  */
 rsdkStatus_t    Csi2PlatformSetCallback(const rsdkCsi2UnitId_t unitId, const rsdkCsi2IrqId_t irqId,
         rsdkCsi2IsrCb_t pCallback);
+
+#endif
 
 
 /**
@@ -475,12 +510,12 @@ rsdkStatus_t Csi2GetFirstByteOffset(const rsdkCsi2UnitId_t unitId, const rsdkCsi
  */
 rsdkStatus_t Csi2GetFirstLinePos(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId, uint32_t *pFirstLine);
 
-#endif
 
 #ifdef __cplusplus
 }
 #endif
 
+// clang-format on
+
 #endif /*CSI2_DRIVER_PLATFORM_SPECIFIC_H*/
 
-// clang-format on

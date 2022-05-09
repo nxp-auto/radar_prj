@@ -15,6 +15,7 @@
 #include <linux/of_address.h>
 #include <linux/highmem.h>
 #include "rsdk_csi2_driver_module.h"
+#include "oal_timespec.h"
 #else
 #include <string.h>
 #include "rsdk_glue_timer_api.h"
@@ -27,10 +28,6 @@
 #include "rsdk_status.h"
 #include "csi2_driver_platform_specific.h"
 #include "csi2_driver_irq_management.h"
-
-#if defined(S32R45)
-#include "oal_timespec.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,31 +42,31 @@ extern "C" {
 /*==================================================================================================
  *                                       LOCAL MACROS
  ==================================================================================================*/
-#define CSI2_LOOP_CONSTANT 10  // constant for the local delay
+#define CSI2_LOOP_CONSTANT 10                           // constant for the local delay
 
-#define RSDK_CSI2_RX_FREQ_STEP 500u  // step for adjusting oscillator parameters
+#define RSDK_CSI2_RX_FREQ_STEP 500u                     // step for adjusting oscillator parameters
 
 // definitions for DPHY registry, not existing in the NXP header file,
 // but defined in the MIPI-CSI2 errata for manual calibration
-#define DPHY_CLKCALVAL_COMPS_OFFSET 0x09a0u           // offset toDPHY_CLKCALVAL_COMPS registry
-#define DPHY_DATALOFFSETCAL_VALUE0_OFFSET 0x0ba5u     // offset to DPHY_DATALOFFSETCAL_VALUE0 registry
-#define DPHY_DATALOFFSETCAL_VALUE1_OFFSET 0x0da5u     // offset to DPHY_DATALOFFSETCAL_VALUE1 registry
-#define DPHY_DATALOFFSETCAL_VALUE2_OFFSET 0x0fa5u     // offset to DPHY_DATALOFFSETCAL_VALUE2 registry
-#define DPHY_DATALOFFSETCAL_VALUE3_OFFSET 0x11a5u     // offset to DPHY_DATALOFFSETCAL_VALUE3 registry
-#define DPHY_TX_TERM_CAL_0_OFFSET 0x1520u             // offset to DPHY_TX_TERM_CAL_0 registry
-#define DPHY_TX_RDWR_TERM_CAL_0_OFFSET 0x080du        // offset to DPHY_TX_RDWR_TERM_CAL_0 registry
-#define DPHY_TX_RDWR_TERM_CAL_1_OFFSET 0x080eu        // offset to DPHY_TX_RDWR_TERM_CAL_1 registry
-#define DPHY_CLKOFFSETCAL_OVRRIDE_OFFSET 0x097fu      // offset to DPHY_CLKOFFSETCAL_OVRRIDE registry
-#define DPHY_CLKOFFSETCAL_OVRRIDEVAL_OFFSET 0x0980u   // offset to DPHY_CLKOFFSETCAL_OVRRIDEVAL registry
-#define DPHY_DATALOFFSETCAL_OVRVALUE0_OFFSET 0x0b80u  // offset to DPHY_DATALOFFSETCAL_OVRVALUE0 registry
-#define DPHY_DATALOFFSETCAL_OVRVALUE1_OFFSET 0x0d80u  // offset to DPHY_DATALOFFSETCAL_OVRVALUE1 registry
-#define DPHY_DATALOFFSETCAL_OVRVALUE2_OFFSET 0x0f80u  // offset to DPHY_DATALOFFSETCAL_OVRVALUE2 registry
-#define DPHY_DATALOFFSETCAL_OVRVALUE3_OFFSET 0x1180u  // offset to DPHY_DATALOFFSETCAL_OVRVALUE3 registry
-#define DPHY_DATAL0OFFSETCAL_OVRCNTRL_OFFSET 0x0b7fu  // offset to DPHY_DATAL0OFFSETCAL_OVRCNTRL registry
-#define DPHY_DATAL1OFFSETCAL_OVRCNTRL_OFFSET 0x0d7fu  // offset to DPHY_DATAL1OFFSETCAL_OVRCNTRL registry
-#define DPHY_DATAL2OFFSETCAL_OVRCNTRL_OFFSET 0x0f7fu  // offset to DPHY_DATAL2OFFSETCAL_OVRCNTRL registry
-#define DPHY_DATAL3OFFSETCAL_OVRCNTRL_OFFSET 0x117fu  // offset to DPHY_DATAL3OFFSETCAL_OVRCNTRL registry
-#define DPHY_RX_STARTUP_OVERRIDE_OFFSET 0x06e4u       // offset to DPHY_RX_STARTUP_OVERRIDE registry
+#define DPHY_CLKCALVAL_COMPS_OFFSET 0x09a0u             // offset toDPHY_CLKCALVAL_COMPS registry
+#define DPHY_DATALOFFSETCAL_VALUE0_OFFSET 0x0ba5u       // offset to DPHY_DATALOFFSETCAL_VALUE0 registry
+#define DPHY_DATALOFFSETCAL_VALUE1_OFFSET 0x0da5u       // offset to DPHY_DATALOFFSETCAL_VALUE1 registry
+#define DPHY_DATALOFFSETCAL_VALUE2_OFFSET 0x0fa5u       // offset to DPHY_DATALOFFSETCAL_VALUE2 registry
+#define DPHY_DATALOFFSETCAL_VALUE3_OFFSET 0x11a5u       // offset to DPHY_DATALOFFSETCAL_VALUE3 registry
+#define DPHY_TX_TERM_CAL_0_OFFSET 0x1520u               // offset to DPHY_TX_TERM_CAL_0 registry
+#define DPHY_TX_RDWR_TERM_CAL_0_OFFSET 0x080du          // offset to DPHY_TX_RDWR_TERM_CAL_0 registry
+#define DPHY_TX_RDWR_TERM_CAL_1_OFFSET 0x080eu          // offset to DPHY_TX_RDWR_TERM_CAL_1 registry
+#define DPHY_CLKOFFSETCAL_OVRRIDE_OFFSET 0x097fu        // offset to DPHY_CLKOFFSETCAL_OVRRIDE registry
+#define DPHY_CLKOFFSETCAL_OVRRIDEVAL_OFFSET 0x0980u     // offset to DPHY_CLKOFFSETCAL_OVRRIDEVAL registry
+#define DPHY_DATALOFFSETCAL_OVRVALUE0_OFFSET 0x0b80u    // offset to DPHY_DATALOFFSETCAL_OVRVALUE0 registry
+#define DPHY_DATALOFFSETCAL_OVRVALUE1_OFFSET 0x0d80u    // offset to DPHY_DATALOFFSETCAL_OVRVALUE1 registry
+#define DPHY_DATALOFFSETCAL_OVRVALUE2_OFFSET 0x0f80u    // offset to DPHY_DATALOFFSETCAL_OVRVALUE2 registry
+#define DPHY_DATALOFFSETCAL_OVRVALUE3_OFFSET 0x1180u    // offset to DPHY_DATALOFFSETCAL_OVRVALUE3 registry
+#define DPHY_DATAL0OFFSETCAL_OVRCNTRL_OFFSET 0x0b7fu    // offset to DPHY_DATAL0OFFSETCAL_OVRCNTRL registry
+#define DPHY_DATAL1OFFSETCAL_OVRCNTRL_OFFSET 0x0d7fu    // offset to DPHY_DATAL1OFFSETCAL_OVRCNTRL registry
+#define DPHY_DATAL2OFFSETCAL_OVRCNTRL_OFFSET 0x0f7fu    // offset to DPHY_DATAL2OFFSETCAL_OVRCNTRL registry
+#define DPHY_DATAL3OFFSETCAL_OVRCNTRL_OFFSET 0x117fu    // offset to DPHY_DATAL3OFFSETCAL_OVRCNTRL registry
+#define DPHY_RX_STARTUP_OVERRIDE_OFFSET 0x06e4u         // offset to DPHY_RX_STARTUP_OVERRIDE registry
 
 /*==================================================================================================
  *                                      LOCAL CONSTANTS
@@ -108,11 +105,31 @@ rsdkCsi2DriverParams_t gCsi2Settings[RSDK_CSI2_MAX_UNITS]
     __attribute__((section(".RSDK_CSI2_INTERNAL_MEMORY"))) 
 #endif
         = {
-    {.driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED, RSDK_CSI2_STAT_NO},
-    {.driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED, RSDK_CSI2_STAT_NO},
+    {
+        .driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED,
+        .pCallback         = {0},
+        .pMDParams         = {0},
+        .workingParamVC    = {{0}}
+    },
+    {
+        .driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED,
+        .pCallback         = {0},
+        .pMDParams         = {0},
+        .workingParamVC    = {{0}}
+    },
 #ifdef S32R45
-    {.driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED, RSDK_CSI2_STAT_NO},
-    {.driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED, RSDK_CSI2_STAT_NO}
+    {
+        .driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED,
+        .pCallback         = {0},
+        .pMDParams         = {0},
+        .workingParamVC    = {{0}}
+    },
+    {
+        .driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED,
+        .pCallback         = {0},
+        .pMDParams         = {0},
+        .workingParamVC    = {{0}}
+    },
 #endif
 };
 
@@ -144,10 +161,13 @@ static void Csi2WaitLoop(uint32_t loops);
 static void DfsTilt(void);
 // Get the corresponding bits number for the data type received
 static uint16_t Csi2GetDataTypeBits(const rsdkCsi2DataStreamType_t dataType);
-// Check the callback parameters
-static rsdkStatus_t Csi2CheckCbParam(const rsdkCsi2InitParams_t *pCsi2InitParam);
 // Check the base parameters : unitId, initialization structure pointer and lanes number
 static rsdkStatus_t Csi2CheckBaseParams(const rsdkCsi2UnitId_t unitId, const rsdkCsi2InitParams_t *pCsi2InitParam);
+
+#if !defined(linux)
+// Check the callback parameters
+static rsdkStatus_t Csi2CheckCbParam(const rsdkCsi2InitParams_t *pCsi2InitParam);
+#endif
 
 /*==================================================================================================
  *                                       LOCAL FUNCTIONS
@@ -213,11 +233,12 @@ static rsdkStatus_t Csi2CheckVCParam(const rsdkCsi2VCParams_t *pVC, uint8_t *pAu
     uint8_t      i;
     uint32_t     bufLen;
 
-    rez = RSDK_SUCCESS;  // default SUCCESS
+    rez = RSDK_SUCCESS;                             // default SUCCESS
     if (pVC != NULL)
-    {  // check only for valid/defined VC
-        bufLen = Csi2PlatformGetBufferRealLineLen(pVC->streamDataType, pVC->channelsNum, pVC->expectedNumSamples, 0u);
-        if (bufLen == 0u)
+    {                                               // check only for valid/defined VC
+        bufLen = Csi2PlatformGetBufferRealLineLen(pVC->streamDataType, (uint32_t)pVC->channelsNum,
+                (uint32_t)pVC->expectedNumSamples, 0u);
+        if ((bufLen == 0u) && (((uint32_t)pVC->streamDataType * (uint32_t)pVC->expectedNumSamples) != 0u))
         {
             rez = RSDK_CSI2_DRV_INVALID_DATA_TYPE;
         }
@@ -226,7 +247,7 @@ static rsdkStatus_t Csi2CheckVCParam(const rsdkCsi2VCParams_t *pVC, uint8_t *pAu
             addrAlign = (uintptr_t)((uint8_t *)pVC->pBufData);
             addrAlign &= 0xfu;
             if ((pVC->outputDataMode & RSDK_CSI2_VC_BUF_FIFTH_CH_ON) != 0u)
-            {  // check for correct auxiliary data setup, rez can be SUCCESS here
+            {                                       // check for correct auxiliary data setup, rez can be SUCCESS here
                 rez = Csi2CheckAuxiliaryMode(pVC);
             }
             if (pVC->expectedNumSamples == (uint16_t)0)
@@ -266,8 +287,11 @@ static rsdkStatus_t Csi2CheckVCParam(const rsdkCsi2VCParams_t *pVC, uint8_t *pAu
             {
                 rez = RSDK_CSI2_DRV_INVALID_EVT_REQ;
             }
+        } // if ((bufLen == 0u) && (((...
+        if(rez == RSDK_SUCCESS)
+        {
             for (i = 0; i < pVC->channelsNum; i++)
-            {  // check for all channels
+            {                                       // check for all channels
                 if (pVC->offsetCompReal[i] == RSDK_CSI2_OFFSET_AUTOCOMPUTE)
                 {
                     *pAutoStat |= 1u;
@@ -275,17 +299,18 @@ static rsdkStatus_t Csi2CheckVCParam(const rsdkCsi2VCParams_t *pVC, uint8_t *pAu
                 }
                 if (((pVC->outputDataMode & RSDK_CSI2_VC_BUF_COMPLEX_DATA) != 0u) &&
                     (pVC->offsetCompImg[i] == RSDK_CSI2_OFFSET_AUTOCOMPUTE))
-                {  // complex data, so check for complex part too
+                {                                   // complex data, so check for complex part too
                     *pAutoStat |= 1u;
                     break;
                 }
             }
-        } // if ((uint8_t) pVC->streamDataType >= (uint8_t) RSDK_CSI2_DATA_TYPE_LIMIT)
+        }
     } // if (pVC != 0)
     return rez;
 }
 /* Csi2CheckVCParam *************************/
 
+#if !defined(linux)
 /*================================================================================================*/
 /*
  * @brief       The function check the CSI2 specific callback parameters
@@ -305,7 +330,7 @@ static rsdkStatus_t Csi2CheckCbParam(const rsdkCsi2InitParams_t *pCsi2InitParam)
     rez = RSDK_SUCCESS;
     // check for callbacks
     if (pCsi2InitParam->pCallback[(uint32_t)RSDK_CSI2_RX_ERR_IRQ_ID] == NULL)
-    {  // at least RxErr callback must be specified
+    {                                               // at least RxErr callback must be specified
         rez = RSDK_CSI2_DRV_NULL_ERR_CB_PTR;
     }
 
@@ -317,6 +342,8 @@ static rsdkStatus_t Csi2CheckCbParam(const rsdkCsi2InitParams_t *pCsi2InitParam)
     return rez;
 }
 /* Csi2CheckCbParam *************************/
+#endif
+
 
 /*================================================================================================*/
 /*
@@ -422,9 +449,9 @@ static rsdkStatus_t Csi2PlatformCheckInitParams(const rsdkCsi2UnitId_t      unit
         for (i = (uint32_t)RSDK_CSI2_LANE_0; i <= pCsi2InitParam->numLanesRx; i++)
         {
             ref |= ((uint8_t)1 << (uint8_t)pCsi2InitParam->lanesMapRx[i]);
-        }           // for
-        t = 0xffu;  // total good channels
-        mask = 1;   // test mask
+        } // for
+        t = 0xffu;                  // total good channels
+        mask = 1;                   // test mask
         for (i = (uint32_t)RSDK_CSI2_LANE_0; i < (uint32_t)RSDK_CSI2_MAX_LANE; i++)
         {
             if ((ref & mask) != 0u)
@@ -435,12 +462,12 @@ static rsdkStatus_t Csi2PlatformCheckInitParams(const rsdkCsi2UnitId_t      unit
         }
 
         if (t != pCsi2InitParam->numLanesRx)
-        {  // wrong configuration for receiving lanes swap
+        {                           // wrong configuration for receiving lanes swap
             rez = RSDK_CSI2_DRV_INVALID_RX_SWAP;
         }
     }
     if (rez == RSDK_SUCCESS)
-    {  // good configuration for lanes swap
+    {                               // good configuration for lanes swap
         if ((pCsi2InitParam->txClkFreq < (uint32_t)RSDK_CSI2_MIN_TX_FREQ) ||
             (pCsi2InitParam->txClkFreq > (uint32_t)RSDK_CSI2_MAX_TX_FREQ) ||
             (pCsi2InitParam->rxClkFreq < (uint32_t)RSDK_CSI2_MIN_RX_FREQ) ||
@@ -456,7 +483,7 @@ static rsdkStatus_t Csi2PlatformCheckInitParams(const rsdkCsi2UnitId_t      unit
             {
                 rez = Csi2CheckVCParam(pCsi2InitParam->pVCconfig[i], &autoDC);
                 if (rez == RSDK_SUCCESS)
-                {  // check for auxiliary data only if successful before
+                {                   // check for auxiliary data only if successful before
                     rez = Csi2CheckVCParam(pCsi2InitParam->pAuxConfig[i], &autoDC);
                 }
                 if ((rez == RSDK_SUCCESS) &&
@@ -464,7 +491,7 @@ static rsdkStatus_t Csi2PlatformCheckInitParams(const rsdkCsi2UnitId_t      unit
                       (pCsi2InitParam->pVCconfig[i]->streamDataType > RSDK_CSI2_DATA_TYPE_USR7)) ||
                      ((pCsi2InitParam->pAuxConfig[i] != NULL) &&
                       (pCsi2InitParam->pAuxConfig[i]->streamDataType < RSDK_CSI2_DATA_TYPE_AUX_0_NO_DROP))))
-                {  // check for correct stream data type on normal/auxiliary flow
+                {                   // check for correct stream data type on normal/auxiliary flow
                     rez = RSDK_CSI2_DRV_INVALID_DATA_TYPE;
                 }
 
@@ -481,7 +508,7 @@ static rsdkStatus_t Csi2PlatformCheckInitParams(const rsdkCsi2UnitId_t      unit
                 {
                     break;
                 }
-            }  // for
+            } // for
             if (rez == RSDK_SUCCESS)
             {
                 // check for autoDC status
@@ -491,12 +518,14 @@ static rsdkStatus_t Csi2PlatformCheckInitParams(const rsdkCsi2UnitId_t      unit
                     rez = RSDK_CSI2_DRV_INVALID_DC_PARAMS;
                 }
             }
+#if !defined(linux)
             if (rez == RSDK_SUCCESS)
             {
                 rez = Csi2CheckCbParam(pCsi2InitParam);
-            }  // if(rez == RSDK_SUCCESS)
-        }      // if((pStart->txClkFreq < RSDK_CSI2_MIN_TX_CLK_FREQ) ||...
-    }          // if (t != pStart->numLanesRx)
+            } // if(rez == RSDK_SUCCESS)
+#endif
+        } // if((pStart->txClkFreq < RSDK_CSI2_MIN_TX_CLK_FREQ) ||...
+    } // if (t != pStart->numLanesRx)
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_CHK_INIT_PARAM, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
@@ -620,23 +649,23 @@ static void Csi2UnitConfigVCSpec(volatile struct MIPICSI2_REG_STRUCT *pRegs, con
     if (bufNr < (uint32_t)RSDK_CSI2_MAX_VC)
     {
         if ((pVCparams->outputDataMode & (uint16_t)RSDK_CSI2_VC_BUF_COMPLEX_DATA) != (uint16_t)0)
-        {                                                 // complex data, so double number of channels
-            for (i = 0; i < pVCparams->channelsNum; i++)  // for each defined channel
+        {                                                   // complex data, so double number of channels
+            for (i = 0; i < pVCparams->channelsNum; i++)    // for each defined channel
             {
                 intDC = ((uint32_t)pVCparams->offsetCompReal[i] & (uint32_t)0xffffu);
                 if (intDC == (uint32_t)RSDK_CSI2_OFFSET_AUTOCOMPUTE)
-                {  // a kind of autocompute
+                {                                           // a kind of autocompute
                     valDC = (uint32_t)0;
                 }
                 else
                 {
-                    valDC = intDC & 0xfffu;    // keep the new offset value for first channel
-                }                   // if(intDC == RSDK_CSI2_OFFSET_AUTOCOMPUTE)
+                    valDC = intDC & 0xfffu;                 // keep the new offset value for first channel
+                }
                 intDC = (uint32_t)pVCparams->offsetCompImg[i];
                 if (intDC != (uint32_t)RSDK_CSI2_OFFSET_AUTOCOMPUTE)
                 {
-                    valDC |= (intDC << 16u);  // keep the offset value, on highest bits
-                }                             // if(intDC == RSDK_CSI2_OFFSET_AUTOCOMPUTE)
+                    valDC |= (intDC << 16u);                // keep the offset value, on highest bits
+                }
                 // set the offset compensations when the data is complex
                 *(pBufRegistry) = (valDC << 4u);    // adjust the value from 12 bits to the real output
                 pBufRegistry++;
@@ -646,22 +675,22 @@ static void Csi2UnitConfigVCSpec(volatile struct MIPICSI2_REG_STRUCT *pRegs, con
         {
             // set the offset compensations when the data is only real
             valDC = 0u;
-            for (i = 0; i < pVCparams->channelsNum; i++)  // for each defined channel
+            for (i = 0; i < pVCparams->channelsNum; i++)    // for each defined channel
             {
                 intDC = ((uint32_t)pVCparams->offsetCompReal[i] & (uint32_t)0xffff);
                 if (intDC != (uint32_t)RSDK_CSI2_OFFSET_AUTOCOMPUTE)
                 {
-                    valDC |= intDC << (16u * (i & 1u)); // keep the new offset value, at right position
-                }                                       // if(intDC == (uint32_t)RSDK_CSI2_OFFSET_AUTOCOMPUTE)
-                *pBufRegistry = (valDC << 4u);          // adjust from 12 bits
+                    valDC |= intDC << (16u * (i & 1u));     // keep the new offset value, at right position
+                }
+                *pBufRegistry = (valDC << 4u);              // adjust from 12 bits
                 if ((i & 1u) != 0u)
                 {
-                    pBufRegistry++;  // after even index go to next value
+                    pBufRegistry++;                         // after even index go to next value
                     valDC = 0u;
                 }
-            }  // for
-        }      // if((pVCparams->outputDataMode & RSDK_CSI2_VC_BUF_COMPLEX_DATA) != 0)
-    }
+            }
+        } // if((pVCparams->outputDataMode & RSDK_CSI2_VC_BUF_COMPLEX_DATA) != 0)
+    } // if (bufNr < (uint32_t)RSDK_CSI2_MAX_VC)
 }
 /* Csi2UnitConfigVCSpec *************************/
 
@@ -679,7 +708,7 @@ static void Csi2UnitConfigVCSpec(volatile struct MIPICSI2_REG_STRUCT *pRegs, con
  * @return      RSDK_SUCCESS   Successful initialization
  *              RSDK_CSI2_WRG_START_PARAMS       Wrong unit id
  *
- * @NOTE        Assuming any VC is receiving only one data_type.
+ * @NOTE        Assuming : pVCparams not NULL and any VC is receiving only one data_type.
  *
  */
 static rsdkStatus_t Csi2ConfigVC(const rsdkCsi2UnitId_t csi2UnitNum, const uint8_t vcId,
@@ -692,95 +721,87 @@ static rsdkStatus_t Csi2ConfigVC(const rsdkCsi2UnitId_t csi2UnitNum, const uint8
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_CFG_VC, (uint32_t)CSI2_SEQ_BEGIN);
     rez = RSDK_SUCCESS;
-    if (pVCparams != NULL)
-    {  // valid VC pointer, so initialize
-        if ((pVCparams->channelsNum <= (uint8_t)RSDK_CSI2_MAX_CHANNEL) && (pVCparams->channelsNum > (uint8_t)0))
-        {
-            // compute the necessary buffer space, according to chirp values and other requirements
-            // chirp length in bytes
-            lenChirpData = pVCparams->expectedNumSamples * Csi2GetDataTypeBits(pVCparams->streamDataType) *
-                           (uint16_t)pVCparams->channelsNum / (uint16_t)8;
-            // buffer length in bytes, without statistics
-            lenBufData = (uint16_t)Csi2PlatformGetBufferRealLineLen(pVCparams->streamDataType, pVCparams->channelsNum,
-                                                                    pVCparams->expectedNumSamples, 0u);
-            if ((pVCparams->outputDataMode & RSDK_CSI2_VC_BUF_FIFTH_CH_ON) != 0u)
-            {
-                if (((pVCparams->outputDataMode & ((uint32_t)RSDK_CSI2_VC_BUF_5TH_CH_MODE_1)) ==
-                     RSDK_CSI2_VC_BUF_5TH_CH_MODE_1))
-                {  // correct chirp length for auxiliary mode_1
-                    lenChirpData = (lenChirpData * 3u) / 2u;
-                    pRegs->RX[vcId & RSDK_CSI2_MAX_VC_MASK].INPLINELEN_CONFIG.R =
-                        lenChirpData;  // adjust the chirp length for base buffer
-                }
-                else
-                {
-                    lenChirpData *= 2u;  // chirp length for all auxiliary data mode 0
-                }
-            }
-
-            val1 = 1u;
-            val2 = CSI2_CBUF0_ENA_MASK;
-            if (vcId < (uint8_t)RSDK_CSI2_MAX_VC)
-            {
-                pRegs->RX_VCENABLE.R |= (val1 + val2) << vcId;  // enable the VC and the buffer
-                pDriverStateVC = &gCsi2Settings[(uint8_t)csi2UnitNum].workingParamVC[vcId];
-                lenBufData = RSDK_CSI2_UPPER_ALIGN_TO_(lenBufData, 16u);  // align the lengths to 16 bytes
-                if (((gCsi2Settings[(uint8_t)csi2UnitNum].statisticsFlag != RSDK_CSI2_STAT_NO) &&
-                     ((lenBufData + RSDK_CSI2_LINE_STAT_LENGTH) <= pVCparams->bufLineLen)) ||
-                    ((gCsi2Settings[(uint8_t)csi2UnitNum].statisticsFlag == RSDK_CSI2_STAT_NO) &&
-                     (lenBufData <= pVCparams->bufLineLen)))
-                {
-                    // save the working params for future usage
-                    pDriverStateVC->outputDataMode = pVCparams->outputDataMode;
-                    // wrong buffer line number at start
-                    pDriverStateVC->lastReceivedBufLine = RSDK_CSI2_CHIRP_NOT_STARTED;
-                    pDriverStateVC->lastReceivedChirpLine = pVCparams->expectedNumLines;
-                    cfg2 = (uint32_t)Csi2PlatformGetChannelNum(pDriverStateVC);  // the real number for channels
-                    cfg2 = (val1 << cfg2) - ((uint32_t)1);                       // mask for enable the real channels
-                    pRegs->RX_CBUF_CHNLENBL[vcId].R = cfg2;                      // the receiving channels
-                    // no 5th channel influence
-                    // check for data translation and add SWAPRAWDATA, even it was asked or not explicitly
-                    cfg2 = (pVCparams->streamDataType == RSDK_CSI2_DATA_TYPE_16_FROM_8) ? 
-                                                            (uint32_t)RSDK_CSI2_VC_BUF_SWAP_RAW8 : 0u;
-                    // the output data mode
-                    pRegs->RX_CBUF_OUTCFG[vcId].R = (cfg2 | (uint32_t)pVCparams->outputDataMode) >> 4u;  
-                }
-                else
-                {
-                    rez = RSDK_CSI2_DRV_TOO_SMALL_BUFFER;  	// the buffer line length is not enough
-                }
-            }
-            else
-            {
-                pRegs->RX_VCENABLE.R |= val2 << vcId;  		// enable the the buffer
-            }
-            if ((rez == RSDK_SUCCESS) && (vcId < (uint8_t)RSDK_CSI2_MAX_VC))
-            {
-                for (i = (uint32_t)RSDK_CSI2_CHANNEL_A; i < (uint32_t)RSDK_CSI2_MAX_CHANNEL; i++)
-                {
-                    pDriverStateVC->statDC[i].channelSum = 0;  // init of VC struct for DC statistics
-                    pDriverStateVC->statDC[i].channelBitToggle = (uint16_t)0;
-                    pDriverStateVC->statDC[i].channelMax =
-                        ((pDriverStateVC->outputDataMode & (uint32_t)RSDK_CSI2_VC_BUF_FLIP_SIGN) == 0u) ?
-                            (int16_t)RSDK_CSI2_MIN_VAL_SIGNED :
-                            (int16_t)RSDK_CSI2_MIN_VAL_UNSIGNED;
-                    pDriverStateVC->statDC[i].channelMin =
-                        ((pDriverStateVC->outputDataMode & (uint32_t)RSDK_CSI2_VC_BUF_FLIP_SIGN) == 0u) ?
-                            (int16_t)RSDK_CSI2_MAX_VAL_SIGNED :
-                            (int16_t)RSDK_CSI2_MAX_VAL_UNSIGNED;
-                }  // for
-            }
-            if(rez == RSDK_SUCCESS)
-            {
-                // configure each VC with the very specific params
-                Csi2UnitConfigVCSpec(pRegs, pVCparams, vcId, lenChirpData, lenBufData, pVCparams->bufLineLen);
-            }
+    // compute the necessary buffer space, according to chirp values and other requirements
+    // chirp length in bytes
+    lenChirpData = pVCparams->expectedNumSamples * Csi2GetDataTypeBits(pVCparams->streamDataType) *
+                   (uint16_t)pVCparams->channelsNum / (uint16_t)8;
+    // buffer length in bytes, without statistics
+    lenBufData = (uint16_t)Csi2PlatformGetBufferRealLineLen(pVCparams->streamDataType, pVCparams->channelsNum,
+                                                            pVCparams->expectedNumSamples, 0u);
+    lenBufData = RSDK_CSI2_UPPER_ALIGN_TO_(lenBufData, 16u);    // align the lengths to 16 bytes
+    if ((pVCparams->outputDataMode & RSDK_CSI2_VC_BUF_FIFTH_CH_ON) != 0u)
+    {
+        if (((pVCparams->outputDataMode & ((uint32_t)RSDK_CSI2_VC_BUF_5TH_CH_MODE_1)) ==
+             RSDK_CSI2_VC_BUF_5TH_CH_MODE_1))
+        {                                                       // correct chirp length for auxiliary mode_1
+            lenChirpData = (lenChirpData * 3u) / 2u;
         }
         else
         {
-            rez = RSDK_CSI2_DRV_INVALID_CHANNEL_NR;  // error, wrong antenna number
-        }  // if((pVCparams->channelsNum <= RSDK_CSI2_MAX_CHANNEL_NR) && (pVCparams->channelsNum > 0))
-    }      // if(pVCparams != NULL)
+            lenChirpData *= 2u;                                 // chirp length for all auxiliary data mode 0
+        }
+    }
+
+    val1 = 1u;
+    val2 = CSI2_CBUF0_ENA_MASK;
+    pRegs->RX_VCENABLE.R |= val1 << (vcId & ((uint8_t)RSDK_CSI2_MAX_VC - 1u));    // enable the VC
+    pRegs->RX_VCENABLE.R |= val2 << vcId;                       // enable the buffer
+    if (vcId < (uint8_t)RSDK_CSI2_MAX_VC)
+    {           // radar data VC
+        pDriverStateVC = &gCsi2Settings[(uint8_t)csi2UnitNum].workingParamVC[vcId];
+        if (((gCsi2Settings[(uint8_t)csi2UnitNum].statisticsFlag != RSDK_CSI2_STAT_NO) &&
+             ((lenBufData + RSDK_CSI2_LINE_STAT_LENGTH) <= pVCparams->bufLineLen)) ||
+            ((gCsi2Settings[(uint8_t)csi2UnitNum].statisticsFlag == RSDK_CSI2_STAT_NO) &&
+             (lenBufData <= pVCparams->bufLineLen)))
+        {
+            // save the working params for future usage
+            pDriverStateVC->outputDataMode = pVCparams->outputDataMode;
+            // wrong buffer line number at start
+            pDriverStateVC->lastReceivedBufLine = RSDK_CSI2_CHIRP_NOT_STARTED;
+            pDriverStateVC->lastReceivedChirpLine = pVCparams->expectedNumLines;
+            cfg2 = (uint32_t)Csi2PlatformGetChannelNum(pDriverStateVC);  // the real number for channels
+            cfg2 = (val1 << cfg2) - ((uint32_t)1);                       // mask for enable the real channels
+            pRegs->RX_CBUF_CHNLENBL[vcId].R = cfg2;                      // the receiving channels
+            // no 5th channel influence
+            // check for data translation and add SWAPRAWDATA, even it was asked or not explicitly
+            cfg2 = (pVCparams->streamDataType == RSDK_CSI2_DATA_TYPE_16_FROM_8) ?
+                                                    (uint32_t)RSDK_CSI2_VC_BUF_SWAP_RAW8 : 0u;
+            // the output data mode
+            pRegs->RX_CBUF_OUTCFG[vcId].R = (cfg2 | (uint32_t)pVCparams->outputDataMode) >> 4u;
+        }
+        else
+        {
+            rez = RSDK_CSI2_DRV_TOO_SMALL_BUFFER;  	// the buffer line length is not enough
+        }
+    }
+    else
+    {           // auxiliary data
+        if(lenBufData > pVCparams->bufLineLen)
+        {
+            rez = RSDK_CSI2_DRV_TOO_SMALL_BUFFER;   // the buffer line length is not enough
+        }
+    }
+    if ((rez == RSDK_SUCCESS) && (vcId < (uint8_t)RSDK_CSI2_MAX_VC))
+    {
+        for (i = (uint32_t)RSDK_CSI2_CHANNEL_A; i < (uint32_t)RSDK_CSI2_MAX_CHANNEL; i++)
+        {
+            pDriverStateVC->statDC[i].channelSum = 0;  // init of VC struct for DC statistics
+            pDriverStateVC->statDC[i].channelBitToggle = (uint16_t)0;
+            pDriverStateVC->statDC[i].channelMax =
+                ((pDriverStateVC->outputDataMode & (uint32_t)RSDK_CSI2_VC_BUF_FLIP_SIGN) == 0u) ?
+                    (int16_t)RSDK_CSI2_MIN_VAL_SIGNED :
+                    (int16_t)RSDK_CSI2_MIN_VAL_UNSIGNED;
+            pDriverStateVC->statDC[i].channelMin =
+                ((pDriverStateVC->outputDataMode & (uint32_t)RSDK_CSI2_VC_BUF_FLIP_SIGN) == 0u) ?
+                    (int16_t)RSDK_CSI2_MAX_VAL_SIGNED :
+                    (int16_t)RSDK_CSI2_MAX_VAL_UNSIGNED;
+        }  // for
+    }
+    if(rez == RSDK_SUCCESS)
+    {
+        // configure each VC with the very specific params
+        Csi2UnitConfigVCSpec(pRegs, pVCparams, vcId, lenChirpData, lenBufData, pVCparams->bufLineLen);
+    }
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_CFG_VC, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
@@ -948,29 +969,27 @@ static rsdkStatus_t Csi2InitAllVcAux(const rsdkCsi2UnitId_t csi2UnitNum, volatil
         {
             // virtual channel real configuration
             rez = Csi2ConfigVC(csi2UnitNum, (uint8_t)i, pRegs, pParams->pVCconfig[i]);
-            if (rez != RSDK_SUCCESS)
+        }
+        if(rez == RSDK_SUCCESS)
+        {
+            // check for auxiliary data buffer
+            val = 0u;
+            if (pParams->pVCconfig[i] != NULL)
             {
-                break;  // error in VC initialization, so stop here and report the error
+                val = (uint32_t)pParams->pVCconfig[i]->outputDataMode;
+                val &= RSDK_CSI2_VC_BUF_FIFTH_CH_ON;
+            }
+            if ((val != 0u) && (pParams->pAuxConfig[i] != NULL))
+            {
+                rez = Csi2ConfigVC(csi2UnitNum, (uint8_t)i + (uint8_t)RSDK_CSI2_MAX_VC, pRegs, pParams->pAuxConfig[i]);
             }
         }
-        // check for auxiliary data buffer
-        val = 0u;
-        if (pParams->pVCconfig[i] != NULL)
+        if (rez == RSDK_SUCCESS)
         {
-            val = (uint32_t)pParams->pVCconfig[i]->outputDataMode;
-            val &= RSDK_CSI2_VC_BUF_FIFTH_CH_ON;
-        }
-        if ((val != 0u) && (pParams->pAuxConfig[i] != NULL))
-        {
-            rez = Csi2ConfigVC(csi2UnitNum, (uint8_t)i + (uint8_t)RSDK_CSI2_MAX_VC, pRegs, pParams->pAuxConfig[i]);
-        }
-        if (rez != RSDK_SUCCESS)
-        {
-            break;                                  // error in VC initialization, so stop here and report the error
-        }
-        if(pParams->pMetaData[i] != NULL)
-        {   // metadata channel defined
-            rez = Csi2ConfigMD((uint8_t)i, pRegs, pParams->pMetaData[i]);
+            if(pParams->pMetaData[i] != NULL)
+            {   // metadata channel defined
+                rez = Csi2ConfigMD((uint8_t)i, pRegs, pParams->pMetaData[i]);
+            }
         }
         if (rez != RSDK_SUCCESS)
         {
@@ -993,7 +1012,7 @@ static rsdkStatus_t Csi2InitAllVcAux(const rsdkCsi2UnitId_t csi2UnitNum, volatil
  *              RSDK_CSI2_INIT_ERROR       Init error occurred
  *
  */
-static rsdkStatus_t Csi2WaitForStopState(volatile struct MIPICSI2_REG_STRUCT *pRegs, const uint32_t maxLane)
+static rsdkStatus_t Csi2WaitForStopState(const volatile struct MIPICSI2_REG_STRUCT *pRegs, const uint32_t maxLane)
 {
     rsdkStatus_t    rez = RSDK_SUCCESS;
     uint32_t        i, j, stp;
@@ -1008,28 +1027,30 @@ static rsdkStatus_t Csi2WaitForStopState(volatile struct MIPICSI2_REG_STRUCT *pR
         {
             stp &= pRegs->RX_LANCS[j].B.DSTOP;
         }
-        if(stp != 0u)
+        if(stp == 0u)
         {
-            break;              // in this case all lanes are in STOP state
-        }
 
 
 
-
-
-
-
-
+    #if (defined(S32R294)) || (defined(S32R45) && !defined(linux))
+            // wait 1 us, for S32R294
+            // STM must be init before, by the application, like using RsdkSTMInit
+            if(RsdkGlueTimerDelayUs(1u) != GLUE_TIMER_SUCCESS)
+    #else
             // wait 1us, for S32R45
             if(OAL_nsleep(1000u) != 0u)
+    #endif
+            {
+                rez = RSDK_CSI2_DRV_TIMER_ERROR;
+            }
 
+        }
+        if((stp != 0u) || (rez != RSDK_SUCCESS))
         {
-            rez = RSDK_CSI2_DRV_TIMER_ERROR;
             break;
         }
-
     }
-    if(stp == 0u)
+    if((stp == 0u) && (rez == RSDK_SUCCESS))
     {
         rez = RSDK_CSI2_DRV_CALIBRATION_TIMEOUT;    // time-out for STOP state
     }
@@ -1327,11 +1348,13 @@ static rsdkStatus_t Csi2ModuleInit(const rsdkCsi2UnitId_t csi2UnitNum, const rsd
                 rez = Csi2InitUIrq(csi2UnitNum, pRegs, pParams);
                 if (rez == RSDK_SUCCESS)
                 {
-                    pDriverState->driverState = CSI2_DRIVER_STATE_ON;  // initialized
+                    pDriverState->driverState = CSI2_DRIVER_STATE_ON;   // initialized
                 }
 
                 // step 27 - Clear FORCERXMODE
-                pRegs->TURNCFG.R = 0u;
+                val = pRegs->TURNCFG.R;
+                val &= 0xffffffe1u;                                     // reset the FORCERXMODEx bits
+                pRegs->TURNCFG.R = val;
 
                 // at this moment the interface is initialized
             } // if (rez == RSDK_SUCCESS)
@@ -1772,6 +1795,7 @@ rsdkStatus_t Csi2PlatformModuleInit(const rsdkCsi2UnitId_t unitId, const rsdkCsi
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_INIT, (uint32_t)CSI2_SEQ_BEGIN);
     //Check the parameters
+    
     rez = Csi2PlatformCheckInitParams(unitId, pCsi2InitParam);
     if (rez == RSDK_SUCCESS)
     {  // correct parameters, continue
@@ -2536,6 +2560,7 @@ uint32_t Csi2PlatformGetFramesCounter(const rsdkCsi2UnitId_t unitId, const rsdkC
 
 
 
+#if !defined(linux)
 /*================================================================================================*/
 /**
  * @brief       Procedure to change the callback for a specific interrupt
@@ -2589,6 +2614,7 @@ rsdkStatus_t    Csi2PlatformSetCallback(const rsdkCsi2UnitId_t unitId, const rsd
 }
 /* Csi2PlatformSetCallback *************************/
 
+#endif // #if !defined(linux)
 
 // clang-format on
 

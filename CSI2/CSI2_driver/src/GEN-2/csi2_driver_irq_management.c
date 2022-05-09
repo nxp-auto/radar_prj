@@ -157,46 +157,12 @@ static void Csi2IrqHandlerEvents3(
 );
 #endif
 
-// Individual irq unit handlers for Tx
-static void Csi2IrqHandlerTx0(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-);
-static void Csi2IrqHandlerTx1(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-);
-#ifdef S32R45
-static void Csi2IrqHandlerTx2(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-);
-static void Csi2IrqHandlerTx3(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-);
-#endif
-
 #endif  // #ifndef linux
 
 // prototypes for each available irq initialization
 static rsdkStatus_t Csi2InitPathIrq(const rsdkCsi2UnitId_t iUnit, volatile struct MIPICSI2_REG_STRUCT *pRegs,
                                     const rsdkCsi2InitParams_t *pParams);
 static rsdkStatus_t Csi2InitRxIrq(const rsdkCsi2UnitId_t iUnit, volatile struct MIPICSI2_REG_STRUCT *pRegs,
-                                  const rsdkCsi2InitParams_t *pParams);
-static rsdkStatus_t Csi2InitTxIrq(const rsdkCsi2UnitId_t iUnit, volatile struct MIPICSI2_REG_STRUCT *pRegs,
                                   const rsdkCsi2InitParams_t *pParams);
 static rsdkStatus_t Csi2InitEventIrq(const rsdkCsi2UnitId_t iUnit, volatile struct MIPICSI2_REG_STRUCT *pRegs,
                                      const rsdkCsi2InitParams_t *pParams);
@@ -213,14 +179,14 @@ static  rsdkIrqHandler_t    sgIrqHandlers[RSDK_CSI2_MAX_UNITS][RSDK_CSI2_MAX_IRQ
 #endif
         = {
         {// unit 1 handlers
-         Csi2IrqHandlerRxErr0, Csi2IrqHandlerPathErr0, Csi2IrqHandlerEvents0, Csi2IrqHandlerTx0},
+         Csi2IrqHandlerRxErr0, Csi2IrqHandlerPathErr0, Csi2IrqHandlerEvents0},
         {// unit 2 handlers
-         Csi2IrqHandlerRxErr1, Csi2IrqHandlerPathErr1, Csi2IrqHandlerEvents1, Csi2IrqHandlerTx1},
+         Csi2IrqHandlerRxErr1, Csi2IrqHandlerPathErr1, Csi2IrqHandlerEvents1},
 #ifdef S32R45
         {// unit 3 handlers
-         Csi2IrqHandlerRxErr2, Csi2IrqHandlerPathErr2, Csi2IrqHandlerEvents2, Csi2IrqHandlerTx2},
+         Csi2IrqHandlerRxErr2, Csi2IrqHandlerPathErr2, Csi2IrqHandlerEvents2},
         {// unit 4 handlers
-         Csi2IrqHandlerRxErr3, Csi2IrqHandlerPathErr3, Csi2IrqHandlerEvents3, Csi2IrqHandlerTx3}
+         Csi2IrqHandlerRxErr3, Csi2IrqHandlerPathErr3, Csi2IrqHandlerEvents3}
 #endif
 };
 
@@ -320,26 +286,6 @@ static rsdkStatus_t Csi2InitRxIrq(const rsdkCsi2UnitId_t iUnit, volatile struct 
 
 /*================================================================================================*/
 /*
- * @brief       Enable for Path errors interrupt on VC.
- *
- * @param[in]   vcId    - VC ID, RSDK_CSI2_VC_0 ... RSDK_CSI2_MAX_VC
- * @param[in]   pRegs   - pointer to unit registry
- *
- */
-static void Csi2EnableVCPathIrq(const uint32_t vcId, volatile struct MIPICSI2_REG_STRUCT *pRegs)
-{
-    // check for each flag possible to be set
-    // and set the necessary enable bit, to the appropriate registry
-    uint32_t regVal;
-
-    regVal = pRegs->CBUF_INTRE.R;
-    regVal |= ((uint32_t)CSI2_IRQ_VC_LIN0LENERR_MASK + (uint32_t)CSI2_IRQ_VC_LIN0CNTERR_MASK) << vcId;
-    pRegs->CBUF_INTRE.R = regVal;
-}
-/* Csi2EnableVCPathIrq *************************/
-
-/*================================================================================================*/
-/*
  * @brief       Init for Path errors interrupt.
  * @details     This procedure is called after the general unit initialization was done.
  *
@@ -373,13 +319,10 @@ static rsdkStatus_t Csi2InitPathIrq(const rsdkCsi2UnitId_t iUnit, volatile struc
         pRegs->CBUF_INTRE.R = (uint32_t)0;      // first disable all
         for (vcId = (uint32_t)RSDK_CSI2_VC_0; vcId < (uint32_t)RSDK_CSI2_MAX_VC; vcId++)  // check all VC
         {
-            if (pParams->pVCconfig[vcId] != NULL)       // only for active VC
+            if (pParams->pVCconfig[vcId] != NULL)       // for any active VC
             {
-                Csi2EnableVCPathIrq(vcId * 2u, pRegs);  // enable the interrupts
-            }
-            if (pParams->pMetaData[vcId] != NULL)       // for MetaData if required
-            {
-                Csi2EnableVCPathIrq(vcId + ((uint32_t)RSDK_CSI2_MAX_VC * (uint32_t)4), pRegs);  // enable the interrupts
+                pRegs->CBUF_INTRE.R = 0xffffff;         // enable all errors on all circular buffers
+                break;
             }
         }
 #ifndef linux
@@ -477,8 +420,8 @@ static rsdkStatus_t Csi2InitEventIrq(const rsdkCsi2UnitId_t iUnit, volatile stru
         pDriverState->pCallback[(uint8_t)RSDK_CSI2_EVENTS_IRQ_ID] =
             pParams->pCallback[(uint8_t)RSDK_CSI2_EVENTS_IRQ_ID];
         // irq enablement for skew calibration
-        pRegs->RX_VCINTRE.R = 0;  // first disable the interrupts
-        setLDevt = 0;             // no LINEDONE request
+        pRegs->RX_VCINTRE.R = 0u;       // first disable the interrupts
+        setLDevt = 0u;                  // no LINEDONE request
         for (vcId = (uint32_t)RSDK_CSI2_VC_0; vcId < (uint32_t)RSDK_CSI2_MAX_VC; vcId++)  // check all VC
         {
             if(pParams->pVCconfig[vcId] != NULL)
@@ -507,7 +450,7 @@ static rsdkStatus_t Csi2InitEventIrq(const rsdkCsi2UnitId_t iUnit, volatile stru
             setLDevt |= evtMask & (uint8_t)RSDK_CSI2_EVT_LINE_END;
         }
         // enable the "line done" interrupt, for internal purposes at least
-        if ((pDriverState->statisticsFlag == RSDK_CSI2_STAT_EVERY_LINE) || (setLDevt != 0u))
+        if (((uint8_t)pDriverState->statisticsFlag == (uint8_t)RSDK_CSI2_STAT_EVERY_LINE) || (setLDevt != 0u))
         {
             pRegs->RX_CHNL_INTRE.B.LINEDONEIE = 1u;  // process all chirps statistics
         }
@@ -527,42 +470,6 @@ static rsdkStatus_t Csi2InitEventIrq(const rsdkCsi2UnitId_t iUnit, volatile stru
 }
 /* Csi2InitEventIrq *************************/
 
-/*================================================================================================*/
-/*
- * @brief       Init for Tx interrupt.
- * @details     TODO : remove it fi Tx feature will not be implemented into the hw.
- *
- * @param[in]   iUnit   - unit ID, RSDK_CSI2_UNIT_0 ... MAX
- * @param[in]   pRegs   - pointer to unit registry
- * @param[in]   pParams - pointer to CSI2 VC init parameters
- *
- */
-static rsdkStatus_t Csi2InitTxIrq(const rsdkCsi2UnitId_t iUnit, volatile struct MIPICSI2_REG_STRUCT *pRegs,
-                                  const rsdkCsi2InitParams_t *pParams)
-{
-    rsdkCsi2DriverParams_t *pDriverState;  // pointer to unit driver state
-    rsdkStatus_t            rez = RSDK_SUCCESS;
-
-    pDriverState = &gCsi2Settings[(uint8_t)iUnit];
-    // save the callback
-    pDriverState->pCallback[(uint8_t)RSDK_CSI2_TX_ERR_IRQ_ID] = pParams->pCallback[(uint8_t)RSDK_CSI2_TX_ERR_IRQ_ID];
-    // so, add the irq handler
-#ifndef linux
-    if (RsdkGlueIrqHandlerRegister(sgIrqHandlers[iUnit][RSDK_CSI2_TX_ERR_IRQ_ID],
-                                   (uint32_t)CSI2_IRQ_TX_BASE_ID_GIC +
-                                       ((uint32_t)CSI2_IRQ_MAP_GAP * gsCsi2IrqUnitRemap[iUnit]),
-                                   pParams->irqExecCore, pParams->irqPriority) == IRQ_REGISTER_ERROR)
-    {
-        rez = RSDK_CSI2_DRV_ERR_IRQ_HANDLER_REG;
-    }
-#endif
-    // irq enablement - all available request activated
-    UNUSED_ARG(pRegs);
-    /*          TODO : Tx not enabled in the rev.N of RM, to check later
-    */
-    return rez;
-}
-/* Csi2InitTxIrq *************************/
 
 /*================================================================================================*/
 /*
@@ -581,7 +488,7 @@ static void Csi2IrqHandlerRxErrVC(const uint32_t vcId, const uint32_t regStat, r
 {
     uint32_t regV;
 
-    pErrorS->errMaskVC[vcId] = 0;  // no errors for the beginning
+    pErrorS->errMaskVC[vcId] = 0u;              // no errors for the beginning
     // ECC error - 2 bits
     if ((regStat & (uint32_t)CSI2_IRQ_VC_ECC2_MASK) != (uint32_t)0)
     {
@@ -655,7 +562,7 @@ static
     if (pRegs != NULL)
     {
         errorS.unitId = iUnit;
-        errorS.errMaskU = 0;
+        errorS.errMaskU = 0u;
         pDriverState = &gCsi2Settings[(uint8_t)iUnit];
         // FIRST step = check for Unit level DPHY errors
         mask = (uint32_t)1;  // mask for single event
@@ -834,7 +741,7 @@ static
     if (pRegs != NULL)
     {
         errorS.unitId = iUnit;
-        errorS.errMaskU = 0;
+        errorS.errMaskU = 0u;
         pDriverState = &gCsi2Settings[(uint8_t)iUnit];
         // FIRST step = check for Unit path errors
         regStat = pRegs->RX_CHNL_INTRS.R;
@@ -1127,18 +1034,18 @@ static uint32_t Csi2ProcessChannelFrameEnd(volatile struct MIPICSI2_REG_STRUCT *
     }
     // divisor for channel statistic sum
     dcDiv = (int64_t)pVCState->pVCParams->expectedNumSamples;
-    if (statFlag == RSDK_CSI2_STAT_EVERY_LINE)
+    if ((uint8_t)statFlag == (uint8_t)RSDK_CSI2_STAT_EVERY_LINE)
     {
         dcDiv *= (int64_t)pVCState->pVCParams->expectedNumLines;
     }
     else
     {
-        if (statFlag == RSDK_CSI2_STAT_AT_FE)
+        if ((uint8_t)statFlag == (uint8_t)RSDK_CSI2_STAT_AT_FE)
         {
             dcDiv *= (int64_t)pVCState->pVCParams->bufNumLines;
         }
     }
-    fToggle = 0;  // toggle bits indicator
+    fToggle = 0u;                   // toggle bits indicator
     dcAdj = 0u;
     for (idChannel = (uint32_t)RSDK_CSI2_CHANNEL_A; idChannel < numChannel; idChannel++)
     {
@@ -1166,7 +1073,7 @@ static uint32_t Csi2ProcessChannelFrameEnd(volatile struct MIPICSI2_REG_STRUCT *
             dcAdj = 0u;
         }
         // test for bit toggle
-        iToggle = (uint16_t)((~pVCState->statDC[idChannel].channelBitToggle) & CSI2_TOGGLE_BITS_MASK);
+        iToggle = (uint16_t)((uint16_t)(~pVCState->statDC[idChannel].channelBitToggle) & (uint16_t)CSI2_TOGGLE_BITS_MASK);
         fToggle |= iToggle;                                 // reversed toggled bit status
         pErrorS->notToggledBits[idChannel] = iToggle;       // the current bits not toggled (1=not toggled)
         pVCState->statDC[idChannel].channelBitToggle = 0u;  // reset toggle bits for next frame
@@ -1209,12 +1116,12 @@ static uint32_t Csi2ProcessVcEvents(rsdkCsi2DriverParams_t *pDriverState, rsdkCs
     rsdkCsi2VCDriverState_t             *pVCDriverState;
 
     pVCDriverState = pDriverState->workingParamVC;
-    pRegs = gpMipiCsi2Regs[(uint8_t)iUnit];  // get the  registry pointer for the unit
-    optionalFlags = 0;                       // no optional flags
-    toCall = 0;
+    pRegs = gpMipiCsi2Regs[(uint8_t)iUnit];     // get the  registry pointer for the unit
+    optionalFlags = 0u;                         // no optional flags
+    toCall        = 0u;
     regStat = pRegs->RX_VCINTRS.R;
-    pRegs->RX_VCINTRS.R = regStat;        // clear the bits
-    vcIdFe = (uint32_t)RSDK_CSI2_MAX_VC;  // FE event unknown
+    pRegs->RX_VCINTRS.R = regStat;              // clear the bits
+    vcIdFe = (uint32_t)RSDK_CSI2_MAX_VC;        // FE event unknown
     for (vcId = (uint32_t)RSDK_CSI2_VC_0; vcId < (uint32_t)RSDK_CSI2_MAX_VC; vcId++)
     {
         errorS->evtMaskVC[vcId] = 0u;                           // no errors for the beginning
@@ -1248,7 +1155,7 @@ static uint32_t Csi2ProcessVcEvents(rsdkCsi2DriverParams_t *pDriverState, rsdkCs
                 if(maskEv != 0u)
                 {   // events to be reported
                     errorS->evtMaskVC[vcId] |= (uint8_t)maskEv;
-                    toCall = 1;
+                    toCall = 1u;
                 }
             }
         }
@@ -1258,7 +1165,7 @@ static uint32_t Csi2ProcessVcEvents(rsdkCsi2DriverParams_t *pDriverState, rsdkCs
             // it is a frame-end event on this virtual channel and for meta data flow the FRAME_END event was requested
             Csi2PlatformIncFramesCounter(iUnit, vcId + (uint32_t)RSDK_CSI2_MAX_VC);     // increment the frames
             errorS->evtMaskVC[vcId] |= (uint8_t)RSDK_CSI2_EVT_FRAME_END;
-            toCall = 1;
+            toCall = 1u;
         }
         regStat >>= CSI2_VC_NUM_TOTALBITS;
         pVCDriverState++;                                       // move to next VC driver state
@@ -1322,7 +1229,8 @@ static
             pVCDriverState->lastReceivedChirpLine = (uint16_t)nextLine;             // keep the line for the next irq
             nextLine = pVCDriverState->lastReceivedBufLine;                         // keep the buffer pointer
             // do processing for VC/channels statistics
-            if ((pDriverState->statisticsFlag == RSDK_CSI2_STAT_EVERY_LINE) && (pVCDriverState->pVCParams != NULL))
+            if (((uint8_t)pDriverState->statisticsFlag == (uint8_t)RSDK_CSI2_STAT_EVERY_LINE) &&
+                    (pVCDriverState->pVCParams != NULL))
             {
                 Csi2ProcessChannelStatistics(pVCDriverState, (uint16_t)nextLine);
             }
@@ -1339,17 +1247,18 @@ static
         {  // VC identified, process FE
             workVcIdFe = vcIdFe & (uint32_t)CSI2_VC_NUM_BITSMASK;
             vcIdFe >>= CSI2_VC_NUM_TOTALBITS;
-            if ((pDriverState->statisticsFlag != RSDK_CSI2_STAT_NO) && (workVcIdFe < (uint32_t)RSDK_CSI2_MAX_VC))
+            if (((uint8_t)pDriverState->statisticsFlag != (uint8_t)RSDK_CSI2_STAT_NO) &&
+                        (workVcIdFe < (uint32_t)RSDK_CSI2_MAX_VC))
             {
                 pVCDriverState = &pDriverState->workingParamVC[workVcIdFe];
                 j = 0u;
-                if (pDriverState->statisticsFlag == RSDK_CSI2_STAT_AT_FE)
+                if ((uint8_t)pDriverState->statisticsFlag == (uint8_t)RSDK_CSI2_STAT_AT_FE)
                 {
                     j = pVCDriverState->pVCParams->bufNumLines;
                 }
-                if (pDriverState->statisticsFlag == RSDK_CSI2_STAT_LAST_LINE)
+                if ((uint8_t)pDriverState->statisticsFlag == (uint8_t)RSDK_CSI2_STAT_LAST_LINE)
                 {
-                    j = 1;
+                    j = 1u;
                 }
                 for (i = 0u; i < j; i++)
                 {
@@ -1482,105 +1391,6 @@ static void Csi2IrqHandlerEvents3(
 #endif  //#ifdef S32R45
 #endif  //#ifndef linux
 
-/*================================================================================================*/
-/*
- * @brief       Generic interrupt procedure for tx level irq.
- *
- * @param[in]   iUnit   - unit id
- *
- */
-#ifndef linux
-static void Csi2IrqHandlerTx(const rsdkCsi2UnitId_t iUnit)
-{
-    UNUSED_ARG(iUnit);
-    // TBD!!!
-}
-/* Csi2IrqHandlerTx *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 0/ tx level irq.
- *
- */
-static void Csi2IrqHandlerTx0(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-)
-{
-#ifdef __ZEPHYR__
-    UNUSED_ARG(pParams);
-#endif
-    Csi2IrqHandlerTx(RSDK_CSI2_UNIT_0);
-}
-/* Csi2IrqHandlerTx0 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 1/ tx level irq.
- *
- */
-static void Csi2IrqHandlerTx1(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-)
-{
-#ifdef __ZEPHYR__
-    UNUSED_ARG(pParams);
-#endif
-    Csi2IrqHandlerTx(RSDK_CSI2_UNIT_1);
-}
-/* Csi2IrqHandlerTx1 *************************/
-
-#ifdef S32R45
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 2/ tx level irq.
- *
- */
-static void Csi2IrqHandlerTx2(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-)
-{
-#ifdef __ZEPHYR__
-    UNUSED_ARG(pParams);
-#endif
-    Csi2IrqHandlerTx(RSDK_CSI2_UNIT_2);
-}
-/* Csi2IrqHandlerTx2 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 3/ tx level irq.
- *
- */
-static void Csi2IrqHandlerTx3(
-#ifdef __ZEPHYR__
-        const void * pParams
-#else
-        void
-#endif
-)
-{
-#ifdef __ZEPHYR__
-    UNUSED_ARG(pParams);
-#endif
-    Csi2IrqHandlerTx(RSDK_CSI2_UNIT_3);
-}
-/* Csi2IrqHandlerTx3 *************************/
-
-#endif  //#ifdef S32R45
-#endif  //#ifndef linux
 
 /*==================================================================================================
 *                                       GLOBAL FUNCTIONS
@@ -1602,17 +1412,13 @@ rsdkStatus_t Csi2InitUIrq(const rsdkCsi2UnitId_t iUnit, volatile struct MIPICSI2
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_INIT_STEP2, (uint32_t)CSI2_SEQ_BEGIN);
     rez = Csi2InitEventIrq(iUnit, pRegs, pInitParams);
-    if (rez == RSDK_SUCCESS)
+    if ((uint32_t)rez == (uint32_t)RSDK_SUCCESS)
     {
         rez = Csi2InitRxIrq(iUnit, pRegs, pInitParams);
     }
-    if (rez == RSDK_SUCCESS)
+    if ((uint32_t)rez == (uint32_t)RSDK_SUCCESS)
     {
         rez = Csi2InitPathIrq(iUnit, pRegs, pInitParams);
-    }
-    if (rez == RSDK_SUCCESS)
-    {
-        rez = Csi2InitTxIrq(iUnit, pRegs, pInitParams);
     }
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_INIT_STEP2, (uint32_t)CSI2_SEQ_END);
     return rez;

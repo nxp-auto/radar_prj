@@ -30,6 +30,7 @@
 #include <linux/uaccess.h>
 #include <linux/interrupt.h>
 #include <linux/fs.h>
+#include <linux/clk.h>
 
 
 /*==================================================================================================
@@ -262,14 +263,15 @@ static int LaxProbe(struct platform_device *pdev)
         .open           = LaxOpen,
         .release        = LaxRelease,
     };
-    laxDevice_t     *pLaxDev;
+    laxDevice_t        *pLaxDev;
     lldLaxControl_t    *pLaxCtrl;
     struct device_node *pNode;
-    struct device   *pToDev;
-    struct device   *pSysFsDev;
+    struct device      *pToDev;
+    struct device      *pSysFsDev;
+    struct clk         *pClk;
     dev_t	            devNo;
-    u8          * deviceName;
-    int32_t         err;
+    u8                 *deviceName;
+    int32_t             err;
     
     BUG_ON((gsNumLaxMajor == 0) || (gspLaxClass == NULL));
 
@@ -277,15 +279,38 @@ static int LaxProbe(struct platform_device *pdev)
     pToDev = &pdev->dev;
     err = 0;
 
-    deviceName = devm_kmalloc(&pdev->dev, 10, GFP_KERNEL );
-    /* Allocate LAX device structure */
-    pLaxDev = devm_kzalloc(&pdev->dev, sizeof(laxDevice_t), GFP_KERNEL);
-    if ((pLaxDev == NULL) || (deviceName == NULL)) 
-    {
-        LAX_LOG_INFO(": failed to allocate lax_dev or deviceName\n");
-        err = -ENOMEM;
+    // initialize the clock
+    LAX_LOG_INFO("RsdkLaxProbe: clock find - lax_module_clk.\n");
+    printk("RsdkLaxProbe: clock find - lax_module_clk.\n");
+    pClk = devm_clk_get(pToDev, "lax_module_clk");
+    LAX_LOG_INFO("RsdkLaxProbe: clock find result - %x.\n", pClk);
+    printk("RsdkLaxProbe: clock find result - %x.\n", pClk);
+    if(IS_ERR(pClk))
+    {   // clock not found
+        LAX_LOG_ERROR("RsdkLaxProbe: clock find error for lax_module_clk.\n");
+        err = -EFAULT;
     }
     else
+    {   // clock found
+        if(clk_prepare_enable(pClk) != 0)
+        {
+            LAX_LOG_ERROR("RsdkLaxProbe: clock start error for lax_module_clk.\n");
+            err = -EFAULT;
+        }
+    }
+
+    if(err == 0)
+    {
+        deviceName = devm_kmalloc(&pdev->dev, 10, GFP_KERNEL );
+        /* Allocate LAX device structure */
+        pLaxDev = devm_kzalloc(&pdev->dev, sizeof(laxDevice_t), GFP_KERNEL);
+        if ((pLaxDev == NULL) || (deviceName == NULL)) 
+        {
+            LAX_LOG_INFO(": failed to allocate lax_dev or deviceName\n");
+            err = -ENOMEM;
+        }
+    }
+    if(err == 0)
     {
         pLaxDev->dev = pToDev;
 
@@ -297,74 +322,80 @@ static int LaxProbe(struct platform_device *pdev)
         }
         else
         {
-            pLaxCtrl = &pLaxDev->laxCtrl;
-
-            devNo = MKDEV(gsNumLaxMajor, gsNumLaxMinor + pLaxCtrl->id);
-            (void)sprintf(deviceName, LAX_DEVICE_NAME "%d", pLaxCtrl->id);
-            dev_set_drvdata(&pdev->dev, pLaxDev);
-
-            if(RSDK_SUCCESS != LaxLowLevelDriverInit(pLaxCtrl))
+            if(err >= 0)
             {
-                err = -EINVAL;
-            }
-            else
-            {
-                /* register the same interrupt handler for all interrupt lines */
-                err = request_irq(pLaxDev->laxIrqNo[0], LaxDevIrqHandler, 0, deviceName, pLaxDev);
-                err += request_irq(pLaxDev->laxIrqNo[1], LaxDevIrqHandler, 0, deviceName, pLaxDev);
-                if (err < 0) 
+                pLaxCtrl = &pLaxDev->laxCtrl;
+
+                devNo = MKDEV(gsNumLaxMajor, gsNumLaxMinor + pLaxCtrl->id);
+                (void)sprintf(deviceName, LAX_DEVICE_NAME "%d", pLaxCtrl->id);
+                dev_set_drvdata(&pdev->dev, pLaxDev);
+
+                if(RSDK_SUCCESS != LaxLowLevelDriverInit(pLaxCtrl))
                 {
-                    LAX_LOG_INFO("%s: request_irq() err = %d\n", deviceName, err);
+                    err = -EINVAL;
                 }
                 else
                 {
-                    cdev_init(&pLaxDev->chDev, &gsLaxFops);
-                    pLaxDev->chDev.owner = THIS_MODULE;
-
-                    err = cdev_add(&pLaxDev->chDev, devNo, 1);
-                    if (err < 0)
+                    /* register the same interrupt handler for all interrupt lines */
+                    err = request_irq(pLaxDev->laxIrqNo[0], LaxDevIrqHandler, 0, deviceName, pLaxDev);
+                    err += request_irq(pLaxDev->laxIrqNo[1], LaxDevIrqHandler, 0, deviceName, pLaxDev);
+                    if (err < 0) 
                     {
-                        LAX_LOG_INFO("Error %d while adding %s", err, deviceName);
+                        LAX_LOG_INFO("%s: request_irq() err = %d\n", deviceName, err);
                     }
                     else
                     {
-                        /* Create sysfs device */
-                        pSysFsDev = device_create(gspLaxClass, pToDev, devNo, NULL, deviceName);
-                        if (IS_ERR(pSysFsDev))
+                        cdev_init(&pLaxDev->chDev, &gsLaxFops);
+                        pLaxDev->chDev.owner = THIS_MODULE;
+
+                        err = cdev_add(&pLaxDev->chDev, devNo, 1);
+                        if (err < 0)
                         {
-                            err = (int32_t)PTR_ERR(pSysFsDev);
-                            LAX_LOG_INFO("Error %d while creating %s", err, deviceName);
+                            LAX_LOG_INFO("Error %d while adding %s", err, deviceName);
                         }
                         else
                         {
-                            if (0 == gsNumLaxDevs)
+                            /* Create sysfs device */
+                            pSysFsDev = device_create(gspLaxClass, pToDev, devNo, NULL, deviceName);
+                            if (IS_ERR(pSysFsDev))
                             {
-                               if(LaxOalCommInit() == RSDK_SUCCESS)
-                               {
-                                    gsNumLaxDevs++;
-                               }
+                                err = (int32_t)PTR_ERR(pSysFsDev);
+                                LAX_LOG_INFO("Error %d while creating %s", err, deviceName);
+                            }
+                            else
+                            {
+                                if (0 == gsNumLaxDevs)
+                                {
+                                   if(LaxOalCommInit() == RSDK_SUCCESS)
+                                   {
+                                        gsNumLaxDevs++;
+                                   }
+                                }
+                            }
+                            if(err < 0)
+                            {
+                                cdev_del(&pLaxDev->chDev);
+                            }
+                            else
+                            {
+                                LAX_LOG_INFO("Lax driver %d initialized.", devNo);
                             }
                         }
                         if(err < 0)
                         {
-                            cdev_del(&pLaxDev->chDev);
+                            (void)free_irq(pLaxDev->laxIrqNo[0], pLaxDev);
+                            (void)free_irq(pLaxDev->laxIrqNo[1], pLaxDev);
                         }
                     }
                     if(err < 0)
                     {
-                        (void)free_irq(pLaxDev->laxIrqNo[0], pLaxDev);
-                        (void)free_irq(pLaxDev->laxIrqNo[1], pLaxDev);
-                    }
-                }
-                if(err < 0)
-                {
-                    if(RSDK_SUCCESS != LaxDeInit(pLaxCtrl))
-                    {
-                        LAX_LOG_ERROR ("Error in LaxDeInit");
+                        if(RSDK_SUCCESS != LaxDeInit(pLaxCtrl))
+                        {
+                            LAX_LOG_ERROR ("Error in LaxDeInit");
+                        }
                     }
                 }
             }
-
         }
     }
     return err;
@@ -476,4 +507,4 @@ module_exit(LaxModExit);
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("NXP Semiconductors");
 MODULE_DESCRIPTION("NXP LAX Driver");
-MODULE_VERSION("1.01");
+MODULE_VERSION("2.00");

@@ -187,6 +187,7 @@ extern "C" {
 
 #define RSDK_CSI2_VC_BUFF_STATISTICS            80u     /**< The necessary buffer length for channels statistics
                                                          * at chirp buffer end                                      */
+#define RSDK_CSI2_BUF_ENA_MASK_OFFSET           8u      /**< The necessary shift amount for buffer enable           */
 
 /** @}*/
 
@@ -312,8 +313,10 @@ typedef enum
 {
     RSDK_CSI2_LANE_0 = 0,           /**< first lane / one lane                                                      */
     RSDK_CSI2_LANE_1,               /**< second lane / two lanes                                                    */
+
     RSDK_CSI2_LANE_2,               /**< third lane / three lanes                                                   */
     RSDK_CSI2_LANE_3,               /**< fourth lane / four lanes                                                   */
+
     RSDK_CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call                */
 }rsdkCsi2LaneEnum_t;
 
@@ -414,17 +417,6 @@ typedef enum {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @brief       IRQ definitions enumeration.
  * @details     According to the platform. The mnemonics can differ somehow from the names in RM.
@@ -434,7 +426,6 @@ typedef enum {
     RSDK_CSI2_RX_ERR_IRQ_ID = 0,    /**< IRQ ID for Receive errors (D-PHY related)                                  */
     RSDK_CSI2_PATH_ERR_IRQ_ID,      /**< IRQ ID for Receive Data Path and Protocol errors                           */
     RSDK_CSI2_EVENTS_IRQ_ID,        /**< IRQ ID for Events and line errors interrupt                                */
-    RSDK_CSI2_TX_ERR_IRQ_ID,        /**< IRQ ID for Tournaround and Transmit errors                                 */
     RSDK_CSI2_MAX_IRQ_ID            /**< Maximum IRQ ID for platform, to not use in procedure call                  */
 }rsdkCsi2IrqId_t;
 
@@ -617,7 +608,7 @@ typedef struct {
  * @details This callback must be used for processing a CSI2 error/event interrupt.<br>
  *          Simple callback function definition example : void CallbackCsi2(rsdkCsi2Report_t *pStruct) { ... }
  *
- * @param[in]    rsdkCsi2Report_t* - the callback receives a pointer to a complete description of the error/event
+ * @param[in]    pReportingStruct* - the callback receives a pointer to a complete description of the error/event
  * @return       nothing
  *
  *
@@ -641,6 +632,11 @@ typedef struct {
                                                  * - simple/normal calibration or quick/short calibration
                                                  * - wait for 5us or not wait for STOP states on data lanes         */
 #endif
+
+
+
+
+
     rsdkCsi2LaneEnum_t     lanesMapRx[RSDK_CSI2_MAX_LANE]; /**< Lanes mapping :
                                                  *  - first byte - the physical lane to be used as lane 1,
                                                  *  - second byte - the physical lane to be used as lane 2,
@@ -710,17 +706,20 @@ typedef struct {
 */
 
 /**
- * @brief          This function initializes the CSI2 interface.
- * @details        The detailed actions done by this function :
- *                   - verify the input parameters; if any wrong parameter, an error value is returned
- *                   - reset the interface
- *                   - initialize the CSI2 interface
- *                   - initialize the interrupt vectors
- *                   - start the interface
- *                   - reset the frame counters <br>
- *                  The function can be called at any time, if necessary.<br>
- *                  If the result is not \ref RSDK_SUCCESS, the interface status is \b NOT_INITIALIZED,
- *                  no matter the status at call time.
+ * @brief       This function initializes the CSI2 interface.
+ * @details     The detailed actions done by this function :
+ *                 - verify the input parameters; if any wrong parameter, an error value is returned
+ *                 - reset the interface
+ *                 - initialize the CSI2 interface
+ *                 - initialize the interrupt vectors
+ *                 - start the interface
+ *                 - reset the frame counters <br>
+ *              The function can be called at any time, if necessary.<br>
+ *              If the result is not \ref RSDK_SUCCESS, the interface status is \b NOT_INITIALIZED,
+ *              no matter the status at call time.
+ *
+ * @note        For SAF85, using this function, the PacketProcessor (PPE) is initailized in any context.
+ *              For external path, MIPICSI2 interface will be initialized too.
  *
  * @param[in] unitId            - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) 
                                                             \ref RSDK_CSI2_UNIT_1 , \endif \ref RSDK_CSI2_MAX_UNITS )

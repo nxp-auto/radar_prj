@@ -455,5 +455,5 @@
 #define RSDK_LAX_CORES_NUM 2U
 
 #endif /* PLATFORM_WIFI_H */
-//! @}
+
 

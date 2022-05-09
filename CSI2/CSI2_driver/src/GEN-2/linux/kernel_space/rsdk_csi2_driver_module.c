@@ -19,6 +19,7 @@
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/uaccess.h>
+#include <linux/clk.h>
 
 #include "rsdk_S32R45.h"
 #include "rsdk_csi2_driver_module.h"
@@ -49,7 +50,7 @@ extern "C" {
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("NXP Semiconductors");
 MODULE_DESCRIPTION("NXP MIPICSI2 Driver");
-MODULE_VERSION("2.00");
+MODULE_VERSION("3.0");
 
 
 /*==================================================================================================
@@ -164,9 +165,8 @@ static int32_t RsdkCsi2GetDtsProperties(struct device_node *pNode, rsdkCsi2DtsIn
             dtsInfo->irqId[0] = irq_of_parse_and_map(pNode, 0);  //DPHY errors interrupt
             dtsInfo->irqId[1] = irq_of_parse_and_map(pNode, 1);  //Rx errors interrupt
             dtsInfo->irqId[2] = irq_of_parse_and_map(pNode, 2);  //Events interrupt
-            dtsInfo->irqId[3] = irq_of_parse_and_map(pNode, 3);  //Tx interrupt
 
-            if ((dtsInfo->irqId[1] == 0u) || (dtsInfo->irqId[2] == 0u) || (dtsInfo->irqId[3] == 0u))
+            if ((dtsInfo->irqId[0] == 0u) || (dtsInfo->irqId[1] == 0u) || (dtsInfo->irqId[2] == 0u))
             {
                 (void)pr_err("RsdkCsi2GetDtsProperties: at least one interrupt not found for %s_%d\n", DEVICE_NAME,
                              dtsInfo->devId);
@@ -221,11 +221,12 @@ static int RsdkCsi2Probe(struct platform_device *pPlatDev)
         .open = RsdkCsi2Open,
         .release = RsdkCsi2Release,
     };
-
-    int32_t             err;
+    
+    int32_t             err = 0, i;
     struct device      *pDevice = &pPlatDev->dev;
     struct device_node *pNode = pPlatDev->dev.of_node;
     struct device      *pSysFsDev;
+    struct clk         *pClk;
     rsdkCsi2Device_t   *pRsdkCsi2Dev;
     dev_t               devNo;
 
@@ -237,16 +238,44 @@ static int RsdkCsi2Probe(struct platform_device *pPlatDev)
 #endif
     BUG_ON((gsNumRsdkCsi2Major == 0) || (gspRsdkCsi2Class == NULL));
 
-    /* Allocate CSI2 device structure */
-    pRsdkCsi2Dev = kzalloc(sizeof(rsdkCsi2Device_t), GFP_KERNEL);
-    err = RsdkCsi2GetDtsProperties(pNode, &pRsdkCsi2Dev->dtsInfo);
-    if (err < 0)
+    // initialize the necessary clocks
+    /*  To be done when the clocks support will be implemented
+    static const char   *csi2ClkNames[5] = { "csi2_dphy_clk", "csi2_pll_clk", "csi2_module_clk", "csi2_ctrl_clk", NULL};
+    i = 0;
+    while((csi2ClkNames[i] != NULL) && (err == 0))
     {
-        kvfree(pRsdkCsi2Dev);
-        (void)pr_err("RsdkCsi2Probe: MIPICSI2 DTS entry parse failed.\n");
-        err = -EINVAL;
+        (void)pr_err("RsdkCsi2Probe: clock find %s.\n", csi2ClkNames[i]);
+        pClk = devm_clk_get(pDevice, csi2ClkNames[i]);
+        (void)pr_err("RsdkCsi2Probe: clock find rez %x.\n", pClk);
+        if(IS_ERR(pClk))
+        {   // clock not found
+            (void)pr_err("RsdkCsi2Probe: clock find error for %s.\n", csi2ClkNames[i]);
+            err = -EFAULT;
+        }
+        else
+        {   // clock found
+            if(clk_prepare_enable(pClk) != 0)
+            {
+                (void)pr_err("RsdkCsi2Probe: clock start error for %s.\n", csi2ClkNames[i]);
+                err = -EFAULT;
+            }
+        }
+        i++;
     }
-    else
+    //*/
+    /* Allocate CSI2 device structure */
+    if(err == 0)
+    {
+        pRsdkCsi2Dev = kzalloc(sizeof(rsdkCsi2Device_t), GFP_KERNEL);
+        err = RsdkCsi2GetDtsProperties(pNode, &pRsdkCsi2Dev->dtsInfo);
+        if (err < 0)
+        {
+            kvfree(pRsdkCsi2Dev);
+            (void)pr_err("RsdkCsi2Probe: MIPICSI2 DTS entry parse failed.\n");
+            err = -EINVAL;
+        }
+    }
+    if(err == 0)
     {
 #ifdef DEBUG_MODE
         (void)pr_alert("RsdkCsi2Probe: GetDtsProperties() OK -> id=%d\n", pRsdkCsi2Dev->dtsInfo.devId);

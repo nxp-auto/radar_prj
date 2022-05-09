@@ -19,6 +19,7 @@
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/uaccess.h>
+#include <linux/clk.h>
 
 #include "rsdk_S32R45.h"
 #include "rsdk_cte_driver_module.h"
@@ -43,7 +44,7 @@ extern "C" {
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("NXP Semiconductors");
 MODULE_DESCRIPTION("NXP CTE Driver");
-MODULE_VERSION("1.03");
+MODULE_VERSION("2.0");
 
 /*==================================================================================================
 *                                             ENUMS
@@ -209,11 +210,12 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
         .release = RsdkCteRelease,
     };
 
-    int32_t             err;
+    int32_t             err = 0, i;
     uint32_t            val;
     struct device *     pDevice = &pPlatDev->dev;
     struct device_node *pNode = pPlatDev->dev.of_node;
     struct device *     pSysFsDev;
+    struct clk         *pClk;
     rsdkCteDevice_t *   pRsdkCteDev;
     dev_t               devNo;
 
@@ -222,16 +224,44 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
 #endif
     BUG_ON((gsNumRsdkCteMajor == 0) || (gspRsdkCteClass == NULL));
 
-    /* Allocate CTE device structure */
-    pRsdkCteDev = kzalloc(sizeof(rsdkCteDevice_t), GFP_KERNEL);
-    err = RsdkCteGetDtsProperties(pNode, &pRsdkCteDev->dtsInfo);
-    if (err < 0)
+    // initialize the clocks
+    /* To be used when it will be possible
+    static const char   *cteClkNames[3] = { "cte_reg_clk", "cte_clk", NULL};
+    i = 0;
+    while((cteClkNames[i] != NULL) && (err == 0))
     {
-        kvfree(pRsdkCteDev);
-        (void)pr_err("RsdkCteProbe: CTE DTS entry parse failed.\n");
-        err = -EINVAL;
+        (void)pr_err("RsdkCteProbe: clock find %s.\n", cteClkNames[i]);
+        pClk = devm_clk_get(pDevice, cteClkNames[i]);
+        (void)pr_err("RsdkCteProbe: clock find rez. %x.\n", pClk);
+        if(IS_ERR(pClk))
+        {   // clock not found
+            (void)pr_err("RsdkCteProbe: clock find error for %s.\n", cteClkNames[i]);
+            err = -EFAULT;
+        }
+        else
+        {   // clock found
+            if(clk_prepare_enable(pClk) != 0)
+            {
+                (void)pr_err("RsdkCteProbe: clock start error for %s.\n", cteClkNames[i]);
+                err = -EFAULT;
+            }
+        }
+        i++;
     }
-    else
+    //*/
+    /* Allocate CTE device structure */
+    if(err == 0)
+    {
+        pRsdkCteDev = kzalloc(sizeof(rsdkCteDevice_t), GFP_KERNEL);
+        err = RsdkCteGetDtsProperties(pNode, &pRsdkCteDev->dtsInfo);
+        if (err < 0)
+        {
+            kvfree(pRsdkCteDev);
+            (void)pr_err("RsdkCteProbe: CTE DTS entry parse failed.\n");
+            err = -EINVAL;
+        }
+    }
+    if(err == 0)
     {
 #ifdef CTE_KERNEL_DEBUG_MODE
         (void)pr_alert("RsdkCteProbe: GetDtsProperties() OK -> id=%d\n", pRsdkCteDev->dtsInfo.devId);

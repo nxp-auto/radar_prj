@@ -21,6 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/uaccess.h>
 #include <linux/fs.h>
+#include <linux/clk.h>
 
 #include "rsdk_S32R45.h"
 #include "spt_oal.h"
@@ -33,16 +34,15 @@ extern "C" {
 /*==================================================================================================
 *                                          CONSTANTS
 ==================================================================================================*/
+MODULE_LICENSE("Dual BSD/GPL");
+MODULE_AUTHOR("NXP Semiconductors");
+MODULE_DESCRIPTION("NXP SPT Driver");
+MODULE_VERSION("2.00");
 
 /*==================================================================================================
 *                                      DEFINES AND MACROS
 ==================================================================================================*/
 #define DEVICE_NAME "spt_driver" /* Dev name as it appears in /proc/devices   */
-
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_AUTHOR("NXP Semiconductors");
-MODULE_DESCRIPTION("NXP SPT Driver");
-MODULE_VERSION("1.00");
 
 /*==================================================================================================
 *                                             ENUMS
@@ -219,22 +219,47 @@ static int32_t SptGetDtsProperties(struct device_node *pNode, sptDtsInfo_t *dtsI
  */
 static int SptProbe(struct platform_device *pPlatDev)
 {
-    int                 err = 0;
+    int                 err = 0, i;
     struct device *     pDevice = &pPlatDev->dev;
     struct device_node *pNode = pPlatDev->dev.of_node;
     struct device *     pSysFsDev;
+    struct clk         *pClk;
+
+    static const char   *sptClkNames[3] = { "spt_clk", "spt_module_clk", NULL};
 
     uint32_t regVal = 1;
 
     PR_ALERT("spt_driver module: SptProbe \n");
     BUG_ON((gNumSptMajor == 0) || (gspSptClass == NULL));
 
+    // initialize the clocks
+    i = 0;
+    while((sptClkNames[i] != NULL) && (err == 0))
+    {
+        (void)pr_err("RsdkSptProbe: clock find %s.\n", sptClkNames[i]);
+        pClk = devm_clk_get(pDevice, sptClkNames[i]);
+        (void)pr_err("RsdkSptProbe: clock find result = %x.\n", pClk);
+        if(IS_ERR(pClk))
+        {   // clock not found
+            (void)pr_err("RsdkSptProbe: clock find error for %s.\n", sptClkNames[i]);
+            err = -EFAULT;
+        }
+        else
+        {   // clock found
+            if(clk_prepare_enable(pClk) != 0)
+            {
+                (void)pr_err("RsdkSptProbe: clock start error for %s.\n", sptClkNames[i]);
+                err = -EFAULT;
+            }
+        }
+        i++;
+    }
     if (SptGetDtsProperties(pNode, &sptDevice.dtsInfo) != 0)
     {
         PR_ALERT("spt_driver module: SPT DTS entry parse failed.\n");
         err = -EINVAL;
     }
-    else
+    if(err == 0)
     {
         PR_ALERT("spt_driver module: SptProbe: SptGetDtsProperties() OK.\n");
 

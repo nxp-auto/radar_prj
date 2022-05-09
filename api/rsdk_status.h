@@ -195,10 +195,10 @@ typedef enum
 	RSDK_TEF810X_ADCCALERR_INJECT_FIT,
     RSDK_TEF810X_ADCCALERR_RECOVERY_FIT,
     RSDK_TEF810X_UNMAPED_ERROR,                            /**< Code returned by TEF810X unmapped to rsdkStatus_t */
-	RSKD_TEF810X_RFBIST_FREQUENCY_FAILURE,
+	RSDK_TEF810X_RFBIST_FREQUENCY_FAILURE,
 	RSDK_TEF810X_RFBIST_MAGNITUDE_FAILURE,
-	RSKD_TEF810X_RFBIST_PHASE_FAILURE,
-	RSKD_TEF810X_RFBIST_USER_DEFINED_PROF3,				  /**< RFBIST params were not loaded due to user providing profile 3 data */
+	RSDK_TEF810X_RFBIST_PHASE_FAILURE,
+	RSDK_TEF810X_RFBIST_USER_DEFINED_PROF3,				  /**< RFBIST params were not loaded due to user providing profile 3 data */
 	RSDK_TEF810X_CSI2_VIRTUAL_CHANNEL_NOT_CONFIGURED,
 
 	// RSDK RF Abstract Tef82XX Error Codes
@@ -255,6 +255,9 @@ typedef enum
 	RSDK_TEF82XX_SYS_AMPLITUDEINC_OUTOFRANGE,
 	RSDK_TEF82XX_SYS_PTR_ADDR_NULL,
 	RSDK_TEF82XX_SYS_AAFC_AUTO_NOT_SUPPORTED,
+	RSDK_TEF82XX_SYS_RAW_NUM_SAMPLE_INVALID,
+	RSDK_TEF82XX_SYS_INVALID_RESET_TIME,
+	RSDK_TEF82XX_SYS_TOTAL_BW_OUTOFRANGE,
 	RSDK_TEF82XX_ALG_DUMMYERROR,
 	RSDK_TEF82XX_SPI_WRTRDCRCERROR,
 	RSDK_TEF82XX_SPI_WRTCHECKFAIL,
@@ -298,6 +301,10 @@ typedef enum
 	RSDK_TEF82XX_SC_PROFILE,
 	RSDK_TEF82XX_SC_OPERATING_FREQ_OUTOFRANGE,
 	RSDK_TEF82XX_SC_PTR_ADDR_NULL,
+	RSDK_TEF82XX_SC_INPUT_FREQ_DRIFT_INVALID,
+	RSDK_TEF82XX_SC_USED_BW_OUTOFRANGE,
+	RSDK_TEF82XX_SC_RAMP_TIME_OUTOFRANGE,
+	RSDK_TEF82XX_SC_RESET_TIME_OUTOFRANGE,
 	RSDK_TEF82XX_CAFC_FREQCNTTIMEOUT,
 	RSDK_TEF82XX_CAFC_SBOUTOFRANGE,
 	RSDK_TEF82XX_CAFC_INPUTOUTOFRANGE,
@@ -310,6 +317,9 @@ typedef enum
 	RSDK_TEF82XX_CAFC_VCOCALIB_AAFCFAIL,
 	RSDK_TEF82XX_CAFC_VCOCALIB_KVCODVDTFAIL,
 	RSDK_TEF82XX_CAFC_NOSTOREINPROFILESELECTED,
+	RSDK_TEF82XX_CAFC_DVDT_COUNT_WRONG,
+	RSDK_TEF82XX_CAFC_KVCO_COUNT_STATUS_ERR,
+	RSDK_TEF82XX_CAFC_WRONG_OTP_SKIP_SB_ERR,
 	RSDK_TEF82XX_ADC_CALIBRATIONFAILED,
 	RSDK_TEF82XX_ADC_CALIBRATIONTIMEOUT,
 	RSDK_TEF82XX_ADC_CALIBRATIONCHECKNOTDONE,
@@ -351,6 +361,8 @@ typedef enum
 	RSDK_TEF82XX_RX1_RX2_RX4_CAL_ERROR,
 	RSDK_TEF82XX_RX2_RX3_RX4_CAL_ERROR,
 	RSDK_TEF82XX_RX1_RX2_RX3_RX4_CAL_ERROR,
+	RSDK_TEF82XX_RX_PTR_ADDR_NULL,
+	RSDK_TEF82XX_RX_WRNG_CAL_TARGET_OFFSET,
 	RSDK_TEF82XX_TX_DUMMYERROR,
 	RSDK_TEF82XX_TX_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_TX_PRCADCTIMEOUT,
@@ -423,9 +435,10 @@ typedef enum
 	RSDK_RFE_RFBIST_ACQ_TIMEOUT,                      	  /**< TEF82XX RFE RFBist - timeout expired on RFBist frame(s) acquisition*/
 	RSDK_RFE_RFBIST_ACQ_TIMER_ERROR,                      /**< TEF82XX RFE RFBist - setting timer error*/
 	RSDK_RFE_RFBIST_ADC_DATA_BUFF_NOT_CONFIGURED,		  /**< TEF82XX RFE RFBist - Adc data buff (Frame Optional Params) not configured */
-	RSKD_TEF82XX_RFBIST_FREQUENCY_FAILURE,                /**< TEF82XX RFE RFBist - RFBIST_FREQUENCY_FAILURE*/
+	RSDK_TEF82XX_RFBIST_FREQUENCY_FAILURE,                /**< TEF82XX RFE RFBist - RFBIST_FREQUENCY_FAILURE*/
+	RSDK_TEF82XX_RFBIST_MISSING_SIGNAL_FAILURE,
 	RSDK_TEF82XX_RFBIST_MAGNITUDE_FAILURE,                /**< TEF82XX RFE RFBist - RFBIST_MAGNITUDE_FAILURE*/
-	RSKD_TEF82XX_RFBIST_PHASE_FAILURE,                    /**< TEF82XX RFE RFBist - RFBIST_PHASE_FAILURE*/
+	RSDK_TEF82XX_RFBIST_PHASE_FAILURE,                    /**< TEF82XX RFE RFBist - RFBIST_PHASE_FAILURE*/
 
 	RSDK_TEF82XX_RFE_PHASEROTATOR_INVALID_DDMA_MODE,
 	RSDK_TEF82XX_RFE_PHASEROTATOR_INVALID_DDMA_SOURCE,
@@ -437,7 +450,6 @@ typedef enum
 	RSDK_TEF82XX_RFE_PHASEROTATOR_INVALID_BPSK_SOURCE,
 
 	RSDK_TEF82XX_UNMAPED_ERROR,                            /**< Code returned by TEF82XX unmapped to rsdkStatus_t */
-	RSDK_TEF82XX_ES_VERSION_UNSUPPORTED,				   /**< Driver was build with unsupported ES (Sample) define */
 
 	RSDK_TEF82XX_PLF_INPUTOUTOFRANGE,                      /**< TEF82XX platform - input of range*/
 	RSDK_TEF82XX_PLF_GLUE_SPI_ERROR,                       /**< TEF82XX platform - SPI glue layer error*/
@@ -481,6 +493,8 @@ typedef enum
     RSDK_CSI2_DRV_INVALID_VC_PARAMS,        /**< Invalid data type specification */
     RSDK_CSI2_DRV_INVALID_DC_PARAMS,        /**< Invalid DC params compensation specification */
     RSDK_CSI2_DRV_INVALID_INIT_PARAMS,      /**< Invalid params for DPHY initialization */
+    RSDK_CSI2_DRV_INVALID_BUF_RESET,        /**< Invalid request for buffer pointer reset */
+    RSDK_CSI2_DRV_INVALID_ADC_STAT,         /**< Invalid request for data header/footer management. */
     RSDK_CSI2_DRV_TOO_SMALL_BUFFER,         /**< The buffer provided is too small for the requested data */
     RSDK_CSI2_DRV_NO_SAMPLE_PER_CHIRP,      /**< Samples per chirp incorrect (null) */
     RSDK_CSI2_DRV_NO_CHIRPS_PER_FRAME,      /**< Chirps per frame incorrect (null) */
@@ -489,7 +503,8 @@ typedef enum
     RSDK_CSI2_DRV_BUF_PTR_NULL,             /**< The VC buffer pointer not provided */
     RSDK_CSI2_DRV_BUF_PTR_NOT_ALIGNED,      /**< The VC buffer pointer not aligned to 16 bytes boundaries */
     RSDK_CSI2_DRV_BUF_NUM_LINES_ERR,        /**< The VC buffer must have at least 2 lines */
-
+    RSDK_CSI2_DRV_ADC_STAT_FOR_EXTERN,      /**< Incorrect request for ADC data header/footer request and
+                                             * external source  */
     RSDK_CSI2_DRV_ERR_UNIT_0_MUST_BE_FIRST, /**< Error for S32R45 platform : initialize unit_0 before unit_1 */
     RSDK_CSI2_DRV_ERR_UNIT_1_MUST_BE_FIRST, /**< Error for S32R294 platform : initialize unit_1 before unit_0 */
     RSDK_CSI2_DRV_ERR_UNIT_2_MUST_BE_FIRST, /**< Error for S32R45 platform : initialize unit_2 before unit_3 */
@@ -633,6 +648,7 @@ typedef enum
     RSDK_SPT_RET_ERR_THR_TERM,  /**< Driver API error: could not terminate the thread used for detecting OS kernel event in user space*/
     RSDK_SPT_RET_ERR_OAL_COMM_INIT,  /**< Driver API error: could not initialize OAL communication channel for transmitting OS kernel events to user space*/
     RSDK_SPT_RET_ERR_CHECK_WATERMARK,       /**< Driver error: Failed to check if the watermark instruction is placed at the start of the kernel code. */
+	RSDK_SPT_RET_ERR_INIT_Q_FAIL,    /**< Driver error: Failed to init the queue used to handle irq data processing on separate thread. */
 #else
     RSDK_SPT_RET_WARN_CS_AHB_BUSY, /**< Warning: during a 'blocking' call, the Driver has detected that the SPT has reached a STOP instruction
                                         (CS_STATUS0[PS_STOP] bit was set), but the SPT Command Sequencer DMA has not completed all of its AHB bus accesses.
@@ -659,6 +675,9 @@ typedef enum
 	RSDK_DSP_RET_ERR_INT_CONFIG,    /**< DSP interrupt configuration has enountered an error. */
 	RSDK_DSP_RET_ERR_DISP_CONFIG,	/**< DSP dispatcher was not able to start its scheduling loop. It retuns to the caller. */
 	RSDK_DSP_RET_ERR_INVALID_PARAM, /**< DSP Dispatcher API error: Input parameter value or combination of values not supported. */
+	RSDK_DSP_RET_ERR_INVALID_MSG_BUFF, /**< DSP Dispatcher API error: Message buffer not allocated properly at address RSDK_DSPHD_MSG_BASE_ADDR. */
+	RSDK_DSPHD_RET_ERR_INVALID_MSG_BUFF, /**< DSP Host Driver error: Message buffer not allocated properly at address RSDK_DSPHD_MSG_BASE_ADDR. */
+	RSDK_DSP_RET_ERR_RC_JOBS_NOT_UPDATED, /**< DSP dispatcher was not able update the periodic radar cycle jobs, as requested by the host CPU */
 	RSDK_DSP_RET_ERR_UNKNOWN = RSDK_DSP_STATUS_BASE +  + 0xFFFU,  /**< Unexpected error in DSP Dispatcher. Reason unknown.
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 No DSP error codes should be defined with a value greater than this one.*/
 #endif

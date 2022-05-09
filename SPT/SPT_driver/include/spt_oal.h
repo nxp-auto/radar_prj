@@ -28,6 +28,11 @@ Umbrella header which in turn includes all OAL support for RSDK modules
 
 
 
+#if defined(__ZEPHYR__)
+#include <sys/atomic.h>
+#include "oal_once.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,6 +67,10 @@ extern uint32_t fake_reg;
 #define HW_READ(reg) (reg)
 #endif  //HW_MOCK
 
+#if defined(__ZEPHYR__)
+#define SPT_DATA_Q_SIZE         (64U)
+#endif
+
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
@@ -89,6 +98,34 @@ typedef struct
     uint32_t               errInfo;
 } evtSharedData_t;
 
+#if defined(__ZEPHYR__)
+struct OAL_Sema
+{
+    struct      k_sem mSem;
+    uint32_t    mValue;
+    int32_t     mSemVal;
+};
+
+typedef struct
+{
+    struct OAL_Sema         queueSem;
+
+    evtSharedData_t         queueEvtData[SPT_DATA_Q_SIZE];  //queue that assures evtData transfer from multiple interrupts
+    uint8_t                 queueIdxRd;                     //queue tail
+    uint8_t                 queueIdxWr;                     //queue head
+
+    struct OAL_OnceControl  queueOnceInitCtrl;  //queue must be init only once
+} rsdkSptIrqDataQueue_t;
+#endif
+
+
+/*==================================================================================================
+*                                GLOBAL VARIABLE DECLARATIONS
+==================================================================================================*/
+#if defined(__ZEPHYR__)
+extern rsdkSptIrqDataQueue_t gSptIrqDataQueue;
+#endif
+
 /*==================================================================================================
 *                                    FUNCTION PROTOTYPES
 ==================================================================================================*/
@@ -107,6 +144,39 @@ static inline int32_t OAL_UnmapUserSpace(uintptr_t addr, size_t size)
     UNUSED_ARG(addr);
     UNUSED_ARG(size);
     return 0;
+}
+
+#endif
+
+#if defined(__ZEPHYR__)
+
+static inline int32_t OAL_InitializeSemaphore(struct OAL_Sema *apSem)
+{
+    int32_t lRet = -1;
+    if (apSem != NULL)
+    {
+        lRet = k_sem_init(&(apSem->mSem), apSem->mValue, SPT_DATA_Q_SIZE);
+    }
+
+    return lRet;
+}
+
+static inline int32_t OAL_GiveSemaphore(struct OAL_Sema *apSem)
+{
+    k_sem_give(&(apSem->mSem));
+
+    return 0;
+}
+
+static inline int32_t OAL_TakeSemaphore(struct OAL_Sema *apSem)
+{
+    int32_t lRet = -1;
+    if (apSem != NULL)
+    {
+        lRet = k_sem_take(&(apSem->mSem), K_FOREVER);
+    }
+
+    return lRet;
 }
 
 #endif

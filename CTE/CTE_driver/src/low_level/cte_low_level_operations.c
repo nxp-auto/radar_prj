@@ -606,71 +606,91 @@ static rsdkStatus_t CteTimingTableSet(rsdkCteTimeTableDef_t *pTimeTable, rsdkCte
     volatile CTE_LUT_tag *pwLut;
     rsdkStatus_t rez = RSDK_SUCCESS;
 
-    pwLut = pLut;
-    // for the first event set all output to low
-    pwLut->LSB[0].R = 0u;
-    pwLut->MSB[0].R = 0u;
-    // set all consecutive events to "unchanged" (respectively high for clocks and low for SPT events)
-    for (i = 1; i < CTE_MAX_SMALL_TIME_TABLE_LEN; i++)
+    if(pTimeTable->pEvents == NULL)
     {
-        pwLut->LSB[i].R = 0u;           // SPT events to low
-        pwLut->MSB[i].R = 0x6fffffu;    // FlexTime to 0, all other to "unchanged"
+        rez = RSDK_CTE_DRV_NULL_PTR_EVENTS;
     }
-    // set the new values
-    i = 0;
-    lastTimeTick = 0;
-    while ((i < pTimeTable->tableLength) && (i < CTE_MAX_SMALL_TIME_TABLE_LEN))
+    else
     {
-        rez = CteMaskValuesGet(pTimeTable->pEvents[i].pEventActions, pSignalDef, &longIntMask);
-        if (rez != RSDK_SUCCESS)
+        pwLut = pLut;
+        // for the first event set all output to low
+        pwLut->LSB[0].R = 0u;
+        pwLut->MSB[0].R = 0u;
+        // set all consecutive events to "unchanged" (respectively high for clocks and low for SPT events)
+        for (i = 1; i < CTE_MAX_SMALL_TIME_TABLE_LEN; i++)
         {
-            break;                              // error to get the signals mask, stop here
+            pwLut->LSB[i].R = 0u;           // SPT events to low
+            pwLut->MSB[i].R = 0x6fffffu;    // FlexTime to 0, all other to "unchanged"
         }
-        tmpVal = Cte64BitCounting(pTimeTable->pEvents[i].absTime, gsDriverData.cteWorkingFreq, 1u,
-                gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
-        work32U = tmpVal - lastTimeTick;
-        if (work32U == 0u)
+        // set the new values
+        i = 0;
+        lastTimeTick = 0;
+        while ((i < pTimeTable->tableLength) && (i < CTE_MAX_SMALL_TIME_TABLE_LEN))
         {
-            work32U = 1;                        // time table value must not be 0
+            if(pTimeTable->pEvents[i].pEventActions == NULL)
+            {
+                rez = RSDK_CTE_DRV_NULL_PTR_ACTIONS;
+                break;
+            }
+            rez = CteMaskValuesGet(pTimeTable->pEvents[i].pEventActions, pSignalDef, &longIntMask);
+            if (rez != RSDK_SUCCESS)
+            {
+                break;                              // error to get the signals mask, stop here
+            }
+            tmpVal = Cte64BitCounting(pTimeTable->pEvents[i].absTime, gsDriverData.cteWorkingFreq, 1u,
+                    gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
+            work32U = tmpVal - lastTimeTick;
+            if (work32U == 0u)
+            {
+                work32U = 1;                        // time table value must not be 0
+            }
+            lastTimeTick = tmpVal;
+            pLut->LSB[i].R = work32U + (uint32_t) longIntMask;
+            longIntMask >>= 32u;                    // get the MSB of the mask
+            pLut->MSB[i].R = (uint32_t) longIntMask;
+            i++;
         }
-        lastTimeTick = tmpVal;
-        pLut->LSB[i].R = work32U + (uint32_t) longIntMask;
-        longIntMask >>= 32u;                    // get the MSB of the mask
-        pLut->MSB[i].R = (uint32_t) longIntMask;
-        i++;
-    }
-    pwLut++;                                  // go to next LUT, if necessary (more than 32 events)
-    if (i < pTimeTable->tableLength)
-    {           // second table must be used too
-        // erase the CTE time table first
-        for (i = 0; i < CTE_MAX_SMALL_TIME_TABLE_LEN; i++)
+        if(rez == RSDK_SUCCESS)
         {
-            pwLut->LSB[i].R = 0u;
-            pwLut->MSB[i].R = 0u;
+            pwLut++;                                  // go to next LUT, if necessary (more than 32 events)
+            if (i < pTimeTable->tableLength)
+            {           // second table must be used too
+                // erase the CTE time table first
+                for (i = 0; i < CTE_MAX_SMALL_TIME_TABLE_LEN; i++)
+                {
+                    pwLut->LSB[i].R = 0u;
+                    pwLut->MSB[i].R = 0u;
+                }
+            }
+            j = 0;
+            while (i < pTimeTable->tableLength)
+            {
+                if(pTimeTable->pEvents[i].pEventActions == NULL)
+                {
+                    rez = RSDK_CTE_DRV_NULL_PTR_ACTIONS;
+                    break;
+                }
+                rez = CteMaskValuesGet(pTimeTable->pEvents[i].pEventActions, pSignalDef, &longIntMask);
+                if (rez != RSDK_SUCCESS)
+                {
+                    break;                              // error to get the signals mask, stop here
+                }
+                tmpVal = Cte64BitCounting(pTimeTable->pEvents[i].absTime, gsDriverData.cteWorkingFreq, 1u,
+                        gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
+                work32U = (uint32_t) tmpVal;
+                work32U -= lastTimeTick;
+                if (work32U == 0u)
+                {
+                    work32U = 1;                        // time table value must not be 0
+                }
+                lastTimeTick = tmpVal;
+                pwLut->LSB[j].R = work32U + (uint32_t) longIntMask;
+                longIntMask >>= 32u;                    // get the MSB of the mask
+                pwLut->MSB[j].R = (uint32_t) longIntMask;
+                i++;
+                j++;
+            }
         }
-    }
-    j = 0;
-    while (i < pTimeTable->tableLength)
-    {
-        rez = CteMaskValuesGet(pTimeTable->pEvents[i].pEventActions, pSignalDef, &longIntMask);
-        if (rez != RSDK_SUCCESS)
-        {
-            break;                              // error to get the signals mask, stop here
-        }
-        tmpVal = Cte64BitCounting(pTimeTable->pEvents[i].absTime, gsDriverData.cteWorkingFreq, 1u,
-                gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
-        work32U = (uint32_t) tmpVal;
-        work32U -= lastTimeTick;
-        if (work32U == 0u)
-        {
-            work32U = 1;                        // time table value must not be 0
-        }
-        lastTimeTick = tmpVal;
-        pwLut->LSB[j].R = work32U + (uint32_t) longIntMask;
-        longIntMask >>= 32u;                    // get the MSB of the mask
-        pwLut->MSB[j].R = (uint32_t) longIntMask;
-        i++;
-        j++;
     }
     return rez;
 }
@@ -1481,13 +1501,13 @@ rsdkStatus_t CtePlatformModuleUpdateTables(rsdkCteTimeTableDef_t *pTable0, rsdkC
         }
         else
         {
-            if (((pTable1 == NULL)
+            if (((pTable1 == NULL)              // table1 was provided at init but is not required now
                     && ((uint8_t) gsDriverData.pSignalDef1[0].outputSignal < (uint8_t) RSDK_CTE_OUTPUT_MAX))
                     ||
-                    ((pTable1 != NULL)
+                    ((pTable1 != NULL)          // table1 was not provided at init and is required now
                             && ((uint8_t) gsDriverData.pSignalDef1[0].outputSignal >= (uint8_t) RSDK_CTE_OUTPUT_MAX)))
             {
-                rez = RSDK_CTE_DRV_WRG_PTR_TABLE1;
+                rez = RSDK_CTE_DRV_WRG_PTR_TABLE1;      
             }
         }
     }

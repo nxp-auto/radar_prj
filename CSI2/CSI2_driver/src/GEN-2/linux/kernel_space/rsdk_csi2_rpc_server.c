@@ -165,7 +165,6 @@ static void UpdateCallbacks(rsdkCsi2InitParams_t *pParam)
     pParam->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID] = (rsdkCsi2IsrCb_t)Callback1;
     pParam->pCallback[RSDK_CSI2_PATH_ERR_IRQ_ID] = (rsdkCsi2IsrCb_t)Callback2;
     pParam->pCallback[RSDK_CSI2_EVENTS_IRQ_ID] = (rsdkCsi2IsrCb_t)Callback3;
-    pParam->pCallback[RSDK_CSI2_TX_ERR_IRQ_ID] = (rsdkCsi2IsrCb_t)Callback3;
 }
 
 /*******************************************************************************/
