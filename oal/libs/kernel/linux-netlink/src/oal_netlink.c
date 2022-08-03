@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <oal_comm_kernel.h>
 #include <oal_log.h>
+#include <oal_comm_kernel.h>
 #include <oal_mem_constants.h>
 #include <oal_static_pool.h>
 #include <os_oal_comm.h>
@@ -12,6 +12,8 @@
 #include <linux/module.h>
 #include <linux/version.h>
 #include <net/genetlink.h>
+
+#define OAL_SERVER_MAX_NAME 15U
 
 struct oal_dispatcher {
 	struct sk_buff *mpRskb;
@@ -23,6 +25,12 @@ struct OAL_RPCService {
 	struct genl_ops mOps;
 	OAL_dispatch_t mDispatch;
 	OAL_ServiceData_t mData;
+};
+
+struct OAL_ReferDispatcher {
+	uint8_t mUsedDispatch;
+	char8_t mName[OAL_SERVER_MAX_NAME];
+	struct OAL_RPCService *mSaveMem;
 };
 
 static int32_t oal_rpc_exec(struct sk_buff *apSkb2, struct genl_info *apInfo);
@@ -52,6 +60,7 @@ static struct genl_family gsOalRpcFamily = {
     .pre_doit = oal_rpc_pre_exec,
 };
 
+static struct OAL_ReferDispatcher gsDispatch[OAL_MAX_SERVICES_PER_DRIVER];
 static struct OAL_RPCService gsDriverServices[OAL_MAX_SERVICES_PER_DRIVER];
 static OAL_DECLARE_STATIC_POOL(gsRPCNetServicesPool,
                                OAL_ARRAY_SIZE(gsDriverServices));
@@ -107,9 +116,11 @@ static int32_t process_message(struct nlattr *apNa, struct genl_info *apInfo)
 	lFunc = nla_get_u32(apNa);
 	lLen  = (size_t)nla_len(apNa);
 
-	lFret = lpServ->mDispatch(&lDisp, lFunc,
-	                          (uintptr_t)(lpData + sizeof(lFunc)),
-	                          lLen - sizeof(lFunc));
+	lFret = lpServ->mDispatch(
+	    &lDisp, lFunc,
+	    (uintptr_t)(lpData + sizeof(lFunc) + OAL_SERVER_MAX_NAME),
+	    (lLen - sizeof(lFunc) - OAL_SERVER_MAX_NAME -
+	     strlen(lpServ->mFam.name) - 1U));
 
 	// Send back the return code
 	lRet = nla_put_u32(lDisp.mpRskb, (int32_t)OAL_RPC_FUNC_RET, lFret);
@@ -137,14 +148,37 @@ process_message_end:
 static int32_t oal_rpc_pre_exec(const struct genl_ops *acpOps,
                                 struct sk_buff *apSkb, struct genl_info *apInfo)
 {
-	int32_t lRet = EINVAL;
-	struct OAL_RPCService *lpServ;
+	int32_t lRet                  = EINVAL;
+	struct OAL_RPCService *lpServ = NULL;
+	struct nlattr *lpNa;
+	uint32_t lFunc;
+	uint8_t lI;
+	uint8_t *lpData;
+	const char8_t *lName;
 
 	OAL_UNUSED_ARG(apSkb);
 	if ((acpOps != NULL) && (apInfo != NULL)) {
-		lpServ = container_of(acpOps, struct OAL_RPCService, mOps);
-		apInfo->user_ptr[0] = lpServ;
-		lRet                = 0;
+		lpNa = apInfo->attrs[OAL_RPC_CALL];
+
+		if (lpNa != NULL) {
+			lFunc  = nla_get_u32(lpNa);
+			lpData = (uint8_t *)nla_data(lpNa);
+			lName  = (char *)(lpData + sizeof(lFunc));
+
+			for (lI = 0; lI < OAL_MAX_SERVICES_PER_DRIVER; lI++) {
+				if (gsDispatch[lI].mUsedDispatch !=
+				        (uint8_t)0 &&
+				    (strncmp(gsDispatch[lI].mName, lName,
+				             (strlen(gsDispatch[lI].mName) +
+				              1U))) == 0) {
+					lpServ = gsDispatch[lI].mSaveMem;
+					break;
+				}
+			}
+
+			apInfo->user_ptr[0] = lpServ;
+			lRet                = 0;
+		}
 	}
 	return lRet;
 }
@@ -175,16 +209,16 @@ OAL_RPCService_t OAL_RPCRegister(const char8_t *acpName, OAL_dispatch_t aDisp)
 {
 	int32_t lRet;
 	struct OAL_RPCService *lpServ = NULL;
-	size_t lLen;
+	size_t lLen, lI;
 
 	static struct genl_ops lsOalRpcOps = {
-	    .cmd    = OAL_RPC_CMD_EXEC,
-	    .flags  = 0,
+		.cmd   = OAL_RPC_CMD_EXEC,
+		.flags = 0,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-	    .policy = gsOalRpcPolicy,
+		.policy = gsOalRpcPolicy,
 #endif
-	    .doit   = oal_rpc_exec,
-	    .dumpit = NULL,
+		.doit   = oal_rpc_exec,
+		.dumpit = NULL,
 	};
 
 	if (aDisp == NULL) {
@@ -210,6 +244,15 @@ OAL_RPCService_t OAL_RPCRegister(const char8_t *acpName, OAL_dispatch_t aDisp)
 	(void)memcpy(lpServ->mFam.name, acpName, lLen);
 	lpServ->mFam.ops   = &lpServ->mOps;
 	lpServ->mFam.n_ops = 1;
+
+	for (lI = 0; lI < OAL_MAX_SERVICES_PER_DRIVER; lI++) {
+		if (gsDispatch[lI].mUsedDispatch == (uint8_t)0) {
+			gsDispatch[lI].mUsedDispatch = 1;
+			gsDispatch[lI].mSaveMem      = lpServ;
+			(void)strncpy(gsDispatch[lI].mName, acpName, lLen);
+			break;
+		}
+	}
 
 	// Register the new family
 	lRet = genl_register_family(&lpServ->mFam);

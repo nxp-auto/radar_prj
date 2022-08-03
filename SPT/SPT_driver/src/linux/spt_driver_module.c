@@ -22,9 +22,10 @@
 #include <linux/uaccess.h>
 #include <linux/fs.h>
 #include <linux/clk.h>
+#include <linux/reset.h>
 
-#include "rsdk_S32R45.h"
-#include "spt_oal.h"
+#include "S32R45_SPT.h"
+#include "Spt_Oal.h"
 #include "spt_driver_module.h"
 
 #ifdef __cplusplus
@@ -125,7 +126,7 @@ static const struct file_operations gSptFileOps = {
 /**
  * @brief   Get dts properties
  */
-static int32_t SptGetDtsProperties(struct device_node *pNode, sptDtsInfo_t *dtsInfo)
+static int32_t SptGetDtsProperties(struct device *pDevice, struct device_node *pNode, sptDtsInfo_t *dtsInfo)
 {
     int32_t err = 0;
 
@@ -194,6 +195,16 @@ static int32_t SptGetDtsProperties(struct device_node *pNode, sptDtsInfo_t *dtsI
             err = -EINVAL;
         }
     }
+	
+	if (err == 0)
+	{
+		dtsInfo->bbe32Reset = devm_reset_control_get(pDevice, "bbe32_reset");     
+		if (IS_ERR(dtsInfo->bbe32Reset)) 
+		{
+			err = -EINVAL;
+			(void)pr_err("spt_driver module: Failed to get 'bbe_reset' reset control. \n");
+		}
+	}
 
     if (err == 0)
     {
@@ -254,7 +265,7 @@ static int SptProbe(struct platform_device *pPlatDev)
         }
         i++;
     }
-    if (SptGetDtsProperties(pNode, &sptDevice.dtsInfo) != 0)
+    if (SptGetDtsProperties(pDevice, pNode, &sptDevice.dtsInfo) != 0)
     {
         PR_ALERT("spt_driver module: SPT DTS entry parse failed.\n");
         err = -EINVAL;
@@ -296,7 +307,7 @@ static int SptProbe(struct platform_device *pPlatDev)
     //finished creating the device, now bind the specific hardware resources to it - register map, interrupts:
     if (err == 0)
     {
-        sptDevice.pSptRegs = (volatile struct SPT_tag *)ioremap((phys_addr_t)sptDevice.dtsInfo.pMemMapBaseAddr, (size_t)sptDevice.dtsInfo.memSize);
+        sptDevice.pSptRegs = (volatile SPT_Type *const)ioremap((phys_addr_t)sptDevice.dtsInfo.pMemMapBaseAddr, (size_t)sptDevice.dtsInfo.memSize);
         if (sptDevice.pSptRegs == NULL)
         {
             err = EFAULT;
@@ -309,8 +320,9 @@ static int SptProbe(struct platform_device *pPlatDev)
         else
         {
             //test the register access by doing a read-after-write:
-            sptDevice.pSptRegs->CS_PG_ST_ADDR.R = SPT_REG_TESTVAL;
-            regVal = sptDevice.pSptRegs->CS_PG_ST_ADDR.R;
+            sptDevice.pSptRegs->CS_PG_ST_ADDR = SPT_REG_TESTVAL;
+            regVal = sptDevice.pSptRegs->CS_PG_ST_ADDR;
+
 			if(regVal != SPT_REG_TESTVAL)
 			{
 				err = EFAULT;

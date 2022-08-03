@@ -131,6 +131,7 @@ ifeq ($(OS), zephyr)
             os_oal_timer.c                                  \
             posix_oal_waitqueue.c                           \
             os_oal_bottomhalf.c                             \
+            os_oal_irq_utils.c                              \
 
     ifeq ($(OAL_DONT_USE_FDT),)
         SRCS += oal_devtree_utils.c

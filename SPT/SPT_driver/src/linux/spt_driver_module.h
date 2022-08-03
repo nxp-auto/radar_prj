@@ -13,10 +13,11 @@
 #include <linux/cdev.h>
 #include <linux/interrupt.h>
 #include <linux/atomic.h>
-#include "rsdk_S32R45.h"
+#include <linux/reset.h>
+#include "S32R45_SPT.h"
 #include "oal_comm_kernel.h"
 #include "oal_waitqueue.h"
-#include "spt_oal.h"
+#include "Spt_Oal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +54,7 @@ typedef enum
 typedef struct
 {
     uint32_t devId;
-
+    struct reset_control *bbe32Reset;
     uint32_t *pMemMapBaseAddr; /* physical address of the SPT register block */
     uint64_t  memSize;
 
@@ -67,8 +68,8 @@ typedef struct
     dev_t          deviceNum;
     int32_t       gUserPid;
 
-    sptDtsInfo_t       dtsInfo;
-    volatile struct SPT_tag *pSptRegs; /* Virtual address of the SPT register block */
+    sptDtsInfo_t        dtsInfo;
+    volatile SPT_Type * pSptRegs; /* Virtual address of the SPT register block */
 
     OAL_RPCService_t  gsOalCommServ[2];
     OAL_waitqueue_t   irqWaitQ;

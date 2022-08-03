@@ -18,11 +18,11 @@ int32_t OAL_InitializeBottomHalf(struct OAL_BottomHalf *apBtHalf,
 	} else {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
 		DECLARE_TASKLET(lTasklet, aCallback, aCallbackArg);
-#else
-		DECLARE_TASKLET_OLD(lTasklet, aCallback);
-#endif
 
 		apBtHalf->mTasklet = lTasklet;
+#else
+		tasklet_init(&apBtHalf->mTasklet, aCallback, aCallbackArg);
+#endif
 	}
 
 	return lRet;

@@ -24,7 +24,7 @@ int32_t OAL_Sleep(const OAL_Timespec_t *acpTm)
 	}
 
 	lUsec = acpTm->mNsec / OAL_NSEC_IN_USEC;
-	if (acpTm->mNsec <= MAX_UDELAY_MS * OAL_NSEC_IN_MSEC) {
+	if (acpTm->mNsec <= (MAX_UDELAY_MS * OAL_NSEC_IN_MSEC)) {
 		udelay(lUsec);
 	} else {
 		usleep_range(lUsec, lUsec);

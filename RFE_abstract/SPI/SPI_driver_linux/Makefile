@@ -24,7 +24,7 @@ OBJS := $(SRCS:.c=.o)
 MODULE_NAME := rsdk_spi_driver
 ARCH ?= arm64
 EXTRA_CFLAGS := -Wall -g $(addprefix -I,$(INCLUDES))
-CFLGS := -std=gnu99 -Ulinux -DOS=linux -DS32R45 $(PRINTK_EN)
+CFLGS := -std=gnu99 -Ulinux -Dlinux -DOS=linux -DS32R45 $(PRINTK_EN)
 
 obj-m += $(MODULE_NAME).o
 $(MODULE_NAME)-objs := $(OBJS)

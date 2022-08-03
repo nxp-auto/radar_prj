@@ -27,6 +27,7 @@ src = .
 obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-objs :=  lax_os_core.o   \
     lax_driver.o                        \
+    lax_os_core_main.o                  \
   ../../../../../oal/libs/kernel/linux-write/build-linux-kernel/liboal_kernel.o
 
 #specific library definitions
@@ -39,7 +40,7 @@ CFLAGS_MOD += -I$(CAPATH)/../inc \
     -I$(CAPATH)/../../../../../oal/include/linux \
     -I$(CAPATH)/../../../../../api \
     -I$(KERNEL_DIR)/../recipe-sysroot/usr/include \
-    -DLAX_OS_linux -D$(PLATFORM)
+    -DLAX_OS_linux -D$(PLATFORM) -Ulinux -Dlinux
 
 ifeq ($(KERNEL_DIR), )
     $(info "***** Error : KERNEL_DIR not defined !")

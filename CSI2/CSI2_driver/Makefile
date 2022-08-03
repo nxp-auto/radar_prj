@@ -12,7 +12,7 @@ all lib module debug release preproc clean cleanall cleanalltmp clean_lib module
 	@if [ "$(OSENV)" = "linux" ]; then                                                               \
         if [ "$(PLATFORM)" = "S32R45" ]; then                                                       \
             echo "#### Building CSI2 driver $@ for linux environment ####" ;                        \
-            make -f project/linux/Makefile $@;                                                      \
+            make -f project/S32R45/Linux/Makefile $@;                                                      \
         else                                                                                        \
             echo "#### Can not make CSI2 driver $@ for linux environment and $(PLATFORM) ####" ;    \
         fi                                                                                          \

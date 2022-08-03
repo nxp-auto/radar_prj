@@ -36,6 +36,9 @@ OAL_INSTALL ?= $(abspath $(DEV_ROOT_DIR)/../oal_install)
 
 ifneq (,$(findstring graph,$(MAKECMDGOALS)))
 ARCH ?= arm64
+ifeq ($(OS),zephyr)
+-include $(DEV_ROOT_DIR)/build/$(ODIR)/Makefile.inc
+endif
 -include $(DEV_ROOT_DIR)/build/CallGraph.mk
 else
 -include $(DEV_ROOT_DIR)/build/$(ODIR)/Makefile.inc

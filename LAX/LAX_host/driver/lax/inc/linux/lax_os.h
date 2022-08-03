@@ -87,6 +87,8 @@ extern const struct attribute_group gAttrGroup;
 /*=================================================================================================
 *                                    FUNCTION PROTOTYPES
 =================================================================================================*/
+int  LaxModInit(void);
+void LaxModExit(void);
 
 #ifdef __cplusplus
 }

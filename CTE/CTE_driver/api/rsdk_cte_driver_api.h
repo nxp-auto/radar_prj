@@ -74,10 +74,8 @@ typedef enum {
 typedef enum {
     RSDK_CTE_CSI2_UNIT_0 = 0u,      /**< MIPI-CSI2 unit 0                                   */
     RSDK_CTE_CSI2_UNIT_1,           /**< MIPI-CSI2 unit 1                                   */
-#ifdef S32R45
     RSDK_CTE_CSI2_UNIT_2,           /**< MIPI-CSI2 unit 2,                                  */
     RSDK_CTE_CSI2_UNIT_3,           /**< MIPI-CSI2 unit 3                                   */
-#endif
     RSDK_CTE_CSI2_UNIT_MAX,         /**< MIPI-CSI2 unit limit (not used)                    */
 } rsdkCteCsi2Unit_t;
 

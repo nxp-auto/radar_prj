@@ -1,5 +1,5 @@
 /*
-* Copyright 2017 NXP
+* Copyright 2017-2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -34,9 +34,35 @@ typedef volatile uint32_t vuint32_t;
 typedef volatile int64_t  vint64_t;
 typedef volatile uint64_t vuint64_t;
 
+#if !defined(linux) && !defined(bool)
+typedef uint8_t     bool;
+#endif
+
+#if !defined(boolean)
+typedef uint8_t     boolean;
+#endif
+
 /*float types*/
 typedef float  float32_t;
 typedef double float64_t;
+
+/* Alias type definitions for Autosar cross-compatibility */
+typedef int8_t  int8;
+typedef uint8_t uint8;
+
+typedef int16_t  int16;
+typedef uint16_t uint16;
+
+typedef int32_t  int32;
+typedef uint32_t uint32;
+
+typedef int64_t  int64;
+typedef uint64_t uint64;
+
+typedef int8_t      sint8;
+typedef int16_t     sint16;
+typedef int32_t     sint32;
+typedef int64_t     sint64;
 
 #elif defined(__MWERKS__) /* Metrowerk CodeWarrior */
 #include <stdint.h>
@@ -67,9 +93,33 @@ typedef volatile uint32_t vuint32_t;
 #elif defined(__DCC__) /* WindRiver's diab*/
 #include <stdint.h>
 
+/* Alias type definitions for Autosar cross-compatibility */
+typedef int8_t  int8;
+typedef uint8_t uint8;
+
+typedef int16_t  int16;
+typedef int16_t  sint16;
+typedef uint16_t uint16;
+
+typedef int32_t  int32;
+typedef uint32_t uint32;
+
+typedef int64_t  int64;
+typedef int64_t  sint64;
+typedef uint64_t uint64;
+
+#if !defined(bool)
+typedef uint8_t     bool;
+#endif
+
+#if !defined(boolean)
+typedef bool        boolean;
+#endif
+
 /* Standard typedefs used by header files, based on ISO C standard */
 typedef volatile int8_t  vint8_t;
 typedef volatile uint8_t vuint8_t;
+typedef uint8_t          uint8;
 
 typedef volatile int16_t  vint16_t;
 typedef volatile uint16_t vuint16_t;
@@ -103,10 +153,40 @@ typedef volatile unsigned long vuint32_t;
 typedef long long          int64_t;
 typedef unsigned long long uint64_t;
 
+/* Alias type definitions for Autosar cross-compatibility */
+typedef int8_t  int8;
+typedef uint8_t uint8;
+
+typedef int16_t  int16;
+typedef uint16_t uint16;
+
+typedef int32_t  int32;
+typedef uint32_t uint32;
+
+typedef int64_t  int64;
+typedef uint64_t uint64;
+
+
 /*float types*/
 typedef float  float32_t;
 typedef double float64_t;
 
+#endif
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef STD_ON
+#define STD_ON      0x01
+#endif
+
+#ifndef STD_OFF
+#define STD_OFF     0x00
 #endif
 
 #ifdef __cplusplus

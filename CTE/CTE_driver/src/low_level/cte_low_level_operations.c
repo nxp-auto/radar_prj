@@ -1230,7 +1230,6 @@ rsdkStatus_t CtePlatformModuleInit(const rsdkCteInitParams_t *pCteInitParams, ui
                 {
                     gspCTE->CNTRL.B.MA_SL_ST = 1u;                  // set bit for Slave mode
                     // set the appropriate registry values for the Slave mode
-#ifdef S32R45
 #ifdef linux
 					mask = (uint32_t)pCteInitParams->cteMode.workingMode - (uint32_t)RSDK_CTE_SLAVE_EXTERNAL;
                     mask += (uint32_t)pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc << 1u;
@@ -1242,15 +1241,6 @@ rsdkStatus_t CtePlatformModuleInit(const rsdkCteInitParams_t *pCteInitParams, ui
                     SRC_1.CTE_CTRL_REG.B.MIPICSI2_ID = (uint32_t)pCteInitParams->cteMode.cteWorkingParam0.cteCsi2Unit;
                     SRC_1.CTE_CTRL_REG.B.VC_ID = (uint32_t)pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc;
 #endif // #ifdef linux
-
-
-
-
-
-
-
-
-#endif
                     gspCTE->CNTRL.B.RFS_DLY = (uint32_t) pCteInitParams->cteMode.cteWorkingParam0.cteInternalRfsDelay;
                     gspCTE->CNTRL.B.RCS_DLY = (uint32_t) pCteInitParams->cteMode.cteWorkingParam1.cteInternalRcsDelay;
                 }

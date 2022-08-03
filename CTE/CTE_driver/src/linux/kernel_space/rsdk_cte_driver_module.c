@@ -210,12 +210,11 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
         .release = RsdkCteRelease,
     };
 
-    int32_t             err = 0, i;
+    int32_t             err = 0;
     uint32_t            val;
     struct device *     pDevice = &pPlatDev->dev;
     struct device_node *pNode = pPlatDev->dev.of_node;
     struct device *     pSysFsDev;
-    struct clk         *pClk;
     rsdkCteDevice_t *   pRsdkCteDev;
     dev_t               devNo;
 
@@ -224,8 +223,10 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
 #endif
     BUG_ON((gsNumRsdkCteMajor == 0) || (gspRsdkCteClass == NULL));
 
-    // initialize the clocks
     /* To be used when it will be possible
+    struct clk         *pClk;
+    int32_t             i
+    /-> initialize the clocks
     static const char   *cteClkNames[3] = { "cte_reg_clk", "cte_clk", NULL};
     i = 0;
     while((cteClkNames[i] != NULL) && (err == 0))
@@ -234,12 +235,12 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
         pClk = devm_clk_get(pDevice, cteClkNames[i]);
         (void)pr_err("RsdkCteProbe: clock find rez. %x.\n", pClk);
         if(IS_ERR(pClk))
-        {   // clock not found
+        {   /-> clock not found
             (void)pr_err("RsdkCteProbe: clock find error for %s.\n", cteClkNames[i]);
             err = -EFAULT;
         }
         else
-        {   // clock found
+        {   /-> clock found
             if(clk_prepare_enable(pClk) != 0)
             {
                 (void)pr_err("RsdkCteProbe: clock start error for %s.\n", cteClkNames[i]);
@@ -248,10 +249,10 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
         }
         i++;
     }
-    //*/
-    /* Allocate CTE device structure */
+    /-> Allocate CTE device structure 
     if(err == 0)
     {
+    */
         pRsdkCteDev = kzalloc(sizeof(rsdkCteDevice_t), GFP_KERNEL);
         err = RsdkCteGetDtsProperties(pNode, &pRsdkCteDev->dtsInfo);
         if (err < 0)
@@ -260,7 +261,9 @@ static int RsdkCteProbe(struct platform_device *pPlatDev)
             (void)pr_err("RsdkCteProbe: CTE DTS entry parse failed.\n");
             err = -EINVAL;
         }
+    /* to keep correct code for clock initialization
     }
+    */
     if(err == 0)
     {
 #ifdef CTE_KERNEL_DEBUG_MODE

@@ -322,80 +322,77 @@ static int LaxProbe(struct platform_device *pdev)
         }
         else
         {
-            if(err >= 0)
-            {
-                pLaxCtrl = &pLaxDev->laxCtrl;
+			pLaxCtrl = &pLaxDev->laxCtrl;
 
-                devNo = MKDEV(gsNumLaxMajor, gsNumLaxMinor + pLaxCtrl->id);
-                (void)sprintf(deviceName, LAX_DEVICE_NAME "%d", pLaxCtrl->id);
-                dev_set_drvdata(&pdev->dev, pLaxDev);
+			devNo = MKDEV(gsNumLaxMajor, gsNumLaxMinor + pLaxCtrl->id);
+			(void)sprintf(deviceName, LAX_DEVICE_NAME "%d", pLaxCtrl->id);
+			dev_set_drvdata(&pdev->dev, pLaxDev);
 
-                if(RSDK_SUCCESS != LaxLowLevelDriverInit(pLaxCtrl))
-                {
-                    err = -EINVAL;
-                }
-                else
-                {
-                    /* register the same interrupt handler for all interrupt lines */
-                    err = request_irq(pLaxDev->laxIrqNo[0], LaxDevIrqHandler, 0, deviceName, pLaxDev);
-                    err += request_irq(pLaxDev->laxIrqNo[1], LaxDevIrqHandler, 0, deviceName, pLaxDev);
-                    if (err < 0) 
-                    {
-                        LAX_LOG_INFO("%s: request_irq() err = %d\n", deviceName, err);
-                    }
-                    else
-                    {
-                        cdev_init(&pLaxDev->chDev, &gsLaxFops);
-                        pLaxDev->chDev.owner = THIS_MODULE;
+			if(RSDK_SUCCESS != LaxLowLevelDriverInit(pLaxCtrl))
+			{
+				err = -EINVAL;
+			}
+			else
+			{
+				/* register the same interrupt handler for all interrupt lines */
+				err = request_irq(pLaxDev->laxIrqNo[0], LaxDevIrqHandler, 0, deviceName, pLaxDev);
+				err += request_irq(pLaxDev->laxIrqNo[1], LaxDevIrqHandler, 0, deviceName, pLaxDev);
+				if (err < 0) 
+				{
+					LAX_LOG_INFO("%s: request_irq() err = %d\n", deviceName, err);
+				}
+				else
+				{
+					cdev_init(&pLaxDev->chDev, &gsLaxFops);
+					pLaxDev->chDev.owner = THIS_MODULE;
 
-                        err = cdev_add(&pLaxDev->chDev, devNo, 1);
-                        if (err < 0)
-                        {
-                            LAX_LOG_INFO("Error %d while adding %s", err, deviceName);
-                        }
-                        else
-                        {
-                            /* Create sysfs device */
-                            pSysFsDev = device_create(gspLaxClass, pToDev, devNo, NULL, deviceName);
-                            if (IS_ERR(pSysFsDev))
-                            {
-                                err = (int32_t)PTR_ERR(pSysFsDev);
-                                LAX_LOG_INFO("Error %d while creating %s", err, deviceName);
-                            }
-                            else
-                            {
-                                if (0 == gsNumLaxDevs)
-                                {
-                                   if(LaxOalCommInit() == RSDK_SUCCESS)
-                                   {
-                                        gsNumLaxDevs++;
-                                   }
-                                }
-                            }
-                            if(err < 0)
-                            {
-                                cdev_del(&pLaxDev->chDev);
-                            }
-                            else
-                            {
-                                LAX_LOG_INFO("Lax driver %d initialized.", devNo);
-                            }
-                        }
-                        if(err < 0)
-                        {
-                            (void)free_irq(pLaxDev->laxIrqNo[0], pLaxDev);
-                            (void)free_irq(pLaxDev->laxIrqNo[1], pLaxDev);
-                        }
-                    }
-                    if(err < 0)
-                    {
-                        if(RSDK_SUCCESS != LaxDeInit(pLaxCtrl))
-                        {
-                            LAX_LOG_ERROR ("Error in LaxDeInit");
-                        }
-                    }
-                }
-            }
+					err = cdev_add(&pLaxDev->chDev, devNo, 1);
+					if (err < 0)
+					{
+						LAX_LOG_INFO("Error %d while adding %s", err, deviceName);
+					}
+					else
+					{
+						/* Create sysfs device */
+						pSysFsDev = device_create(gspLaxClass, pToDev, devNo, NULL, deviceName);
+						if (IS_ERR(pSysFsDev))
+						{
+							err = (int32_t)PTR_ERR(pSysFsDev);
+							LAX_LOG_INFO("Error %d while creating %s", err, deviceName);
+						}
+						else
+						{
+							if (0 == gsNumLaxDevs)
+							{
+							   if(LaxOalCommInit() == RSDK_SUCCESS)
+							   {
+									gsNumLaxDevs++;
+							   }
+							}
+						}
+						if(err < 0)
+						{
+							cdev_del(&pLaxDev->chDev);
+						}
+						else
+						{
+							LAX_LOG_INFO("Lax driver %d initialized.", devNo);
+						}
+					}
+					if(err < 0)
+					{
+						(void)free_irq(pLaxDev->laxIrqNo[0], pLaxDev);
+						(void)free_irq(pLaxDev->laxIrqNo[1], pLaxDev);
+					}
+				}
+				if(err < 0)
+				{
+					if(RSDK_SUCCESS != LaxDeInit(pLaxCtrl))
+					{
+						LAX_LOG_ERROR ("Error in LaxDeInit");
+					}
+				}
+			}
         }
     }
     return err;
@@ -453,7 +450,7 @@ static int LaxRemove(struct platform_device *ofpdev)
 /**
  * @brief   Driver/module init
  */
-static int __init LaxModInit(void)
+int LaxModInit(void)
 {
     int32_t err;
 
@@ -494,17 +491,9 @@ static int __init LaxModInit(void)
 /**
  * @brief   Driver/module exit
  */
-static void __exit LaxModExit(void)
+void LaxModExit(void)
 {
     platform_driver_unregister(&gsLaxDriver);
     class_destroy(gspLaxClass);
     unregister_chrdev_region(gsDevNo, RSDK_LAX_CORES_NUM);
 }// LaxModExit
-
-module_init(LaxModInit);
-module_exit(LaxModExit);
-
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_AUTHOR("NXP Semiconductors");
-MODULE_DESCRIPTION("NXP LAX Driver");
-MODULE_VERSION("2.00");

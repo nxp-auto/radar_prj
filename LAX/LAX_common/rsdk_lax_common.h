@@ -58,7 +58,7 @@ extern "C"{
 #endif
 
 /**
-* @bref     Macros for registry access.
+* @brief    Macros for registry access.
 * @details  The current version of S32R45.h file defines many structures for the same area.
 *           This is perhaps as a VSPA inheritance.
 *
@@ -458,6 +458,8 @@ typedef enum
 
 
     RSDK_LAX_EVENT_DMA_DONE,  /**< @brief Host-triggered DMA completion, for both LAX0 and LAX1 */
+
+    RSDK_LAX_EVENT_LAX_DRIVER_INTERNAL_ERR, /**< @brief LAX driver internal error in LaxEventHandlerThread */
 
     /**< @brief below: error/fault events may be ordered with the one of lowest priority first */
     RSDK_LAX_EVENT_LAX0_ILLEGALOP,          /**< @brief LAX 0 core executed an illegal operation */

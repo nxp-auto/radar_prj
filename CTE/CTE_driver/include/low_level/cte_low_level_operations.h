@@ -11,15 +11,7 @@
  *                                        INCLUDE FILES
  ==================================================================================================*/
 #include "rsdk_cte_driver_api.h"
-
-
-#if   defined(S32R45)
 #include "rsdk_S32R45.h"
-
-
-#else
-#error "Working platform not defined !"
-#endif
 #ifdef __KERNEL__
 #include <linux/types.h>
 #else
@@ -38,15 +30,7 @@ extern "C" {
 #define CTE_MAX_SMALL_TIME_TABLE_LEN    32u     // maximum length for double time table usage (single table)
 
 
-
-
-#if   defined(S32R45)
 #define CTE_IRQ_NUMBER      263u            // hardware interrupt number
-
-
-#else
-#error "Working platform not defined !"
-#endif
 
 
 /*==================================================================================================

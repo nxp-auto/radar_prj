@@ -246,7 +246,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
     uintptr_t               realTableGap, brickMask;
     rsdkCteTimeTableDef_t   *pTable0, *pTable1;
     void                    *pParams = NULL;
-    uint64_t                uInt64;
+    uint64_t                uInt64Val;
 
     DebugMessage("RsdkCteRpcDispatcher: func=%d, len=%d\n", func, len);
     // the input data must have at least an integer
@@ -264,7 +264,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
             }
             else
             {
-                rez = (uint32_t)CteLinuxKernelInit((rsdkCteLinuxTransfer_t*)pParams, &uInt64);  // real unit 
+                rez = (uint32_t)CteLinuxKernelInit((rsdkCteLinuxTransfer_t*)pParams, &uInt64Val);  // real unit 
             }
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_STOP:                // CTE stop request
@@ -287,7 +287,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
             else
             {
                 // align the table pointers to 4 bites chunks
-                brickMask = sizeof(uint32_t) - 1;
+                brickMask = (uintptr_t)(sizeof(uint32_t) - 1u);
                 realTableGap = (sizeof(rsdkCteTimeTableDef_t) + brickMask) & (~brickMask);
                 pTable0 = (rsdkCteTimeTableDef_t*)pParams;
                 pTable1 = (rsdkCteTimeTableDef_t*)(pParams + realTableGap);                
@@ -300,7 +300,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
                     pTable1 = NULL;
                 }
                 DebugMessage("RsdkCteRpcDispatcher: pTable0=%lx, pTable1=%lx\n", (long)pTable0, (long)pTable1);
-                rez = (uint32_t)CtePlatformModuleUpdateTables(pTable0, pTable1, &uInt64);  // real unit initialization
+                rez = (uint32_t)CtePlatformModuleUpdateTables(pTable0, pTable1, &uInt64Val);  // real unit initialization
             }
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_REG_EVT:             // events registration request
@@ -317,9 +317,9 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
                 rez = (uint32_t)RSDK_CTE_DRV_LX_WRG_CALL;
             }
             break;
-        case RSDK_CTE_LX_CTE_READ_CHECKSUM:                 // get the TT checksum
-            uInt64 = CtePlatformModuleGetLutChecksum();
-            rez = OAL_RPCAppendReply(dispatcher, (uint8_t*)&uInt64, sizeof(uint64_t));
+        case (uint32_t)RSDK_CTE_LX_CTE_READ_CHECKSUM:                 // get the TT checksum
+            uInt64Val = CtePlatformModuleGetLutChecksum();
+            rez = (uint32_t)OAL_RPCAppendReply(dispatcher, (uint8_t*)&uInt64Val, sizeof(uint64_t));
             break;
         default:
             rez = (uint32_t)RSDK_CTE_DRV_LX_WRG_CALL;       // unknown request

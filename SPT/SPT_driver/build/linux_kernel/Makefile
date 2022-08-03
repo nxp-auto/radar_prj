@@ -32,11 +32,14 @@ SRCDIR_COMMON = $(_SPT_ROOTPATH)/src
 SRCS := $(SRCDIR_LINUX)/spt_driver_module.c 		\
 		$(SRCDIR_LINUX)/spt_interrupts_kernel.c 	\
 		$(SRCDIR_LINUX)/spt_oal_comm_kernel.c 		\
-		$(SRCDIR_COMMON)/spt_hw_err.c
-INCLUDES := $(SPT_ABS_ROOTPATH)/include 		\
+		$(SRCDIR_COMMON)/common/Spt_Hw_Check.c
+INCLUDES := $(SPT_ABS_ROOTPATH)/include 		  \
+			$(SPT_ABS_ROOTPATH)/include/common	  \
+			$(SPT_ABS_ROOTPATH)/include/specific  \
 			$(RSDK_ABS_ROOTPATH)/api              \
 			$(RSDK_ABS_ROOTPATH)/oal/include      \
-			$(RSDK_ABS_ROOTPATH)/oal/include/linux
+			$(RSDK_ABS_ROOTPATH)/oal/include/linux \
+			$(RSDK_ABS_ROOTPATH)/platform_setup/include/ARM/S32R45
 LIBS = $(_RSDK_ROOTPATH)/oal/libs/kernel/linux-write/build-linux-kernel/liboal_kernel.o
 OBJS := $(SRCS:.c=.o) $(LIBS)
 
@@ -51,7 +54,7 @@ export CROSS_COMPILE
 MODULE_NAME := rsdk_spt_driver
 ARCH ?= arm64
 EXTRA_CFLAGS := -Wall -g $(addprefix -I,$(INCLUDES))
-CFLGS := -std=gnu99 -Ulinux -DOS=linux -DS32R45 -D$(PRINTK_EN)
+CFLGS := -std=gnu99 -Ulinux -Dlinux -DOS=linux -DS32R45 -D$(PRINTK_EN)
 
 obj-m += $(MODULE_NAME).o
 $(MODULE_NAME)-objs := $(OBJS)

@@ -8,7 +8,7 @@
 *                                        INCLUDE FILES
 ==================================================================================================*/
 #include "spt_driver_module.h"
-#include "spt_oal.h"
+#include "Spt_Oal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +21,7 @@ extern "C" {
 /*==================================================================================================
 *                                       LOCAL MACROS
 ==================================================================================================*/
+#define SIGNED_ERROR_CONVERT(x) ((uint32_t)((-1) * x))
 
 /*==================================================================================================
 *                                      GLOBAL VARIABLES
@@ -55,11 +56,12 @@ static uint32_t SptOalCommCh0Dispatcher(oal_dispatcher_t *d, uint32_t func, uint
              * 0 and it is no longer decremented. This allows the interrupt handler to signal the need for data transfer
              * by performing only an increment on the irqsNotServed variable.
              */
-            ret = OAL_WaitEventInterruptible(sptDevice.irqWaitQ, atomic_dec_if_positive(&(sptDevice.irqsNotServed)) >= 0);
+            oalStatus = OAL_WaitEventInterruptible(sptDevice.irqWaitQ, atomic_dec_if_positive(&(sptDevice.irqsNotServed)) >= 0);
 
-            if (ret != 0u)
+            if (oalStatus != 0)
             {
                 PR_ERR("spt_driver module: SptOalCommCh0Dispatcher error: OAL_WaitEventInterruptible() failed!\n");
+                ret = SIGNED_ERROR_CONVERT(oalStatus);
                 break;
             }
 
@@ -77,7 +79,7 @@ static uint32_t SptOalCommCh0Dispatcher(oal_dispatcher_t *d, uint32_t func, uint
             if (oalStatus != 0)
             {
                 PR_ALERT("spt_driver module: SptOalCommCh0Dispatcher: cannot send back RPC reply.\n");
-                ret = EFAULT;
+                ret = SIGNED_ERROR_CONVERT(oalStatus);
             }
 
             PR_ALERT("spt_driver module: SptOalCommCh0Dispatcher: wake up.\n");
@@ -115,53 +117,69 @@ static uint32_t SptOalCommCh1Dispatcher(oal_dispatcher_t *d, uint32_t func, uint
             //send 'dummy' notification to wake up SptIrqCapture thread which is blocked in OAL_DriverOutCall(SPT_OAL_RPC_WAIT_FOR_IRQ):
             evtData.evtType = SPT_OAL_RPC_EVT_TERM_SPTIRQCAP;
 
-            if (ret == 0u)
+            /* Get and update the queue write index.
+             * By using 'atomic_inc_return' we can be sure that each IRQ handler that executes concurrently
+             * will get a different value for 'queueIdxWr'. By calling 'atomic_cmpxchg' the value of the index
+             * will be wrapped if needed. This will be performed successfully only by the handler that has the
+             * most up to date value of 'queueIdxWr'. The 'atomic_cmpxchg' call ensures a correct wrap-around
+             * of the index, regardless of the queue size (if the queue size is not a power of 2, the default
+             * wrap-around of the atomic_t variable - int - will corrupt the queue).
+             */
+            queueIdxWr = (uint32_t)atomic_inc_return(&(sptDevice.queueIdxWr));
+            (void)atomic_cmpxchg(&(sptDevice.queueIdxWr), (int32_t)queueIdxWr, (int32_t)(queueIdxWr % SPT_DATA_Q_SIZE));
+
+            /* Compute local index ('atomic_inc_return' return the incremented value) */
+            queueIdxWr = (queueIdxWr - 1u) % SPT_DATA_Q_SIZE;
+
+            //put the notification in the evtData queue
+            sptDevice.queueEvtData[queueIdxWr] = evtData;
+            
+            if ((uint32_t)atomic_inc_return(&(sptDevice.irqsNotServed)) > (SPT_DATA_Q_SIZE - SPT_DATA_Q_CNT_LAST))
             {
-                /* Get and update the queue write index.
-                 * By using 'atomic_inc_return' we can be sure that each IRQ handler that executes concurrently
-                 * will get a different value for 'queueIdxWr'. By calling 'atomic_cmpxchg' the value of the index
-                 * will be wrapped if needed. This will be performed successfully only by the handler that has the
-                 * most up to date value of 'queueIdxWr'. The 'atomic_cmpxchg' call ensures a correct wrap-around
-                 * of the index, regardless of the queue size (if the queue size is not a power of 2, the default
-                 * wrap-around of the atomic_t variable - int - will corrupt the queue).
-                 */
-                queueIdxWr = (uint32_t)atomic_inc_return(&(sptDevice.queueIdxWr));
-                atomic_cmpxchg(&(sptDevice.queueIdxWr), queueIdxWr, queueIdxWr % SPT_DATA_Q_SIZE);
+                PR_ALERT("spt_driver module: SptOalCommCh1Dispatcher: Data queue almost full!\n");
+            }
 
-                /* Compute local index ('atomic_inc_return' return the incremented value) */
-                queueIdxWr = (queueIdxWr - 1) % SPT_DATA_Q_SIZE;
+            //signal the SptIrqCapture thread
+            oalStatus = OAL_WakeUpInterruptible(&(sptDevice.irqWaitQ));
+            if (oalStatus != 0)
+            {
+                PR_ERR("spt_driver module: SptOalCommCh1Dispatcher:: Cannot wake up user process!\n");
+                ret = SIGNED_ERROR_CONVERT(oalStatus);
+                break;
+            }
 
-                //put the notification in the evtData queue
-                sptDevice.queueEvtData[queueIdxWr] = evtData;
-                
-                if ((uint32_t)atomic_inc_return(&(sptDevice.irqsNotServed)) > SPT_DATA_Q_SIZE - SPT_DATA_Q_CNT_LAST)
+            //wait until SptOalCommCh0Dispatcher is released from its wait:
+            while (atomic_read(&(sptDevice.irqsNotServed)) == 0)
+            {
+                if (timeoutCnt > 0u)
                 {
-                    PR_ALERT("spt_driver module: SptOalCommCh1Dispatcher: Data queue almost full!\n");
+                    timeoutCnt--;
                 }
-
-                //signal the SptIrqCapture thread
-                oalStatus = OAL_WakeUpInterruptible(&(sptDevice.irqWaitQ));
-                if (oalStatus != 0)
+                else
                 {
-                    PR_ERR("spt_driver module: SptOalCommCh1Dispatcher:: Cannot wake up user process!\n");
-                    ret = EPERM;
+                    ret = ETIME;
                     break;
                 }
-
-                //wait until SptOalCommCh0Dispatcher is released from its wait:
-                while (atomic_read(&(sptDevice.irqsNotServed)) == 0)
-                {
-                    if (timeoutCnt > 0u)
-                    {
-                        timeoutCnt--;
-                    }
-                    else
-                    {
-                        ret = ETIME;
-                        break;
-                    }
-                }
             }
+            break;
+        }
+        case (uint32_t)SPT_OAL_RPC_BBE32_REBOOT:
+        {
+            oalStatus = reset_control_assert(sptDevice.dtsInfo.bbe32Reset);
+            if (oalStatus != 0) 
+            {
+                PR_ERR("spt_driver module: SptOalCommCh1Dispatcher: Cannot assert reset for RADAR partition!\n");
+                ret = SIGNED_ERROR_CONVERT(oalStatus);
+            }
+            else
+            {
+                oalStatus = reset_control_deassert(sptDevice.dtsInfo.bbe32Reset);
+                if (oalStatus != 0) 
+                {
+                    PR_ERR("spt_driver module: SptOalCommCh1Dispatcher: Cannot deassert reset for RADAR partition!\n");
+                    ret = SIGNED_ERROR_CONVERT(oalStatus);
+                }
+            } 		
             break;
         }
         default:
@@ -173,6 +191,7 @@ static uint32_t SptOalCommCh1Dispatcher(oal_dispatcher_t *d, uint32_t func, uint
 
     return ret;
 }
+
 int32_t SptOalCommInit(void)
 {
     int32_t rc = 0;

@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2021 NXP
+* Copyright 2019-2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -22,34 +22,23 @@ extern "C" {
 /*==================================================================================================
 *                                      DEFINES AND MACROS
 ==================================================================================================*/
+/** Not API. Internal use only. */
+#define RSDK_RFE_STATUS_BASE  0x10000U
+#define RSDK_SPT_STATUS_BASE  0x11000U
+#define RSDK_DSP_STATUS_BASE  0x12000U
+#define RSDK_CSI2_STATUS_BASE 0x13000U
+#define RSDK_CTE_STATUS_BASE  0x12500U
+#define RSDK_LAX_STATUS_BASE  0x14000U
+#define RSDK_APP_STATUS_BASE  0x15000U
+
+
+#define RSDK_REPORT_ERROR(errCode) errCode
+#define E_OK RSDK_SUCCESS
+#define E_NOT_OK RSDK_ERROR
 
 /*==================================================================================================
 *                                             ENUMS
 ==================================================================================================*/
-
-/*==================================================================================================
-*                                STRUCTURES AND OTHER TYPEDEFS
-==================================================================================================*/
-
-/*==================================================================================================
-*                                GLOBAL VARIABLE DECLARATIONS
-==================================================================================================*/
-
-/*==================================================================================================
-*                                    FUNCTION PROTOTYPES
-==================================================================================================*/
-/** Not API. Internal use only. */
-#define RSDK_RFE_STATUS_BASE  0x10000U
-#define RSDK_SPT_STATUS_BASE  0x11000U
-#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
-#define RSDK_DSP_STATUS_BASE  0x12000U
-#endif
-#define RSDK_CSI2_STATUS_BASE 0x13000U
-#define RSDK_CTE_STATUS_BASE  0x12500U
-#if defined(S32R45)
-#define RSDK_LAX_STATUS_BASE  0x14000U
-#endif
-#define RSDK_APP_STATUS_BASE  0x15000U
 
 /**
 * @brief          Return datatype for RSDK API calls.
@@ -131,10 +120,10 @@ typedef enum
     RSDK_RFE_NULL_CHIRP_SHAPES,                            /**< pointer to chirp shape is NULL */
     RSDK_RFE_NULL_IRQ_REGISTER_CB,                         /**< isrRegisterCb is NULL */
     RSDK_RFE_USING_DRIVER_IN_WRONG_STATE,                  /**< the driver is in the wrong state for this operation*/
-	RSDK_RFE_USING_SLAVE_DRIVER_IN_WRONG_STATE,            /**< the slave driver is in the wrong state for this operation*/
+	RSDK_RFE_USING_SLAVE_DRIVER_IN_WRONG_STATE,            /**< the follower driver is in the wrong state for this operation*/
     RSDK_RFE_INVALID_RESET_TYPE,                           /**< the type of soft reset isn't supported */
     RSDK_RFE_OPERATION_NOT_SUPPORTED_BY_DEVICE,            /**< the selected device doesn't support this operation */
-    RSDK_RFE_OPERATION_NOT_SUPPORTED_BY_SLAVE_DEVICE,     /**< the slave device doesn't support this operation */
+    RSDK_RFE_OPERATION_NOT_SUPPORTED_BY_SLAVE_DEVICE,     /**< the follower device doesn't support this operation */
 	RSDK_RFE_TEF810X_EXCEEDED_MAX_ISM_DELAY,          	   /**< rsdkTef810XFrameOptionalParams_t::ismDelay greater than tPreSampling */
     RSDK_TEF810X_CALLFAILED,                               /**< DOLPHINIC_EC_CALLFAILED */
     RSDK_TEF810X_CALLTIMEOUT,                              /**< DOLPHINIC_EC_CALLTIMEOUT */
@@ -180,12 +169,13 @@ typedef enum
     RSDK_TEF810X_FAULTINJECTIONRFAIL,                      /**< DOLPHINIC_EC_FAULTINJECTIONRFAIL */
     RSDK_TEF810X_SUBBANDSELECT_BS_FAIL,                    /**< DOLPHINIC_EC_SUBBANDSELECT_BS_FAIL */
 	RSDK_TEF810X_SUBBANDNOTFOUND,
-	RSDK_TEF810X_MCLKINTEGRITYFAILED,                 
+	RSDK_TEF810X_MCLKINTEGRITYFAILED,
 	RSDK_TEF810X_MCLKRECALIBFAILED,
 	RSDK_TEF810X_ATBADCREADFAIL,
     RSDK_TEF810X_CSI2_PLL_LOCK_TIMEOUT,
     RSDK_TEF810X_MCLK_FREQ_CNT_TIMEOUT,
     RSDK_TEF810X_CAFC_FREQ_CNT_TIMEOUT,
+	RSDK_TEF810X_TENG_WAITFORREADY_TIMEOUT,
     RSDK_TEF810X_ERROR_FLAG_MODE,
 	RSDK_TEF810X_WRONG_CHIRP_TRIGGER_MODE,
 	RSDK_TEF810X_ERRORN_PIN_ACTIVE,
@@ -201,144 +191,155 @@ typedef enum
 	RSDK_TEF810X_RFBIST_USER_DEFINED_PROF3,				  /**< RFBIST params were not loaded due to user providing profile 3 data */
 	RSDK_TEF810X_CSI2_VIRTUAL_CHANNEL_NOT_CONFIGURED,
 
-	// RSDK RF Abstract Tef82XX Error Codes
+	/* RSDK RF Abstract Tef82XX Error Codes */
 	RSDK_RFE_TEF82XX_EXCEEDED_MAX_ISM_DELAY,
 	RSDK_TEF82XX_WRONG_CHIRP_TRIGGER_MODE,
 	RSDK_TEF82XX_INVALID_CSI2_VIRTUAL_CHANNEL_NO,
 	RSDK_TEF82XX_CSI2_VIRTUAL_CHANNEL_NOT_CONFIGURED,
-	// Tef82XX Error Codes
-	RSDK_TEF82XX_INPUTOUTOFRANGE,
-	RSDK_TEF82XX_FUNCNOTEXIST,
-	RSDK_TEF82XX_FAILTOINJECTCRCERR,
-	RSDK_TEF82XX_WRONGINTERFACE,
-	RSDK_TEF82XX_IPDISABLED,
+	/* Tef82XX Error Codes */
+	RSDK_TEF82XX_INPUTOUTOFRANGE,						/**< Input parameters out of range */
+	RSDK_TEF82XX_FUNCNOTEXIST,							/**< Access to a not-existing function */
+	RSDK_TEF82XX_FAILTOINJECTCRCERR,					/**< CRC error injection failure */
+	RSDK_TEF82XX_WRONGINTERFACE,						/**< Serializer mode other than MIPI/LVDS selected */
+	RSDK_TEF82XX_IPDISABLED,							/**< Access to an OTP disabled IP */
 	RSDK_TEF82XX_SYS_IPHASNOATBCONNECTION,
 	RSDK_TEF82XX_SYS_CANNOTFINDCAFCDACCODE,
-	RSDK_TEF82XX_SYS_CALLOGAINBISTFAILED,
-	RSDK_TEF82XX_SYS_SYSCONFNOTSET,
 	RSDK_TEF82XX_SYS_ADCINVALID,
 	RSDK_TEF82XX_SYS_FILEERROR,
 	RSDK_TEF82XX_SYS_JSONSTRINGNOTEXISTED,
-	RSDK_TEF82XX_SYS_AAFC_AACFAIL,
-	RSDK_TEF82XX_SYS_AAFC_AFCFAIL,
-	RSDK_TEF82XX_SYS_TX_TEMP_READ_TIMEOUT,
-	RSDK_TEF82XX_SYS_MCLK_INTEGRITY_FAILED,
+	RSDK_TEF82XX_SYS_TX_TEMP_READ_TIMEOUT,				/**< Failed reading temperature data of TX after multiple retries */
+	RSDK_TEF82XX_SYS_MCLK_INTEGRITY_FAILED,				/**< MCLK for serializer(LVDS/MIPI) is not within range.
+															 Expected MCLK is 480MHz with a minor drift of +/- 500KHz.   */
 	RSDK_TEF82XX_SYS_WRONG_APPCONFIG,
-	RSDK_TEF82XX_SYS_INVALID_INPUT,
-	RSDK_TEF82XX_SYS_INVALID_DDMA,
+	RSDK_TEF82XX_SYS_INVALID_INPUT,						/**< Invalid CRC trigger event is given as input */
 	RSDK_TEF82XX_SYS_FAULTINJECTIONRFAIL,
 	RSDK_TEF82XX_SYS_WRONG_MID_NO_RECOVERY,
 	RSDK_TEF82XX_SYS_WRONG_PROFILE_NO_RECOVERY,
 	RSDK_TEF82XX_SYS_ERRORRECOVERY_FAILED,
-	RSDK_TEF82XX_SYS_CAFCINTEGRITY_CHECK_LEVEL,
-	RSDK_TEF82XX_SYS_CAFCINTEGRITY_CHECK_UNLOCK,
-	RSDK_TEF82XX_SYS_TXGAINCALIBRATIONFAIL,
-	RSDK_TEF82XX_SYS_WRONG_DATAINTERFACE_CONFIG,
-	RSDK_TEF82XX_SYS_DATAINTERFACETEST_FAIL,
-	RSDK_TEF82XX_SYS_TXPRCURR_SETTING_FAIL,
-	RSDK_TEF82XX_SYS_ERROR_N,
+	RSDK_TEF82XX_SYS_CAFCINTEGRITY_CHECK_LEVEL,			/**< This error is related to CAFC sensor integrity check where
+															 known errors are injected and checked whether corresponding
+															 CAFC errors are triggered. This error is reported when
+															 VCOLevelMinErr is FALSE while TRUE is expected */
+	RSDK_TEF82XX_SYS_CAFCINTEGRITY_CHECK_UNLOCK,		/**< This error is related to CAFC sensor integrity check where
+															 known errors are injected and checked whether corresponding
+															 CAFC errors are triggered. This error is reported when
+															 PLLUnlockErr is FALSE while TRUE is expected	*/
+	RSDK_TEF82XX_SYS_WRONG_DATAINTERFACE_CONFIG,		/**< Wrong data interface configuration. LVDS or MIPI interface
+															 need to be set in App configuration before initializing
+															 data interface */
+	RSDK_TEF82XX_SYS_ERROR_N,							/**< ERROR_N Pin should be high at the end of successful startup
+															 sequence completion. This error code indicates there are
+															 some errors and ERROR_N Pin is low. */
 	RSDK_TEF82XX_SYS_INVALID_PROFILE,
 	RSDK_TEF82XX_SYS_SPIACCESS_CHECKFAIL,
-	RSDK_TEF82XX_SYS_CAFC_TEMP_READ_TIMEOUT,
-	RSDK_TEF82XX_SYS_CHIRPSTARTOUT_OUTPUTMODE,
-	RSDK_TEF82XX_SYS_ERRORN_OUTPUTMODE,
-	RSDK_TEF82XX_SYS_ERRORRESET_INPUTMODE,
-	RSDK_TEF82XX_SYS_CHIRPSTART_IN_INPUTMODE,
-	RSDK_TEF82XX_SYS_TX1_I_PS_INPUTMODE,
-	RSDK_TEF82XX_SYS_TX2_I_PS_INPUTMODE,
-	RSDK_TEF82XX_SYS_TX3_I_PS_INPUTMODE,
-	RSDK_TEF82XX_SYS_TX1_Q_PS_INPUTMODE,
-	RSDK_TEF82XX_SYS_TX2_Q_PS_INPUTMODE,
-	RSDK_TEF82XX_SYS_TX3_Q_PS_INPUTMODE,
-	RSDK_TEF82XX_SYS_SLAVE_WRONG_APPCONFIG,
+	RSDK_TEF82XX_SYS_CAFC_TEMP_READ_TIMEOUT,			/**< Failed reading temperature data of CAFC after multiple retries */
+	RSDK_TEF82XX_SYS_SLAVE_WRONG_APPCONFIG,				/**< CAFC module has to be disabled for follower device. This error
+															 occur if the CAFC module is enable for follower device */
 	RSDK_TEF82XX_SYS_SUBBANDINC_OUTOFRANGE,
-	RSDK_TEF82XX_SYS_AMPLITUDEINC_OUTOFRANGE,
 	RSDK_TEF82XX_SYS_PTR_ADDR_NULL,
 	RSDK_TEF82XX_SYS_AAFC_AUTO_NOT_SUPPORTED,
 	RSDK_TEF82XX_SYS_RAW_NUM_SAMPLE_INVALID,
-	RSDK_TEF82XX_SYS_INVALID_RESET_TIME,
-	RSDK_TEF82XX_SYS_TOTAL_BW_OUTOFRANGE,
+	RSDK_TEF82XX_SYS_INVALID_RESET_TIME,				/**< CAFC module has to be disabled for follower device.
+															 This error occur if the CAFC module is enable for follower device */
+	RSDK_TEF82XX_SYS_TOTAL_BW_OUTOFRANGE,				/**< Calculated total (full ramp) bandwidth = BW tPreSampling + BW Acquisition +
+															 BW tPostSampling, is going out of range for corresponding VCO bandwidth. */
+	RSDK_TEF82XX_SYS_CAFCINTEGRITY_CHECK_FAILED,		/**< CAFC integrity check failure due to PLL unlock and/or VCO level min error,
+															 API is not able to clear the unlock and/or VCO level min error */
+	RSDK_TEF82XX_SYS_RESTORE_CHIRP_GLOBAL_FAILED,		/**< Restoring of chirp global control register failed while CAFC integrity check  */
+	RSDK_TEF82XX_SYS_REGCRC_ISMMODULE_ERROR_SET,		/**< ISM register CRC error is reported, even after clearing the error injection */
+	RSDK_TEF82XX_SYS_REGCRC_TRIGGER_FAILED,
+	RSDK_TEF82XX_SYS_TX_CTRL_ENABLE_WRITECHECK_BASE,	/**< Write check failed while setting defaults for TX control enable register */
+	RSDK_TEF82XX_SYS_TX1_CTRL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SYS_TX2_CTRL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SYS_TX1_TX2_CTRL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SYS_TX3_CTRL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SYS_TX1_TX3_CTRL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SYS_TX2_TX3_CTRL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SYS_TX1_TX2_TX3_CTRL_ENABLE_WRITECHECK,
 	RSDK_TEF82XX_ALG_DUMMYERROR,
 	RSDK_TEF82XX_SPI_WRTRDCRCERROR,
 	RSDK_TEF82XX_SPI_WRTCHECKFAIL,
 	RSDK_TEF82XX_SPI_READFAIL,
 	RSDK_TEF82XX_CC_SYSCONFNOTSET,
 	RSDK_TEF82XX_CC_PTR_ADDR_NULL,
-	RSDK_TEF82XX_MIPI_DEVICE_READY_TIMEOUT,
+	RSDK_TEF82XX_MIPI_DEVICE_READY_TIMEOUT,				/**< Busy wait read of frequency counter register failed after max retries */
 	RSDK_TEF82XX_MIPI_FREQCOUNTTIMEOUT,
 	RSDK_TEF82XX_MIPI_FREQCNT_OUTOFRANGE,
 	RSDK_TEF82XX_MIPI_PTR_ADDR_NULL,
+	RSDK_TEF82XX_MIPI_RESTORE_FREQ_COUNTER,				/**< Restoring of the frequency counter register failed */
 	RSDK_TEF82XX_TE_PRSAFETYDELAY,
 	RSDK_TEF82XX_TE_PRCALIBDELAY,
 	RSDK_TEF82XX_TE_RXACTIVEDELAY,
-	RSDK_TEF82XX_TE_HPFRESETDELAY,
+	RSDK_TEF82XX_TE_HPFRESETDELAY,						/**< Invalid HPF reset release delay from reference point */
 	RSDK_TEF82XX_TE_DCPOWONDELAY,
-	RSDK_TEF82XX_TE_DCSAFETYDELAY,
+	RSDK_TEF82XX_TE_DCSAFETYDELAY,						/**< Invalid safety monitor delay from reference point */
 	RSDK_TEF82XX_TE_DDMASETTING,
 	RSDK_TEF82XX_TE_DDMAMODE,
 	RSDK_TEF82XX_TE_JUMPBACK,
-	RSDK_TEF82XX_TE_TXRXGRPDELAY,
+	RSDK_TEF82XX_TE_TXRXGRPDELAY,						/**< Either TX or RX group delay is greater than DC power on delay */
 	RSDK_TEF82XX_TE_FINEGRPDELAY,
-	RSDK_TEF82XX_TE_PROFILELIST,
+	RSDK_TEF82XX_TE_PROFILELIST,						/**< Invalid Profile or profile combination */
 	RSDK_TEF82XX_TE_PRCALTIMEOUT,
 	RSDK_TEF82XX_TE_BIASDELAY,
 	RSDK_TEF82XX_TE_INPUTNULL,
-	RSDK_TEF82XX_TE_PRFREPEATCNT,
+	RSDK_TEF82XX_TE_PRFREPEATCNT,						/**< Invalid profile repeat count  */
 	RSDK_TEF82XX_TE_CHIRPSEQINTERVAL,
 	RSDK_TEF82XX_TE_SETTLETIME,
 	RSDK_TEF82XX_TE_OUTPUTSAMPRATE,
 	RSDK_TEF82XX_TE_CHIRPINTERVAL,
 	RSDK_TEF82XX_TE_VIRTUALCHANNEL,
 	RSDK_TEF82XX_TE_DWELLTIME,
-	RSDK_TEF82XX_TE_DELAYFROMREFPT,
+	RSDK_TEF82XX_TE_DELAYFROMREFPT,						/**< Invalid Transmission ON delay from timing reference point */
 	RSDK_TEF82XX_TE_FREQCNTTIMEOUT,
-	RSDK_TEF82XX_TE_CHIRPSEQUENCE,
+	RSDK_TEF82XX_TE_CHIRPSEQUENCE,						/**< Polling for the completion of chirp sequence failed after multiple retries */
 	RSDK_TEF82XX_TE_CHIRPTRGMODE,
-	RSDK_TEF82XX_TE_CHIRPSTARTOUTMODE,
-	RSDK_TEF82XX_TE_PRCALFAILURE,
-	RSDK_TEF82XX_TE_PRSAFETYCHECKFAILURE,
 	RSDK_TEF82XX_TE_PHASEOUTOFRANGE,
+	RSDK_TEF82XX_TE_HPFRESETWRONGTRIGGERPOINT,
+	RSDK_TEF82XX_TE_TX_CAL_ENABLE_WRITECHECK_BASE,		/**< Write check failed while setting defaults for TX cal enable register */
+	RSDK_TEF82XX_TE_TX1_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_TX2_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_TX1_TX2_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_TX3_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_TX1_TX3_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_TX2_TX3_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_TX1_TX2_TX3_CAL_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TE_CHIRP_ENABLE_WRITECHECK_FAILED,		/**< Write check failed while setting chirp enable  */
 	RSDK_TEF82XX_SC_PROFILE,
 	RSDK_TEF82XX_SC_OPERATING_FREQ_OUTOFRANGE,
 	RSDK_TEF82XX_SC_PTR_ADDR_NULL,
-	RSDK_TEF82XX_SC_INPUT_FREQ_DRIFT_INVALID,
-	RSDK_TEF82XX_SC_USED_BW_OUTOFRANGE,
-	RSDK_TEF82XX_SC_RAMP_TIME_OUTOFRANGE,
-	RSDK_TEF82XX_SC_RESET_TIME_OUTOFRANGE,
+	RSDK_TEF82XX_SC_INPUT_FREQ_DRIFT_INVALID,			/**< Frequency Drift value greater than the chirp bandwidth */
+	RSDK_TEF82XX_SC_USED_BW_OUTOFRANGE,					/**< Bandwidth is outside the range what hardware is capable of */
+	RSDK_TEF82XX_SC_RAMP_TIME_OUTOFRANGE,				/**< Ramp time outside the practical range */
+	RSDK_TEF82XX_SC_RESET_TIME_OUTOFRANGE,				/**< Reset time outside the practical range */
 	RSDK_TEF82XX_CAFC_FREQCNTTIMEOUT,
 	RSDK_TEF82XX_CAFC_SBOUTOFRANGE,
 	RSDK_TEF82XX_CAFC_INPUTOUTOFRANGE,
-	RSDK_TEF82XX_CAFC_BWOUTOFRANGE,
-	RSDK_TEF82XX_CAFC_CONFIGLOOPFILTERFAIL,
+	RSDK_TEF82XX_CAFC_BWOUTOFRANGE,						/**< Wrong VCO selected */
+	RSDK_TEF82XX_CAFC_CONFIGLOOPFILTERFAIL,				/**< Compensated slice number is 0, which is is invalid */
 	RSDK_TEF82XX_CAFC_LOOPBWOUTOFRANGE,
 	RSDK_TEF82XX_CAFC_PTR_ADDR_NULL,
 	RSDK_TEF82XX_CAFC_WRONGPROFILEID,
-	RSDK_TEF82XX_CAFC_AAFCKVCODVDT_TIMEOUT,
+	RSDK_TEF82XX_CAFC_AAFCKVCODVDT_TIMEOUT,				/**< Busy status for AAFC, KVCO and DVDT */
 	RSDK_TEF82XX_CAFC_VCOCALIB_AAFCFAIL,
 	RSDK_TEF82XX_CAFC_VCOCALIB_KVCODVDTFAIL,
 	RSDK_TEF82XX_CAFC_NOSTOREINPROFILESELECTED,
 	RSDK_TEF82XX_CAFC_DVDT_COUNT_WRONG,
 	RSDK_TEF82XX_CAFC_KVCO_COUNT_STATUS_ERR,
 	RSDK_TEF82XX_CAFC_WRONG_OTP_SKIP_SB_ERR,
-	RSDK_TEF82XX_ADC_CALIBRATIONFAILED,
-	RSDK_TEF82XX_ADC_CALIBRATIONTIMEOUT,
-	RSDK_TEF82XX_ADC_CALIBRATIONCHECKNOTDONE,
+	RSDK_TEF82XX_CAFC_WRONG_KVCO,
+	RSDK_TEF82XX_CAFC_WRONG_ACQUISITION_DURATION,
+	RSDK_TEF82XX_ADC_CALIBRATIONFAILED,					/**< ADC calibration failure */
+	RSDK_TEF82XX_ADC_CALIBRATIONTIMEOUT,				/**< ADC calibration timeout failure */
+	RSDK_TEF82XX_ADC_CALIBRATIONCHECKNOTDONE,			/**< ADC calibration check not done */
 	RSDK_TEF82XX_GBIAS_DUMMY,
-	RSDK_TEF82XX_LOI_CALIBRATIONFAIL,
-	RSDK_TEF82XX_LOI_LOX3GAINCALIBRATIONFAIL,
-	RSDK_TEF82XX_LOI_LUTGAINCODE_OUTOFRANGE,
-	RSDK_TEF82XX_LOI_DIRECTGAINCODE_OUTOFRANGE,
+	RSDK_TEF82XX_LOI_LUTGAINCODE_OUTOFRANGE,			/**< LO LUT Gain code out of range */
 	RSDK_TEF82XX_LOI_CAL_BUSY,
 	RSDK_TEF82XX_LOI_CAL_ERROR,
 	RSDK_TEF82XX_LOI_PTR_ADDR_NULL,
-	RSDK_TEF82XX_MCLK_PLL_PLL_CALIBRATION_TIMEOUT,
-	RSDK_TEF82XX_MCLK_PLL_PLL_CALIBRATION_FAILED,
 	RSDK_TEF82XX_MCLK_PLL_CALIBRATION_FAILED,
 	RSDK_TEF82XX_MCLK_PLL_CALIBRATION_NOTFINISHED,
 	RSDK_TEF82XX_MCLK_MSPC_CALIBRATION_ERROR,
 	RSDK_TEF82XX_MCLK_MSPCTIMEOUT,
-	RSDK_TEF82XX_MCLK_MSPC_CALIBCHECK_NOTFINISHED,
-	RSDK_TEF82XX_MCLK_MSPCCHEK_TIMEOUT,
 	RSDK_TEF82XX_MCLK_PTR_ADDR_NULL,
 	RSDK_TEF82XX_RX_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_RX_CAL_BUSY,
@@ -363,6 +364,22 @@ typedef enum
 	RSDK_TEF82XX_RX1_RX2_RX3_RX4_CAL_ERROR,
 	RSDK_TEF82XX_RX_PTR_ADDR_NULL,
 	RSDK_TEF82XX_RX_WRNG_CAL_TARGET_OFFSET,
+	RSDK_TEF82XX_RX_FUSA_ENABLE_WRITECHECK_BASE,		/**< Write check failed while enabling Functional Safety Mon Level for RX   */
+	RSDK_TEF82XX_RX1_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX2_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX2_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX2_RX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX2_RX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX2_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX2_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX3_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX3_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX2_RX3_RX4_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_RX1_RX2_RX3_RX4_FUSA_ENABLE_WRITECHECK,
 	RSDK_TEF82XX_TX_DUMMYERROR,
 	RSDK_TEF82XX_TX_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_TX_PRCADCTIMEOUT,
@@ -394,20 +411,28 @@ typedef enum
 	RSDK_TEF82XX_TX_PTR_ADDR_NULL,
 	RSDK_TEF82XX_TX_NOSTOREINPROFILESELECTED,
 	RSDK_TEF82XX_TX_POUT_VGA_REDUCETX_NOTSUPPORTED,
-	RSDK_TEF82XX_SSB_SIGNALNOTEXISTONSELECTEDATB,
+	RSDK_TEF82XX_TX_RF_MIN_CODE_OUTOFRANGE,
+	RSDK_TEF82XX_TX_FUSA_ENABLE_WRITECHECK_BASE,			/**< Write check failed while enabling functional safety monitor level for TX  */
+	RSDK_TEF82XX_TX1_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TX2_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TX1_TX2_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TX1_TX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TX2_TX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_TX1_TX2_TX3_FUSA_ENABLE_WRITECHECK,
+	RSDK_TEF82XX_SSB_SIGNALNOTEXISTONSELECTEDATB,			/**< Connected signal node to a wrong ATB */
 	RSDK_TEF82XX_SSB_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_GLDO_DUMMYERROR,
 	RSDK_TEF82XX_GLDO_SNSERROR,
 	RSDK_TEF82XX_GLDO_SNS_FORCEERROR,
 	RSDK_TEF82XX_GLDO_SNS_RESETERROR,
-	RSDK_TEF82XX_ATB_BISTADCTIMEOUT,
-	RSDK_TEF82XX_ATB_WRONGATBNODESELECTED,
-	RSDK_TEF82XX_OTP_FAILTOREAD,
-	RSDK_TEF82XX_OTP_CRCCHECKFAILURE,
-	RSDK_TEF82XX_OTP_IPISDISABLED,
-	RSDK_TEF82XX_OTP_OTPISNOTLOADED,
-	RSDK_TEF82XX_OTP_NOTENABLED,
-	RSDK_TEF82XX_OTP_ALLMEMDISABLED,
+	RSDK_TEF82XX_ATB_BISTADCTIMEOUT,						/**< BISTADC data collection timeout */
+	RSDK_TEF82XX_ATB_WRONGATBNODESELECTED,					/**< Selected a wrong ATB */
+	RSDK_TEF82XX_OTP_FAILTOREAD,							/**< Fail to read OTP table */
+	RSDK_TEF82XX_OTP_CRCCHECKFAILURE,						/**< CRC check failure */
+	RSDK_TEF82XX_OTP_IPISDISABLED,							/**< IP is disabled */
+	RSDK_TEF82XX_OTP_OTPISNOTLOADED,						/**< OTP is not loaded */
+	RSDK_TEF82XX_OTP_ALLMEMDISABLED,						/**< None of the OTP memory is enabled */
 	RSDK_TEF82XX_ISM_INVALID_INPUT,
 	RSDK_TEF82XX_ISM_PTR_ADDR_NULL,
 	RSDK_TEF82XX_ISM_STARTUP_SEQ_CONFIG_FAILED,
@@ -429,8 +454,9 @@ typedef enum
 	RSDK_TEF82XX_ISM_CAL_BUSY,
 	RSDK_TEF82XX_ISM_CAL_ERROR,
 	RSDK_TEF82XX_ISM_CAL_SUCCESS,
+	RSDK_TEF82XX_ISM_DISABLE_LB_TOGGLE_TEST_FAILED,
 
-    RSDK_RFE_RFBIST_RFE_MODE_NOT_SUPPORTED,               /**< TEF82XX RFE RFBist - RFBIST must be run on STANDALONE or MASTER(with one SLAVE) FE*/
+    RSDK_RFE_FRONTEND_MODE_NOT_SUPPORTED,                 /**< TEF82XX RFE RFBist - RFBIST must be run on STANDALONE or MASTER(with one SLAVE) FE*/
     RSDK_RFE_RFBIST_ACQ_CSI2_ERRORS,                      /**< TEF82XX RFE RFBist - too many CSI2 errors on RFBist acquisition*/
 	RSDK_RFE_RFBIST_ACQ_TIMEOUT,                      	  /**< TEF82XX RFE RFBist - timeout expired on RFBist frame(s) acquisition*/
 	RSDK_RFE_RFBIST_ACQ_TIMER_ERROR,                      /**< TEF82XX RFE RFBist - setting timer error*/
@@ -454,10 +480,12 @@ typedef enum
 	RSDK_TEF82XX_PLF_INPUTOUTOFRANGE,                      /**< TEF82XX platform - input of range*/
 	RSDK_TEF82XX_PLF_GLUE_SPI_ERROR,                       /**< TEF82XX platform - SPI glue layer error*/
 	RSDK_TEF82XX_PLF_SPIWRTRDCRCERROR,                     /**< TEF82XX platform - SPIWRTRDCRCERROR */
-	RSDK_TEF82XX_PLF_RSDK_ERRORN_PIN_ACTIVE,               /**< TEF82XX platform - error_n pin is active*/
+	RSDK_TEF82XX_PLF_ERRORN_PIN_ACTIVE,               /**< TEF82XX platform - error_n pin is active*/
+	RSDK_TEF82XX_PLF_INVALID_GPIO_TARGET,
+	RSDK_TEF82XX_PLF_GLUE_SLEEP_ERROR,
 	RSDK_TEF82XX_PLF_UNMAPPED_ERROR,                       /**< TEF82XX platform - unmapped error */
 
-    RSDK_TEF82XX_RFE_DRIFT_ONEPROFILE,                     /**< TEF82XX Freq auto drift supports only one profile */ 
+    RSDK_TEF82XX_RFE_DRIFT_ONEPROFILE,                     /**< TEF82XX Freq auto drift supports only one profile */
     RSDK_TEF82XX_RFE_MAX_AUTO_DRIFT,                       /**< TEF82XX Max freq auto drift exceded */
     RSDK_TEF82XX_RFE_MIN_AUTO_DRIFT,                       /**< TEF82XX Min freq auto drift exceded */
 
@@ -468,15 +496,15 @@ typedef enum
     RSDK_RFE_STUCK_IN_BUSY_AND_ERROR_ENCOUNTERED, /**< Can't change busy flag and another error was encountered */
     RSDK_RFE_NOT_INITIALIZED,                   /**< The driver wasn't initialized */
 
-    // Leave these at the end of RFE error group in case the ctrl interface changes
+    /* Leave these at the end of RFE error group in case the ctrl interface changes */
     RSDK_RFE_GLUE_SPI_INIT_ERROR,               /**< Error reported by the SPI glue layer */
     RSDK_RFE_GLUE_SPI_TRANSFER_ERROR,           /**< Error reported by the SPI glue layer */
     RSDK_RFE_GLUE_GPIO_ERROR,                   /**< Error reported by the GPIO glue layer */
 	RSDK_RFE_GLUE_TIMER_ERROR,                  /**< Error reported by the Timer glue layer */
 
 
-    //-------------------------------------------------------------------------
-    // CSI2 Driver API error codes:
+    /*-------------------------------------------------------------------------*/
+    /* CSI2 Driver API error codes:*/
     RSDK_CSI2_DRV_WRG_UNIT_ID = RSDK_CSI2_STATUS_BASE,         /**< Wrong unit ID specified */
     RSDK_CSI2_DRV_NULL_PARAM_PTR,           /**< Wrong parameters pointer (NULL) */
     RSDK_CSI2_DRV_NULL_VC_PARAM_PTR,        /**< Wrong parameters pointer to VC (NULL) */
@@ -538,8 +566,8 @@ typedef enum
 
     RSDK_CSI2_DRV_STATE_ON,                 /**< The driver status is ON. */
 
-    //-------------------------------------------------------------------------
-    // CSI2 Driver API error codes:
+    /*-------------------------------------------------------------------------*/
+    /* CTE Driver API error codes:*/
     RSDK_CTE_DRV_WRG_MODE = RSDK_CTE_STATUS_BASE,	/**< Wrong working mode requested                               */
     RSDK_CTE_DRV_ZERO_FREQ,                 /**< The required frequency set to zero.                                */
     RSDK_CTE_DRV_NULL_PTR_PARAMS,           /**< The required parameters pointer is NULL.                           */
@@ -579,7 +607,7 @@ typedef enum
                                              at a table update : Table1 was initialized and now the pointer is NULL,
                                              or table was not initialized and now the pointer is not NULL.           */
     RSDK_CTE_DRV_IRQ_REG_FAILED,            /**< Failed to register CTE irq handler.                                 */
-    RSDK_CTE_DRV_LX_NOT_ENOUGH_PARAM,       /**< Linux call - not enough data provided. Usually this means the 
+    RSDK_CTE_DRV_LX_NOT_ENOUGH_PARAM,       /**< Linux call - not enough data provided. Usually this means the
                                              structures provided or the total data length are less than required     */
     RSDK_CTE_DRV_LX_WRG_CALL,               /**< Linux call - wrong call                                             */
     RSDK_CTE_DRV_ERR_INVALID_REQ,           /**< Incorrect request to the driver - Linux usage only */
@@ -587,8 +615,8 @@ typedef enum
     RSDK_CTE_DRV_ERR_EVT_CONN,              /**< Error when trying to connect to kernel events */
     RSDK_CTE_DRV_ERR_START_EVT_MGR,         /**< Error starting the events manager */
 
-    //-------------------------------------------------------------------------
-    //SPT Driver API error codes:
+    /*-------------------------------------------------------------------------*/
+    /*SPT Driver API error codes:*/
     RSDK_SPT_RET_ERR_INVALID_PARAM = RSDK_SPT_STATUS_BASE, /**< Driver API error: Parameter value or
                                                                 combination of values not supported. */
     RSDK_SPT_RET_ERR_INVALID_STATE, /**< Driver API error: operation not supported in current state. */
@@ -597,7 +625,7 @@ typedef enum
 
     RSDK_SPT_RET_WARN_HW_BUSY, /**< Driver API warning: Input parameters are valid but no action was done
                                        by current function call because the SPT hardware is busy. */
-    //SPT hw error codes (signaled by interrupt):
+    /*SPT hw error codes (signaled by interrupt):*/
     RSDK_SPT_RET_ERR_MEM,    /**< SPT hw error: internal memory handling, triggers an ECS interrupt.
                                 MEM_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
     RSDK_SPT_RET_ERR_DMA,    /**< SPT hw error: SDMA operation, triggers an ECS interrupt.
@@ -620,15 +648,12 @@ typedef enum
     RSDK_SPT_RET_ERR_IRQ_REG,       /**< SPT error: the irq handler was not registered. */
     RSDK_SPT_RET_ERR_UNMAP_SPT_MEM, /**< Driver error: Failed to unmap SPT registers' addresses. */
 
-#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
     RSDK_SPT_RET_ERR_WR,            /**< SPT hw error: WR or SPR access error.
                                          WR_ACCESS_ERR_REG register value is passed to the user callback (rsdkSptIsrCb_t)*/
-#if defined(S32R45) || defined(S32R41)
     RSDK_SPT_RET_ERR_ILLOP_SCS0,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer0.
                                     SCS0_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
     RSDK_SPT_RET_ERR_ILLOP_SCS1,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer1.
                                     SCS1_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
-#if defined(S32R45)
     RSDK_SPT_RET_ERR_ILLOP_SCS2,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer2.
                                     SCS2_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
     RSDK_SPT_RET_ERR_ILLOP_SCS3,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer3.
@@ -636,8 +661,6 @@ typedef enum
     RSDK_SPT_RET_ERR_HW2_ACC, /**< SPT hw error: tried to execute an instruction with illegal operands or configuration, related to the 2nd instances
                                   of the SPT Accelerator modules (e.g. FFT2, MAXS2 etc). Triggers an ECS interrupt.
                                   HW2_ACC_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
-#endif//defined(S32R45)
-#endif//defined(S32R45) || defined(S32R41)
     RSDK_SPT_RET_WARN_DRV_BUSY,     /**< Driver API warning: an API call is already in progress on another thread */
     RSDK_SPT_RET_ERR_API_INIT_LOCK_FAIL,    /**< Driver API error: could not init mutex for controlling multithreaded API call sequence */
     RSDK_SPT_RET_ERR_API_ENTER_LOCK_FAIL,   /**< Driver API error: could not lock mutex for controlling multithreaded API call sequence */
@@ -649,19 +672,13 @@ typedef enum
     RSDK_SPT_RET_ERR_OAL_COMM_INIT,  /**< Driver API error: could not initialize OAL communication channel for transmitting OS kernel events to user space*/
     RSDK_SPT_RET_ERR_CHECK_WATERMARK,       /**< Driver error: Failed to check if the watermark instruction is placed at the start of the kernel code. */
 	RSDK_SPT_RET_ERR_INIT_Q_FAIL,    /**< Driver error: Failed to init the queue used to handle irq data processing on separate thread. */
-#else
-    RSDK_SPT_RET_WARN_CS_AHB_BUSY, /**< Warning: during a 'blocking' call, the Driver has detected that the SPT has reached a STOP instruction
-                                        (CS_STATUS0[PS_STOP] bit was set), but the SPT Command Sequencer DMA has not completed all of its AHB bus accesses.
-                                        In this case there is a short time interval after returning from RsdkSptRun() (< 1us) when Work Register access
-                                        by CPU must be avoided, otherwise it can cause the system to become non-responsive. Highly unlikely. */
-#endif//defined(S32R45) || defined(S32R41) || defined(SAF85XX)
+	RSDK_SPT_RET_ERR_BBE32_REBOOT,   /**< Driver API error: could not reboot the BBE32 */
     RSDK_SPT_RET_ERR_INVALID_KERNEL, /**< Driver error: detected invalid SPT kernel code, which does not start with the mandatory watermarking instruction.
                                         See also #SPT_KERNEL_WATERMARK */
     RSDK_SPT_RET_ERR_HW_RST,         /**< SPT error: hardware is in unexpected RST state */
 
     RSDK_SPT_RET_ERR_OTHER = RSDK_SPT_STATUS_BASE + 0xFFFU, /**< Any other return status not covered above.
                                        No SPT error codes should be defined with a value greater than this one.*/
-#if defined(S32R45) || defined(S32R41) || defined(SAF85XX)
     RSDK_DSP_RET_ERR_CMD_INVALID = RSDK_DSP_STATUS_BASE, /**< DSP Command Error: Command ID not supported. */
 	RSDK_DSP_RET_ERR_CRC_INVALID,						 /**< DSP Command CRC Error: Recomputed CRC does not match with the received CRC */
 	RSDK_DSP_RET_ERR_CMD_NO_DATA,						  /**< DSP Command Error: New command interrupt received, but no data available in the queue. */
@@ -673,6 +690,10 @@ typedef enum
 	 	 	 	 	 	 	 	 	 	 "exccause" register value is also passed to the user callback (rsdkSptIsrCb_t dspIsrCb) */
 	RSDK_DSP_RET_ERR_MPU_CONFIG,	/**< DSP MPU map configuration has enountered an error. */
 	RSDK_DSP_RET_ERR_INT_CONFIG,    /**< DSP interrupt configuration has enountered an error. */
+	RSDK_DSP_RET_ERR_INT_DISABLE,		/**< DSP xos_interrupt_disable has encountered an error. */
+	RSDK_DSP_RET_ERR_INT_ENABLE,		/**< DSP xos_interrupt_enable has encountered an error. */
+	RSDK_DSP_RET_ERR_THR_RESUME,	/**< DSP xos_thread_resume has encountered an error. */
+	RSDK_DSP_RET_ERR_TIMER_START,   /**< DSP xos_start_system_timer has encountered an error. */
 	RSDK_DSP_RET_ERR_DISP_CONFIG,	/**< DSP dispatcher was not able to start its scheduling loop. It retuns to the caller. */
 	RSDK_DSP_RET_ERR_INVALID_PARAM, /**< DSP Dispatcher API error: Input parameter value or combination of values not supported. */
 	RSDK_DSP_RET_ERR_INVALID_MSG_BUFF, /**< DSP Dispatcher API error: Message buffer not allocated properly at address RSDK_DSPHD_MSG_BASE_ADDR. */
@@ -680,15 +701,13 @@ typedef enum
 	RSDK_DSP_RET_ERR_RC_JOBS_NOT_UPDATED, /**< DSP dispatcher was not able update the periodic radar cycle jobs, as requested by the host CPU */
 	RSDK_DSP_RET_ERR_UNKNOWN = RSDK_DSP_STATUS_BASE +  + 0xFFFU,  /**< Unexpected error in DSP Dispatcher. Reason unknown.
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 No DSP error codes should be defined with a value greater than this one.*/
-#endif
 
-#ifdef S32R45
 	RSDK_LAX_ERR_INVALID_PARAM = RSDK_LAX_STATUS_BASE, /**< LAX Driver Error: Parameter value or combination not supported. */
 	RSDK_LAX_ERR_NOT_INIT,  /**< LAX Driver Error:  Module not initialized.  */
 	RSDK_LAX_ERR_CTXT, /**< LAX Driver Error: Invalid context used for this API call. */
 	RSDK_LAX_ERR_EXEC, /**< LAX Driver Error: Operation failed during execution phase. */
 	RSDK_LAX_ERR_TIMEOUT, /**< LAX Driver Error: Operation did not finish in due time. */
-	RSDK_LAX_ERR_INTERNAL_BUF,/**< LAX Driver Error: Initialization failed due to insufficient 
+	RSDK_LAX_ERR_INTERNAL_BUF,/**< LAX Driver Error: Initialization failed due to insufficient
 							 memory region provided by user application for driver internal buffers */
 	RSDK_LAX_ERR_ELD_BUF_SIZE,/**< LAX Driver Error: half the size of eld buffer is not AXI bus width aligned,
                                  see RSDK_LAX_ELD_BUF_SIZE */
@@ -724,7 +743,7 @@ typedef enum
 	RSDK_LAX_ERR_ENOSR,             /**< No Sequence ID available */
 	RSDK_LAX_ERR_ENOBUFS,           /**< No Cmd circular buffer space */
 
-	//DMA Errors
+	/*DMA Errors*/
 	RSDK_LAX_ERR_DMA_QUEUE_FULL,            /**< Error indicating DMA transmit request queue is full */
 	RSDK_LAX_ERR_DMA_ENOMSG,                /**< Error indicating DMA transmit request queue is empty */
 	RSDK_LAX_ERR_DMA_EBUSY,                 /**< Error indicating another DMA transmission is in progress */
@@ -741,14 +760,26 @@ typedef enum
 	RSDK_LAX_ERR_BOOT_MSG_MISSMATCH,        /**< Boot failure due to boot complete message mismatch */
 	RSDK_LAX_ERR_BOOT_TIMEOUT,              /**< Boot failure due to timeout waiting for HANDSHAKE Ack msg */
 	RSDK_LAX_ERR_BOOT_HANDSHAKE_FAIL,       /**< Boot failure due to HANDSHAKE Ack returned error */
-#endif
-    //-------------------------------------------------------------------------
-    //Application level errors
+    /*-------------------------------------------------------------------------*/
+    /*Application level errors*/
     RSDK_HEAP_MEM_ALLOC_ERROR = RSDK_APP_STATUS_BASE, /**< Not enough space in heap buffer to allocate desired size*/
     RSDK_HEAP_MEM_FREE_ERROR,   /**< Start adress and array size do not match with current heap buffer state.
 									May be due to trying to release a segment that was not the last allocated*/
 	RSDK_SPT_RET_ERR_TRAM_CHK_FAIL/**< SPT error: TRAM memory check failed */
 } rsdkStatus_t;
+
+typedef rsdkStatus_t Std_ReturnType;
+/*==================================================================================================
+*                                STRUCTURES AND OTHER TYPEDEFS
+==================================================================================================*/
+
+/*==================================================================================================
+*                                GLOBAL VARIABLE DECLARATIONS
+==================================================================================================*/
+
+/*==================================================================================================
+*                                    FUNCTION PROTOTYPES
+==================================================================================================*/
 
 #ifdef __cplusplus
 }

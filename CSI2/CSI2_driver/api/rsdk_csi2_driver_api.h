@@ -115,11 +115,6 @@ extern "C" {
 #define RSDK_CSI2_EVT_FRAME_END         (1UL << 1u) /**< Frame end event (FE)                                       */
 #define RSDK_CSI2_EVT_SHORT_PACKET      (1UL << 2u) /**< Generic short packet received (GNSP)                       */
 #define RSDK_CSI2_EVT_LINE_END          (1UL << 3u) /**< Line end event (LINEDONE)                                  */
-
-
-
-
-
 #define RSDK_CSI2_EVT_BIT_NOT_TOGGLE    (1UL << 6u) /**< Bit not toggled on a channel,
                                                      * reported in rsdkCsi2Report_t::notToggledBits.                */
 
@@ -281,10 +276,8 @@ typedef enum
 {
     RSDK_CSI2_UNIT_0 = 0,           /**< First unit (MIPICSI2_0)                                                    */
     RSDK_CSI2_UNIT_1,               /**< Second unit (MIPICSI2_1)                                                   */
-    #if defined(S32R45)
         RSDK_CSI2_UNIT_2,           /**< Third unit (MIPICSI2_2)                                                    */
         RSDK_CSI2_UNIT_3,           /**< Fourth unit (MIPICSI2_3)                                                   */
-    #endif
     RSDK_CSI2_MAX_UNITS             /**< The units limit, to not use in procedure call                              */
 }rsdkCsi2UnitId_t;
 
@@ -313,10 +306,8 @@ typedef enum
 {
     RSDK_CSI2_LANE_0 = 0,           /**< first lane / one lane                                                      */
     RSDK_CSI2_LANE_1,               /**< second lane / two lanes                                                    */
-
     RSDK_CSI2_LANE_2,               /**< third lane / three lanes                                                   */
     RSDK_CSI2_LANE_3,               /**< fourth lane / four lanes                                                   */
-
     RSDK_CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call                */
 }rsdkCsi2LaneEnum_t;
 
@@ -378,45 +369,6 @@ typedef enum {
 }rsdkCsi2DphyInitOptions_t;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @brief       IRQ definitions enumeration.
  * @details     According to the platform. The mnemonics can differ somehow from the names in RM.
@@ -428,6 +380,24 @@ typedef enum {
     RSDK_CSI2_EVENTS_IRQ_ID,        /**< IRQ ID for Events and line errors interrupt                                */
     RSDK_CSI2_MAX_IRQ_ID            /**< Maximum IRQ ID for platform, to not use in procedure call                  */
 }rsdkCsi2IrqId_t;
+
+
+/**
+ * @brief       CSI2 lanes status enumeration.
+ * @details     Depending the interface moment, a lane can be in one of these states.
+ *
+ */
+typedef enum
+{
+    RSDK_CSI2_LANE_STATE_MARK,          /**< The Rx lane in Mark-1 state.                            */
+    RSDK_CSI2_LANE_STATE_ULPA,          /**< The Rx lane in Ultra Low Power State.                   */
+    RSDK_CSI2_LANE_STATE_STOP,          /**< The Rx lane in Stop state.                              */
+    RSDK_CSI2_LANE_STATE_REC,           /**< The Rx lane is receiving data.                          */
+    RSDK_CSI2_LANE_STATE_VRX,           /**< The Rx lane is receiving valid data.                    */
+    RSDK_CSI2_LANE_STATE_ON,            /**< The Rx lane active, but not currently receiving data.   */
+    RSDK_CSI2_LANE_STATE_OFF,           /**< The Rx lane inactive.                                   */
+    RSDK_CSI2_LANE_STATE_ERR,           /**< Wrong parameters.                                       */
+} rsdkCsi2LaneStatus_t;
 
 
 /*==================================================================================================
@@ -470,7 +440,7 @@ typedef struct {
  *
  */
 typedef struct {
-    rsdkCsi2DataStreamType_t  streamDataType;   /**< Data type to be received                                        */
+    uint16_t    streamDataType;   /**< Data type to be received                                        */
     uint8_t     channelsNum;                    /**< Channels number for this VC; equal to antennas number for radar */
     uint8_t     vcEventsReq;                    /**< Mask for IRQ requested events for VC (i.e. \ref
                                                  * RSDK_CSI2_EVT_FRAME_END or similar)                               */
@@ -485,10 +455,6 @@ typedef struct {
                                                  * \b 1 \endif                                                       */
     uint16_t    bufLineLen;                     /**< The available line length in buffer, per line (16 bytes aligned)
                                                  * must include 80 supplementary bytes for line/chirp statistics     */
-
-
-
-
     uint16_t    outputDataMode;                 /**< The mode data is output in the buffer and other information
                                                  * about input data, see above : RSDK_CSI2_VC_BUF_... family definitions
                                                  * i.e. \ref RSDK_CSI2_VC_BUF_COMPLEX_DATA.
@@ -535,10 +501,7 @@ typedef struct {
  *
  */
 typedef struct {
-    rsdkCsi2DataStreamType_t  streamDataType;   /**< Data type to be received                                       */
-    uint8_t     vcEventsReq;                    /**< Mask for IRQ requested events for MetaData; only
-                                                 * RSDK_CSI2_EVT_FRAME_END is accepted                              */
-
+    uint16_t    streamDataType;   /**< Data type to be received                                       */
     uint16_t    expectedNumBytes;               /**< Expected line length, in bytes, for receiving data             */
     uint16_t    expectedNumLines;               /**< Expected number of lines/chirps per frame                      */
     uint16_t    bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
@@ -559,7 +522,7 @@ typedef struct {
  *
  */
 typedef struct {
-    rsdkCsi2UnitId_t    unitId;                     /**< Unit number reporting the error,
+    uint8_t     unitId;                     /**< Unit number reporting the error,
                                                      * similar to \ref rsdkCsi2UnitId_t                             */
     uint32_t    errMaskU;                           /**< The cumulated masks for signaled errors at unit level;<br>
                                                      * \if (S32R45_DOCS || S32R294_DOCS) the possible masks are for:
@@ -626,29 +589,20 @@ typedef struct {
     uint8_t     numLanesRx;                     /**< Number of lanes used to receive data; use \ref rsdkCsi2LaneEnum_t
                                                  *  to configure this. \if SAF85XX_DOCS For SAF85XX only two lanes 
                                                  * are available to use. \endif */
-#if defined(S32R294) || defined(S32R45) || defined(S32R41)
-    rsdkCsi2DphyInitOptions_t   initOptions;    /**< Specific initialization options for the unit, required by
-                                                 * the application :
-                                                 * - simple/normal calibration or quick/short calibration
-                                                 * - wait for 5us or not wait for STOP states on data lanes         */
-#endif
-
-
-
-
-
-    rsdkCsi2LaneEnum_t     lanesMapRx[RSDK_CSI2_MAX_LANE]; /**< Lanes mapping :
+    uint8_t     lanesMapRx[RSDK_CSI2_MAX_LANE]; /**< Lanes mapping :
                                                  *  - first byte - the physical lane to be used as lane 1,
                                                  *  - second byte - the physical lane to be used as lane 2,
                                                  *  - etc.<br>
                                                  *  use \ref rsdkCsi2LaneEnum_t to set these fields                 */
-    uint8_t     numLanesTx;                     /**< Number of lanes used to transmit data, 1...4 (TBD)             */
-    rsdkCsi2AutoDCComputeTime_t statManagement; /**< How the channel statistics are managed. Only channels having
+    uint8_t     initOptions;                    /**< Specific initialization options for the unit, required by
+                                                 * the application :
+                                                 * - simple/normal calibration or quick/short calibration
+                                                 * - wait for 5us or not wait for STOP states on data lanes         */
+    uint8_t     statManagement;                 /**< How the channel statistics are managed. Only channels having
                                                  * \ref RSDK_CSI2_OFFSET_AUTOCOMPUTE DC offset specified will be
                                                  * managed. Use one of RSDK_CSI2_STAT_... definitions. The value is
                                                  * used only at least one of the VC channels has the DC offset
                                                  * specified as \ref RSDK_CSI2_OFFSET_AUTOCOMPUTE .                 */
-    uint32_t    txClkFreq;                      /**< Transmit (Tx) clock frequency for CSI2 (17...80 Mbps), in Mbps.*/
     uint32_t    rxClkFreq;                      /**< Receiving (Rx) frequency (between \ref RSDK_CSI2_MIN_RX_FREQ
                                                  * and \ref RSDK_CSI2_MAX_RX_FREQ), in Mbps.                        
                                                  * \if SAF85XX_DOCS For SAF85XX, this parameter define the data source :
@@ -852,7 +806,7 @@ rsdkStatus_t RsdkCsi2PowerOn(const rsdkCsi2UnitId_t unitId);
  *        understand how interface is working.
  *
  */
-rsdkStatus_t RsdkCsi2GetInterfaceStatus(const rsdkCsi2UnitId_t unitId);
+rsdkCsi2LaneStatus_t RsdkCsi2GetInterfaceStatus(const rsdkCsi2UnitId_t unitId);
 
 
 /**
@@ -874,7 +828,7 @@ rsdkStatus_t RsdkCsi2GetInterfaceStatus(const rsdkCsi2UnitId_t unitId);
  *        Depending of the returned status, some times is necessary to loop on this call to
  *        really understand how lane is working.
  */
-rsdkStatus_t RsdkCsi2GetLaneStatus(const rsdkCsi2UnitId_t unitId, const uint32_t laneNum);
+rsdkCsi2LaneStatus_t RsdkCsi2GetLaneStatus(const rsdkCsi2UnitId_t unitId, const uint32_t laneNum);
 
 
 /**
@@ -918,47 +872,6 @@ uint32_t    RsdkCsi2GetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType
         const uint32_t samplesPerChirp, const uint8_t autoStatistics);
 
 
-#if defined(S32R294) || defined(SAF85XX) || defined(S32R41) || defined(S32R45)
-/**
- * @brief       Procedure to get the buffer start for the next frame.
- * @details     The procedure returns the offset from the buffer start
- *                  where the first byte of the frame will be written.
- *              The procedure must be called after the previous frame was received,
- *                  but before the start of the expected frame.
- *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
-                                                                    \endif \ref RSDK_CSI2_MAX_UNITS )
- * @param[in] vcId      - VC ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC )
- * @param[in] pOffset   - pointer to a uint32_t which will receive the real offset
- *
- * @return      RSDK_SUCCESS - if driver status is correct; the buffer offset of the first byte is passed to pOffset
- *              error if the driver is in an inappropriate state; pOffset is not updated
- *
- */
-rsdkStatus_t    RsdkCsi2GetFirstByteOffset(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId,
-        uint32_t *pOffset);
-
-/**
- * @brief       Procedure to get the buffer start for the next frame.
- * @details     The procedure returns the buffer line
- *                  where the first line of the frame will be written.
- *              The procedure must be called after the previous frame was received,
- *                  but before the start of the expected frame.
- * @note        To get the exact address, must be used the buffer line length
- *                  declared in the unit initialization parameters (rsdkCsi2VCParams_t::bufLineLen).
- *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
-                                                                    \endif \ref RSDK_CSI2_MAX_UNITS )
- * @param[in] vcId      - VC ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC )
- * @param[in] pFirstLine - pointer to a uint32_t which will receive the real first line position
- *
- * @return      RSDK_SUCCESS - if driver status is correct; the frame first line index is passed to pFirstLine
- *              error if the driver is in an inappropriate state; pOffset is not updated
- *
- */
-rsdkStatus_t    RsdkCsi2GetFirstLinePos(const rsdkCsi2UnitId_t unitId, const rsdkCsi2VirtChnlId_t vcId,
-        uint32_t *pFirstLine);
-
 /**
  * @brief       Procedure to change the callback for a specific interrupt
  * @details     The procedure set for the specified unit and interrupt ID a new callback pointer
@@ -974,33 +887,6 @@ rsdkStatus_t    RsdkCsi2GetFirstLinePos(const rsdkCsi2UnitId_t unitId, const rsd
  */
 rsdkStatus_t    RsdkCsi2SetCallback(const rsdkCsi2UnitId_t unitId, const rsdkCsi2IrqId_t irqId,
         rsdkCsi2IsrCb_t pCallback);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif // #if defined(S32R294) || defined(SAF85XX)
 
 
 #ifdef __cplusplus
