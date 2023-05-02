@@ -1,5 +1,5 @@
 /*
-* Copyright 2022 NXP
+* Copyright 2022-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -71,8 +71,17 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 #include "CDD_Csi2.h"
+
+
+
+
+
     #include "S32R45_MIPICSI2.h"
     #include "S32R45_DFS.h"
+
+
+
+
 
 
 /*==================================================================================================
@@ -148,7 +157,11 @@ extern "C"{
 #if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 
     /* Copy for CSI2 actual params, to use if reset needed.                         */
+
+
+
     static Csi2_SetupParamsType gsCsi2UnitParamCopy[CSI2_MAX_UNITS];
+
 
     /* copies of the Virtual Channel data parameters                                */
     /*
@@ -158,7 +171,11 @@ extern "C"{
     * To not mix code and data storage, for proper memory mapping,
     * some of the static variables are not defined at block scope.
     */
+
+
+
     static Csi2_VCParamsType gsCsi2VCParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
+
 
     #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
         /* copies of the auxiliary data parameters                                  */
@@ -169,7 +186,11 @@ extern "C"{
         * To not mix code and data storage, for proper memory mapping,
         * some of the static variables are not defined at block scope.
         */
+
+
+
         static Csi2_VCParamsType gsCsi2AuxParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
+
     #endif /* (CSI2_AUXILIARY_DATA_USAGE == STD_ON)                                 */
 
 #if (CSI2_METADATA_DATA_USAGE == STD_ON)
@@ -181,7 +202,11 @@ extern "C"{
     * To not mix code and data storage, for proper memory mapping,
     * some of the static variables are not defined at block scope.
     */
+
+
+
     static Csi2_MetaDataParamsType gsCsi2MdParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
+
 #endif /* (CSI2_AUXILIARY_DATA_USAGE == STD_ON)                                 */
 
 #endif /* (CSI2_POWER_ON_OFF_USAGE == STD_ON)                                       */
@@ -189,13 +214,15 @@ extern "C"{
 #if (CSI2_DEV_ERROR_DETECT == STD_ON)
 
     /* Loop exit signal.                                             */
-    static volatile bool gsCsi2LoopExit = FALSE;
+    static volatile boolean gsCsi2LoopExit = FALSE;
 
 #endif  /* #if (CSI2_DEV_ERROR_DETECT == STD_ON)                    */
+
 
     #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE)
         static uint8_t gsCsi2DfsReset = 0u;         /* variable to manage the DFS usage         */
     #endif
+
 
 
 /*==================================================================================================
@@ -208,19 +235,30 @@ extern "C"{
 
 #if (CSI2_FRAMES_COUNTER_USED == STD_ON)
     /* Counter for received frames.                                             */
+
+
+
         volatile uint32 gsCsi2FramesCounter[CSI2_MAX_UNITS][CSI2_MAX_VC];
+
 #endif /* (CSI2_FRAMES_COUNTER_USED == STD_ON)                                  */
 
 /* Pointer to MIPICSI2 memory map                                               */
+
+
+
         volatile GENERIC_CSI2_Type *gpMipiCsi2Regs[CSI2_MAX_UNITS];
 
 
     /* settings to be kept during the execution
      * only run-time necessary parameters are kept                                  */
+
+
+
     Csi2_DriverParamsType gCsi2Settings[CSI2_MAX_UNITS] = {{
             .driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED,
             .pCallback = { NULL_PTR },
     }};
+
 
 /*==================================================================================================
 *                                    LOCAL FUNCTION PROTOTYPES
@@ -232,6 +270,7 @@ static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAu
 static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
                                                 const Csi2_SetupParamsType *pCsi2SetupParam);
 #endif
+
 
     /* DFS reset                                */
     #if (CSI2_DFS_USAGE == CSI2_DFS_NOT_USED)
@@ -245,6 +284,7 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
     #else
         #error Not defined DFS usage, choose one of : #>CSI2_DFS_NOT_USED, #>CSI2_DFS_ONCE, #>CSI2_DFS_ALWAYS
     #endif
+
 
 
 /*==================================================================================================
@@ -410,6 +450,9 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
     {       /* good configuration for lanes swap                                        */
         if (((pCsi2SetupParam->rxClkFreq < (uint32)CSI2_MIN_RX_FREQ) ||
             (pCsi2SetupParam->rxClkFreq > (uint32)CSI2_MAX_RX_FREQ))
+
+
+
                 )
         {
             CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_CLOCK_FREQ, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
@@ -567,6 +610,14 @@ static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAu
                 CSI2_HALT_ON_ERROR;
             }
 
+
+
+
+
+
+
+
+
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
             for (i = 0; i < pVC->channelsNum; i++)
             {       /* check for all channels       */
@@ -651,6 +702,10 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
 #if defined(linux)
         *pRegs = (volatile GENERIC_CSI2_Type*)gpRsdkCsi2Device[unitId]->pMemMapVirtAddr;
 #else
+
+
+
+
         switch (unitId)
         {
             case CSI2_UNIT_0:
@@ -660,8 +715,13 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 * #A conversion should not be performed between a pointer to object and an integer type
                 * Some initialization need to be done for pointers.
                 */
+
+
+
                 *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_0;
+
                 break;
+
             case CSI2_UNIT_1:
                 /*
                 * @section Csi2_c_REF_4
@@ -669,8 +729,14 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 * #A conversion should not be performed between a pointer to object and an integer type
                 * Some initialization need to be done for pointers.
                 */
+
+
+
                 *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_1;
+
                 break;
+
+
             case CSI2_UNIT_2:
                 /*
                 * @section Csi2_c_REF_4
@@ -678,7 +744,7 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 * #A conversion should not be performed between a pointer to object and an integer type
                 * Some initialization need to be done for pointers.
                 */
-                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_0;
+                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_2;
                 break;
             case CSI2_UNIT_3:
                 /*
@@ -687,16 +753,19 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 * #A conversion should not be performed between a pointer to object and an integer type
                 * Some initialization need to be done for pointers.
                 */
-                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_1;
+                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_3;
                 break;
+
             default:
                 rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
                 break;
         }  /* switch    */
+
 #endif  /* #if defined(linux)   */
     return rez;
 }
 /* Csi2_RegsMap *************************/
+
 
 /*================================================================================================*/
 /*
@@ -806,6 +875,8 @@ static void Csi2_GetOperatingSpeedMask(const uint16 speed, uint8 *pHSFREQRNG, ui
     *pDDLOSCFREQ = gsCsi2OscFreqTarget[i];
 }
 /* Csi2_GetOperatingSpeedMask *************************/
+
+
 
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
 /*================================================================================================*/
@@ -1125,7 +1196,12 @@ static Std_ReturnType Csi2_ConfigVC(const Csi2_UnitIdType csi2UnitNum, const uin
     pRegs->RX_VCENABLE |= val1 + val2;     /* enable the VC and the buffer                                 */
     if (vcId < (uint8)CSI2_MAX_VC)
     {
+
+
+
+
         pDriverParams = &gCsi2Settings[(uint8)csi2UnitNum];
+
         pDriverStateVC = &pDriverParams->workingParamVC[vcId];
         /*
         * @section Csi2_c_REF_1
@@ -1354,6 +1430,7 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
 }
 /* Csi2_SetupAllVcAux *************************/
 
+
 #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE) || (CSI2_DFS_USAGE == CSI2_DFS_ALWAYS)
 /*================================================================================================*/
 /*
@@ -1364,6 +1441,7 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
 static void DfsTilt(void)
 {
     uint32_t regVal, i, testVal = (1u << 2u);
+
     volatile DFS_Type *pDfs;
 
 #ifdef linux
@@ -1372,6 +1450,11 @@ static void DfsTilt(void)
 #else
     pDfs = (volatile DFS_Type *)IP_PERIPH_DFS;
 #endif /* linux                                    */
+
+
+
+
+
     regVal = pDfs->PORTRESET;
     regVal |= testVal;
     pDfs->PORTRESET = regVal;                               /* step 2 - Gate the MIPI_CSI_TXRX_LI_CLK   */
@@ -1386,6 +1469,8 @@ static void DfsTilt(void)
 }
 /* DfsTilt *************************/
 #endif /* #if defined(CSI2_DFS_ONCE) || defined(CSI2_DFS_ALWAYS)    */
+
+
 
 /*================================================================================================*/
 /*
@@ -1551,6 +1636,8 @@ static void Csi2_SetSdma(volatile GENERIC_CSI2_Type *pRegs, const uint8 csi2VC,
 /* Csi2_SetSdma *************************/
 #endif
 
+
+
 /*================================================================================================*/
 /*
  * @brief       Procedure for specific unit setup.
@@ -1574,6 +1661,10 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
 
     rez = (Std_ReturnType)E_OK;
 
+
+
+
+
     volatile uint8 *                    pDphyRegs = (volatile uint8*)(NULL_PTR);    /* pointer to DPHY registry     */
                                         /* temporary values for quick DPHY calibration                              */
     uint8                               lVal0 = 0u, lVal1 = 0u, lVal2 = 0u, lVal3 = 0u, lVal4 = 0u;
@@ -1585,6 +1676,11 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
     Csi2_UnitIdType                     pllUnit;
 
     pDriverState = &gCsi2Settings[(uint8)usedUnit];
+
+
+
+
+
     if((uint8)usedUnit < (uint8)CSI2_UNIT_2)
     {
         pllUnit = CSI2_UNIT_0;
@@ -1593,12 +1689,19 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
     {
         pllUnit = CSI2_UNIT_2;
     }
+
+
+
     /* check first to have UNIT_1 used/setup before UNIT_0                                                          */
     if (usedUnit != pllUnit)
     {
         if (gCsi2Settings[(uint8)pllUnit].driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)     /* unit 0 not setup */
         {
             /* error, unit 0 must be setup first                                                                    */
+
+
+
+
             if(pllUnit == CSI2_UNIT_2)
             {
                 CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_UNIT_2_MUST_BE_FIRST, (uint8)CSI2_SETUP_MODULE_INIT, 
@@ -1609,11 +1712,16 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_UNIT_0_MUST_BE_FIRST, (uint8)CSI2_SETUP_MODULE_INIT, 
                                                                             (uint8)CSI2_E_PARAM_POINTER);
             }
+
+
+
+
             CSI2_HALT_ON_ERROR;
         }
     }
     if (rez == (Std_ReturnType)E_OK)
     {
+
 #ifdef linux
         if(pDriverState->driverState != CSI2_DRIVER_STATE_NOT_INITIALIZED)
         {
@@ -1632,6 +1740,9 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
         rez = Csi2_RegsMap(usedUnit, &pRegs);                           /* get the  registry pointer for the unit   */
         if (rez == (Std_ReturnType)E_OK)
         {       /* valid registry pointer   */
+
+
+
             gpMipiCsi2Regs[(uint8)usedUnit] = pRegs;                    /* keep the registry pointer for future     */
             /* execute short calibration only if required by application                                            */
             if(((uint8)pParams->initOptions & (uint8)CSI2_DPHY_INIT_SHORT_CALIB) != 0u)
@@ -1645,6 +1756,7 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 lVal4 = pDphyRegs[DPHY_CLKCALVAL_COMPS_OFFSET];
             }
 
+
             /* supplementary step : SoftReset
              * not present in RM (at least for the moment)
              * necessary to reset the NEXTLINE registry and implicitly the start of the next frame                  */
@@ -1652,10 +1764,12 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
             pRegs->RX_SR = 0u;
 
             /* start of DPHY subsystem initialization ===========================================================   */
+
             /* setup CSI2 subsystem : RM/rev.1/draft O pag.1957
              * according to the latest RM, only Rx can be used, no Tx available                                     */
 
             pRegs->RX_RXNULANE = (uint32)pParams->numLanesRx + 1u;  /* step 1 - set the Rx num. lanes               */
+
 #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE)
             if(gsCsi2DfsReset == 0u)
             {
@@ -1665,6 +1779,7 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
 #elif (CSI2_DFS_USAGE == CSI2_DFS_ALWAYS)
             DfsTilt();      /* step 2&3 - Gate/ungate the MIPI_CSI_TXRX_LI_CLK                                      */
 #endif
+
 
             pRegs->DPHY_RSTCFG = 0u;                                /* step 4 & 5 - clear RSTZ & SHUTDWNZ           */
 
@@ -1901,6 +2016,12 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 CSI2_SET_REGISTRY32(&pRegs->RX_RXENABLE, MIPICSI2_RX_RXENABLE_CFG_FLUSH_CNT_MASK,
                         MIPICSI2_RX_RXENABLE_CFG_FLUSH_CNT(3u)); /* rates over to 200MHz */
             }  /* if(pParams->dphyClkFreq < CSI2_FLUSH_CNT_FREQ_LIMIT)  */
+
+
+
+
+
+
             /* end of DPHY subsystem initialization ===========================================================     */
 
             /* step 20 - configure the circular buffers                                                             */
@@ -1941,6 +2062,7 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 }
 #endif
 
+
                 /* step 21 - Configure noext_burnin_res_cal_rw                                                      */
                 /*
                 * @section Csi2_c_REF_1
@@ -1962,10 +2084,12 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 {
                     rez = Csi2_WaitForStopState(pRegs, (uint32)pParams->numLanesRx);
                 }
+
             }
             if (rez == (Std_ReturnType)E_OK)
             {
 #if (CSI2_GPIO_USED == STD_ON) || (CSI2_SDMA_USED == STD_ON)
+
                 /* assume step 26 done with success => setup ok
                  * do the other VC setup - GPIO, SDMA, irq handling                                                 */
                 for (vcId = (uint8)CSI2_VC_0; vcId < (uint8)CSI2_MAX_VC; vcId++)
@@ -1978,11 +2102,13 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                     Csi2_SetSdma(pRegs, vcId, pParams->vcConfigPtr[vcId]);
         #endif
                 }  /* for   */
+
 #endif /* #if (CSI2_GPIO_USED == STD_ON) || (CSI2_SDMA_USED == STD_ON) */
                 /* interrupts programming                                                                           */
                 rez =
                         Csi2_SetupUIrq(usedUnit, pRegs, pParams);
                 pDriverState->driverState = CSI2_DRIVER_STATE_ON;   /* setup done ok                                */
+
 
                 /* step 27 - Clear FORCERXMODE                                                                      */
                 /*
@@ -1998,10 +2124,13 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                         MIPICSI2_TURNCFG_FORCERXMODE3_MASK |
                         MIPICSI2_TURNCFG_FORCERXMODE4_MASK, 0u);
 
+
                 /* at this moment the interface is setup                                                            */
             } /* if (rez == (Std_ReturnType)E_OK)   */
         } /* if (rez == (Std_ReturnType)E_OK)       */
+
     } /* if if (rez == (Std_ReturnType)E_OK)        */
+
     return rez;
 }
 /* Csi2_ModuleSetup *************************/
@@ -2089,12 +2218,22 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
 
 #if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 
+
+
+
+
+
+
+
+
+
         pStaticParams = &gsCsi2UnitParamCopy[(uint8)unitId];
         pStaticVcParams = &gsCsi2VCParamCopy[(uint8)unitId][0u];
         pStaticAuxParams = &gsCsi2AuxParamCopy[(uint8)unitId][0u];
         pStaticMdParams = &gsCsi2MdParamCopy[(uint8)unitId][0u];
         pDrvParams = &gCsi2Settings[(uint8)unitId];
         pFramesCntr = &gsCsi2FramesCounter[(uint8)unitId][0];
+
         /* copy the current parameters for future use, if it will be required                                       */
         if (pStaticParams != setupParamPtr)
         {
@@ -2175,6 +2314,7 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
 
 /**************************************************************/
 /* Using the DPHY                                             */
+
 
 #if (CSI2_RX_START_STOP_USAGE == STD_ON) || (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 /*================================================================================================*/
@@ -2591,6 +2731,7 @@ Csi2_LaneStatusType Csi2_GetLaneStatus(const Csi2_UnitIdType unitId, const Csi2_
 /* Csi2_GetLaneStatus *************************/
 #endif  /* (CSI2_SECONDARY_FUNCTIONS_USAGE == STD_ON)   */
 
+
 /* Using the DPHY                                             */
 /**************************************************************/
 
@@ -2704,10 +2845,18 @@ uint32 Csi2_GetFramesCounter(const Csi2_UnitIdType unitId, const Csi2_VirtChnlId
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_FRM_CNTR, (uint32_t)CSI2_SEQ_BEGIN);
 
     uint32 rez = 0xffffffffu;
+
+
+
+
+
+
+
     if (((uint8)unitId < (uint8)CSI2_MAX_UNITS) && ((uint8)vcId < (uint8)CSI2_MAX_VC))
     {
         rez = gsCsi2FramesCounter[(uint8)unitId][(uint8)vcId];
     }
+
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_FRM_CNTR, (uint32_t)CSI2_SEQ_END);
     return rez;

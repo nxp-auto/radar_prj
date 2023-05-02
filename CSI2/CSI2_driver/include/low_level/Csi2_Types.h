@@ -1,5 +1,5 @@
 /*
-* Copyright 2022 NXP
+* Copyright 2022-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -32,7 +32,15 @@ extern "C"{
     #endif
     #include "Csi2_Defs.h"
 #include "Csi2_Cfg.h"
+
+
+
+
+
     #include "S32R45_MIPICSI2.h"
+
+
+
 
 
 /*==================================================================================================
@@ -179,7 +187,7 @@ typedef enum {
     CSI2_DATA_TYPE_AUX_1_NO_DROP    = 0x100u, /**< auxiliary, mode 1, no drop, mask                             */
     CSI2_DATA_TYPE_R12_A1_NO_DROP   = 0x12Cu, /**< RAW12 + auxiliary, mode 1, no drop, <b>type to be used       */
 #endif
-    CSI2_DATA_TYPE_MAX              = 0x13Fu, /**< stream type maximum, not used                                */
+    CSI2_DATA_TYPE_MAX              = 0x13Fu  /**< stream type maximum, not used                                */
 } Csi2_DataStreamType;
 
 
@@ -191,9 +199,13 @@ typedef enum {
 typedef enum
 {
     CSI2_UNIT_0 = 0,           /**< First unit (MIPICSI2_0)                         */
+
     CSI2_UNIT_1,               /**< Second unit (MIPICSI2_1)                        */
+
+
     CSI2_UNIT_2,               /**< Third unit (MIPICSI2_2)                         */
     CSI2_UNIT_3,               /**< Fourth unit (MIPICSI2_3)                        */
+
     CSI2_MAX_UNITS             /**< The units limit, to not use in procedure call   */
 } Csi2_UnitIdType;
 
@@ -222,8 +234,10 @@ typedef enum
 {
     CSI2_LANE_0 = 0,           /**< first lane / one lane                                       */
     CSI2_LANE_1,               /**< second lane / two lanes                                     */
+
     CSI2_LANE_2,               /**< third lane / three lanes                                    */
     CSI2_LANE_3,               /**< fourth lane / four lanes                                    */
+
     CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call */
 } Csi2_LaneIdType;
 
@@ -241,7 +255,7 @@ typedef enum
     CSI2_LANE_STATE_VRX,           /**< The Rx lane is receiving valid data.                    */
     CSI2_LANE_STATE_ON,            /**< The Rx lane active, but not currently receiving data.   */
     CSI2_LANE_STATE_OFF,           /**< The Rx lane inactive.                                   */
-    CSI2_LANE_STATE_ERR,           /**< The requested parameters are not correct.               */
+    CSI2_LANE_STATE_ERR            /**< The requested parameters are not correct.               */
 } Csi2_LaneStatusType;
 
 
@@ -262,7 +276,7 @@ typedef enum {
     CSI2_CHANNEL_F,
     CSI2_CHANNEL_G,
     CSI2_CHANNEL_H,
-    CSI2_MAX_CHANNEL,
+    CSI2_MAX_CHANNEL
 } Csi2_ChannelIdType;
 
 
@@ -306,7 +320,7 @@ typedef enum {
     CSI2_DRIVER_STATE_NOT_INITIALIZED = 0,      /* driver not initialized           */
     CSI2_DRIVER_STATE_ON,                       /* driver initialized               */
     CSI2_DRIVER_STATE_OFF,                      /* driver off                       */
-    CSI2_DRIVER_STATE_STOP,                     /* driver stopped                   */
+    CSI2_DRIVER_STATE_STOP                      /* driver stopped                   */
 } Csi2_DriverStateType;
 
 
@@ -324,9 +338,47 @@ typedef enum {
                                          * setup error reported */
     CSI2_DPHY_INIT_SHORT_AND_STOP = CSI2_DPHY_INIT_SHORT_CALIB | CSI2_DPHY_INIT_W_STOP_STATE,
                                         /**< Short calibration, STOP state to be reached in about 1.2ms     */
-    CSI2_DPHY_INIT_MAX = CSI2_DPHY_INIT_SHORT_AND_STOP + 1,
+    CSI2_DPHY_INIT_MAX = CSI2_DPHY_INIT_SHORT_AND_STOP + 1
                                         /**< Setup max limit, not to be used in application                  */
 } Csi2_DphySetupOptionsType;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -356,7 +408,7 @@ typedef enum {
     /* other data output parameters                                                                             */
     CSI2_VC_BUF_SWAP_RAW8         = 0x800u,     /**< Swap bytes for RAW8 data received                          */
     CSI2_VC_BUF_RAW16_MSB_F       = 0x1000u,    /**< For RAW16, first is the MSB (not the LSB, as default)      */
-    CSI2_VC_BUF_WRITE_ALL_DATA    = 0x2000u,    /**< Received data before FrameStart, but after setup,
+    CSI2_VC_BUF_WRITE_ALL_DATA    = 0x2000u     /**< Received data before FrameStart, but after setup,
                                                  * is written into the memory                                   */
 } Csi2_DataManipulationType;
 
@@ -372,7 +424,7 @@ typedef enum {
     CSI2_REQ_ETRG_ENA_ON_ERROR     = 0x01u,     /**< Enable external trigger on VC error
                                                              *  (linecount, line len, crc/ecc, no sync)         */
     CSI2_REQ_ETRG_ENA_ON_PACKET    = 0x02u,     /**< Enable external trigger on VC packet received              */
-    CSI2_REQ_ETRG_ENA_ON_PF        = 0x04u,     /**< Enable external trigger on VC packet and frame             */
+    CSI2_REQ_ETRG_ENA_ON_PF        = 0x04u      /**< Enable external trigger on VC packet and frame             */
 } Csi2_ExternalTriggerType;
 
 
@@ -397,7 +449,7 @@ typedef enum {
     CSI2_REQ_ETRG_EVT_ERR_LINECNT      = 0x00u,  /**< Default, trigger on line count error                      */
     CSI2_REQ_ETRG_EVT_ERR_LINLEN       = 0x01u,  /**< Trigger on line length error                              */
     CSI2_REQ_ETRG_EVT_ERR_CRCECC       = 0x02u,  /**< Trigger on CRC or ECC error                               */
-    CSI2_REQ_ETRG_EVT_ERR_NOSYNC       = 0x03u,  /**< Trigger on synchronization missing                        */
+    CSI2_REQ_ETRG_EVT_ERR_NOSYNC       = 0x03u   /**< Trigger on synchronization missing                        */
 } Csi2_ExternalEventsType;
 #endif
 
@@ -408,7 +460,13 @@ typedef enum {
 /**
  *  @brief      Necessary CSI2 pointer to memory, as defined in the platform header files
  */
+
 typedef MIPICSI2_Type    GENERIC_CSI2_Type;
+
+
+
+
+
 
 /**
  *  @brief      Necessary typedef for uintptr, as AUTOSAR doesn't offer one.
@@ -478,6 +536,9 @@ typedef struct {
     uint16      expectedNumSamples;             /**< Expected line length for receiving in terms of samples/pixels/etc.
                                                  * per channel (antenna for radar)                                   */
     uint16      expectedNumLines;               /**< Expected number of lines/chirps per frame                       */
+
+
+
     uint16      bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
                                                  * statistics to be received in buffer, at least 1<br>
                                                  * @note For internal software reasons,
@@ -630,6 +691,11 @@ typedef struct {
                                                      * - simple/normal calibration or quick/short calibration
                                                      * - wait for 5us or not wait for STOP states on data lanes
                                                      * use Csi2_DphySetupOptionsType to set this field.              */
+
+
+
+
+
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
     uint8           statManagement;                 /**< How the channel statistics are managed. Only channels having
                                                      * CSI2_OFFSET_AUTOCOMPUTE DC offset specified will be

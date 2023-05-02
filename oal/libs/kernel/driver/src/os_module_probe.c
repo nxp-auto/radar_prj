@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2020, 2022 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -91,7 +91,7 @@ get_res_reg_exit:
 int32_t OAL_OS_ProbeDriver(const struct fdt_node *acpNode, const void **acpData)
 {
 	int32_t lRet = 0;
-	uint8_t *lpPropValue;
+	uint8_t *lpPropValue = NULL;
 	struct OAL_MemoryAllocatorRegion lResMem;
 
 	OAL_UNUSED_ARG(acpData);

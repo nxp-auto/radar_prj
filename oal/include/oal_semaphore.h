@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -8,12 +8,11 @@
 #define OAL_SEMA_H
 
 #include <oal_utils.h>
-#include <posix/posix_oal_semaphore.h>
+#include <os_oal_semaphore.h>
 
 /**
  * @defgroup OAL_Sema OAL Sema
  *
- * @{
  * @brief Basic semaphore mechanism
  *
  * @detail
@@ -74,10 +73,6 @@ int32_t OAL_GetValueSemaphore(struct OAL_Sema *apSem);
 /**
  * @brief Destroy the semaphore
  *
- * @details In Zephyr, this function can not destroy a semaphore
- * with the count value is greater than 0. But it can destroy 
- * a blocked semaphore
- *
  * @param[in] apSem A reference to an initialized semaphore
  *
  * @return 0 is the operation succeeded, a negative value otherwise
@@ -85,10 +80,5 @@ int32_t OAL_GetValueSemaphore(struct OAL_Sema *apSem);
 int32_t OAL_DestroySemaphore(struct OAL_Sema *apSem);
 
 __END_DECLS
-
-/* @} */
-#ifdef OAL_TRACE_API_FUNCTIONS
-#include <trace/oal_semaphore.h>
-#endif
 
 #endif

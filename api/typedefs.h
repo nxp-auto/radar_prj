@@ -1,5 +1,5 @@
 /*
-* Copyright 2017-2022 NXP
+* Copyright 2017-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -34,17 +34,15 @@ typedef volatile uint32_t vuint32_t;
 typedef volatile int64_t  vint64_t;
 typedef volatile uint64_t vuint64_t;
 
-#if !defined(linux) && !defined(bool)
-typedef uint8_t     bool;
-#endif
-
-#if !defined(boolean)
-typedef uint8_t     boolean;
-#endif
-
 /*float types*/
 typedef float  float32_t;
 typedef double float64_t;
+
+
+#if !defined(RSDK_AUTOSAR)
+#if !defined(__ZEPHYR__)
+typedef uint8_t     boolean;
+#endif
 
 /* Alias type definitions for Autosar cross-compatibility */
 typedef int8_t  int8;
@@ -63,6 +61,7 @@ typedef int8_t      sint8;
 typedef int16_t     sint16;
 typedef int32_t     sint32;
 typedef int64_t     sint64;
+#endif
 
 #elif defined(__MWERKS__) /* Metrowerk CodeWarrior */
 #include <stdint.h>
@@ -108,12 +107,9 @@ typedef int64_t  int64;
 typedef int64_t  sint64;
 typedef uint64_t uint64;
 
-#if !defined(bool)
-typedef uint8_t     bool;
-#endif
 
 #if !defined(boolean)
-typedef bool        boolean;
+#define  boolean bool
 #endif
 
 /* Standard typedefs used by header files, based on ISO C standard */
@@ -193,4 +189,4 @@ typedef double float64_t;
 }
 #endif
 
-#endif  //TYPEDEFS_H
+#endif  /* TYPEDEFS_H */

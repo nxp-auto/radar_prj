@@ -1,5 +1,5 @@
 /*
-* Copyright 2022 NXP
+* Copyright 2022-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -18,15 +18,23 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 
+
+
+
 #include "S32R45_SPT.h"
+
+
+
+
+
 
 #include "rsdk_status.h"
 #include "rsdk_toolchain_helper.h"
 #include "rsdk_osenv.h"
 
-#if !defined(RSDK_OSENV_SA)
-#error "RSDK_OSENV_SA not defined! Please include rsdk_osenv.h before using this macro"
-#endif
+
+
+
 
 #if defined(TRACE_ENABLE)
 #include "trace.h"
@@ -172,6 +180,20 @@ extern "C"{
 * @brief [ERROR] SPT hardware error. Undefined SPT error.
 * */
 #define SPT_E_OTHER                                 ((uint8)0x14U)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if (SPT_SINGLE_THREAD == STD_OFF)
 /**

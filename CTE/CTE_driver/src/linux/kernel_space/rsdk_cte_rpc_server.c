@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -24,7 +24,7 @@
 
 #include "rsdk_cte_driver_module.h"
 #include "rsdk_cte_driver_api.h"
-#include "cte_low_level_operations.h"
+#include "CDD_Cte.h"
 #include "rsdk_cte_interrupt.h"
 
 #ifdef __cplusplus
@@ -120,14 +120,14 @@ static void Callback(rsdkCteIrqDefinition_t events)
 static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pUInt64)
 {
     uint32_t            i, j, k, rez;
-    rsdkCteInitParams_t llInitParams;               // the init params in expected low-level format
+    Cte_SetupParamsType llInitParams;               // the init params in expected low-level format
     uint8_t             *pBuf = kzalloc(2u * ((CTE_MAX_LARGE_TIME_TABLE_LEN * sizeof(rsdkCteLinuxTtEvents_t)) + 
                                 ((uint32_t)RSDK_CTE_OUTPUT_MAX * sizeof(rsdkCteSingleOutputDef_t))), GFP_KERNEL);
     uint8_t				*pTmp = pBuf;
     
     // adapt the parameters to be transferred to kernel
     // general parameters
-    llInitParams.cteMode            = pParams->cteMode;
+    llInitParams.cteMode            = *(Cte_ModeDefinitionType*)&pParams->cteMode;
     llInitParams.cteClockFrecq      = pParams->cteClockFrecq;
     llInitParams.repeatCount        = pParams->repeatCount;
     llInitParams.cteIrqEvents       = pParams->cteIrqEvents;
@@ -139,14 +139,14 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
     }
     else
     {
-        llInitParams.pSignalDef0    = (rsdkCteSingleOutputDef_t*)(void*)pBuf;
+        llInitParams.pSignalDef0    = (Cte_SingleOutputDefType*)pBuf;
         for(i = 0; i < pParams->lenSigDef0; i++)
         {
-            llInitParams.pSignalDef0[i] = pParams->signalDef0[i];
+            llInitParams.pSignalDef0[i] = *(Cte_SingleOutputDefType*)&pParams->signalDef0[i];
         }
         llInitParams.pSignalDef0[i].outputSignal = RSDK_CTE_OUTPUT_MAX;
         i++;
-        pBuf += i * sizeof(rsdkCteSingleOutputDef_t);
+        pBuf += i * sizeof(Cte_SingleOutputDefType);
     }
     if(pParams->lenSigDef1 == 0u)
     {
@@ -154,10 +154,10 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
     }
     else
     {
-        llInitParams.pSignalDef1    = (rsdkCteSingleOutputDef_t*)(void*)pBuf;
+        llInitParams.pSignalDef1    = (Cte_SingleOutputDefType*)(void*)pBuf;
         for(i = 0; i < pParams->lenSigDef1; i++)
         {
-            llInitParams.pSignalDef1[i] = pParams->signalDef1[i];
+            llInitParams.pSignalDef1[i] = *(Cte_SingleOutputDefType*)&pParams->signalDef1[i];
         }
         llInitParams.pSignalDef1[i].outputSignal = RSDK_CTE_OUTPUT_MAX;
         i++;
@@ -170,19 +170,19 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
     }
     else
     {
-        llInitParams.pTimeTable0                        = (rsdkCteTimeTableDef_t*)(void*)pBuf;
+        llInitParams.pTimeTable0                        = (Cte_TimeTableDefType*)pBuf;
         llInitParams.pTimeTable0->tableLength           = pParams->tableLen0;
         llInitParams.pTimeTable0->tableTimeExecLimit    = pParams->timeLimT0;
         pBuf += sizeof(rsdkCteTimeTableDef_t);
-        llInitParams.pTimeTable0->pEvents = (rsdkCteTimingEvent_t*)(void*)pBuf;
-        pBuf += pParams->tableLen0 * sizeof(rsdkCteTimingEvent_t);
+        llInitParams.pTimeTable0->pEvents = (Cte_TimingEventType*)(void*)pBuf;
+        pBuf += pParams->tableLen0 * sizeof(Cte_TimingEventType);
         for(i = 0; (i < pParams->tableLen0) && (i < CTE_MAX_SMALL_TIME_TABLE_LEN); i++)
         {
             llInitParams.pTimeTable0->pEvents[i].absTime = pParams->timeTable0[i].evTime;
-            llInitParams.pTimeTable0->pEvents[i].pEventActions = (rsdkCteAction_t*)(void*)pBuf;
+            llInitParams.pTimeTable0->pEvents[i].pEventActions = (Cte_ActionType*)pBuf;
             for(j = 0; j < pParams->timeTable0[i].actionsNumber; j++)
             {
-                llInitParams.pTimeTable0->pEvents[i].pEventActions[j] = pParams->timeTable0[i].actions[j];
+                llInitParams.pTimeTable0->pEvents[i].pEventActions[j] = *(Cte_ActionType*)&pParams->timeTable0[i].actions[j];
             }
             llInitParams.pTimeTable0->pEvents[i].pEventActions[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
             j++;
@@ -192,10 +192,10 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
         {
             k = i - CTE_MAX_SMALL_TIME_TABLE_LEN;
             llInitParams.pTimeTable0->pEvents[i].absTime = pParams->timeTable1[k].evTime;
-            llInitParams.pTimeTable0->pEvents[i].pEventActions = (rsdkCteAction_t*)(void*)pBuf;
+            llInitParams.pTimeTable0->pEvents[i].pEventActions = (Cte_ActionType*)(void*)pBuf;
             for(j = 0; j < pParams->timeTable1[k].actionsNumber; j++)
             {
-                llInitParams.pTimeTable0->pEvents[i].pEventActions[j] = pParams->timeTable1[k].actions[j];
+                llInitParams.pTimeTable0->pEvents[i].pEventActions[j] = *(Cte_ActionType*)&pParams->timeTable1[k].actions[j];
             }
             llInitParams.pTimeTable0->pEvents[i].pEventActions[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
             j++;
@@ -209,26 +209,26 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
 }
     else
     {
-        llInitParams.pTimeTable1                        = (rsdkCteTimeTableDef_t*)(void*)pBuf;
+        llInitParams.pTimeTable1                        = (Cte_TimeTableDefType*)pBuf;
         llInitParams.pTimeTable1->tableLength           = pParams->tableLen1;
         llInitParams.pTimeTable1->tableTimeExecLimit    = pParams->timeLimT1;
         pBuf += sizeof(rsdkCteTimeTableDef_t);
-        llInitParams.pTimeTable1->pEvents = (rsdkCteTimingEvent_t*)(void*)pBuf;
-        pBuf += pParams->tableLen1 * sizeof(rsdkCteTimingEvent_t);
+        llInitParams.pTimeTable1->pEvents = (Cte_TimingEventType*)pBuf;
+        pBuf += pParams->tableLen1 * sizeof(Cte_TimingEventType);
         for(i = 0; i < pParams->tableLen1; i++)
         {
             llInitParams.pTimeTable1->pEvents[i].absTime = pParams->timeTable1[i].evTime;
-            llInitParams.pTimeTable1->pEvents[i].pEventActions = (rsdkCteAction_t*)(void*)pBuf;
+            llInitParams.pTimeTable1->pEvents[i].pEventActions = (Cte_ActionType*)pBuf;
             for(j = 0; j < pParams->timeTable1[i].actionsNumber; j++)
             {
-                llInitParams.pTimeTable1->pEvents[i].pEventActions[j] = pParams->timeTable1[i].actions[j];
+                llInitParams.pTimeTable1->pEvents[i].pEventActions[j] = *(Cte_ActionType*)&pParams->timeTable1[i].actions[j];
             }
             llInitParams.pTimeTable1->pEvents[i].pEventActions[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
             j++;
-            pBuf += j * sizeof(rsdkCteAction_t);
+            pBuf += j * sizeof(Cte_ActionType);
         }
     }
-	rez = (uint32_t)CtePlatformModuleInit(&llInitParams, pUInt64);
+	rez = (uint32_t)Cte_Setup(&llInitParams, pUInt64);
 	
 	
 	kvfree(pTmp);
@@ -244,7 +244,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
 {
     uint32_t                rez;
     uintptr_t               realTableGap, brickMask;
-    rsdkCteTimeTableDef_t   *pTable0, *pTable1;
+    Cte_TimeTableDefType    *pTable0, *pTable1;
     void                    *pParams = NULL;
     uint64_t                uInt64Val;
 
@@ -268,16 +268,16 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
             }
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_STOP:                // CTE stop request
-            rez = (uint32_t)CtePlatformModuleStop();
+            rez = (uint32_t)Cte_Stop();
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_START:               // CTE start request
-            rez = (uint32_t)CtePlatformModuleStart();
+            rez = (uint32_t)Cte_Start();
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_RESTART:             // CTE restart request
-            rez = (uint32_t)CtePlatformModuleRestart();
+            rez = (uint32_t)Cte_Restart();
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_RFS_SET:             // CTE software generate RFS request
-            rez = (uint32_t)CtePlatformModuleRfsGenerate();
+            rez = (uint32_t)Cte_RfsGenerate();
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_TABLE_UPDATE:        // table(s) update request
             if ((uint32_t)len < ((sizeof(uintptr_t)) * 2u))
@@ -289,8 +289,8 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
                 // align the table pointers to 4 bites chunks
                 brickMask = (uintptr_t)(sizeof(uint32_t) - 1u);
                 realTableGap = (sizeof(rsdkCteTimeTableDef_t) + brickMask) & (~brickMask);
-                pTable0 = (rsdkCteTimeTableDef_t*)pParams;
-                pTable1 = (rsdkCteTimeTableDef_t*)(pParams + realTableGap);                
+                pTable0 = (Cte_TimeTableDefType*)pParams;
+                pTable1 = (Cte_TimeTableDefType*)(pParams + realTableGap);                
                 if(pTable0->tableTimeExecLimit == RSDK_CTE_WRONG_TABLE_TIME_LENGTH)
                 {
                     pTable0 = NULL;
@@ -300,7 +300,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
                     pTable1 = NULL;
                 }
                 DebugMessage("RsdkCteRpcDispatcher: pTable0=%lx, pTable1=%lx\n", (long)pTable0, (long)pTable1);
-                rez = (uint32_t)CtePlatformModuleUpdateTables(pTable0, pTable1, &uInt64Val);  // real unit initialization
+                rez = (uint32_t)Cte_UpdateTables(pTable0, pTable1, &uInt64Val);  // real unit initialization
             }
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_REG_EVT:             // events registration request
@@ -318,7 +318,7 @@ static uint32_t RsdkCteRpcDispatcher(oal_dispatcher_t *dispatcher, uint32_t func
             }
             break;
         case (uint32_t)RSDK_CTE_LX_CTE_READ_CHECKSUM:                 // get the TT checksum
-            uInt64Val = CtePlatformModuleGetLutChecksum();
+            uInt64Val = Cte_GetLutChecksum();
             rez = (uint32_t)OAL_RPCAppendReply(dispatcher, (uint8_t*)&uInt64Val, sizeof(uint64_t));
             break;
         default:

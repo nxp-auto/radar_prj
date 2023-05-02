@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -300,9 +300,14 @@ static uint32_t RsdkCsi2RpcDispatcherE(oal_dispatcher_t *d, uint32_t func, uintp
             }
             break;
         }
-        // no errors to report, so wait for wakeup
-        OAL_WaitEventInterruptible(gpRsdkCsi2Device[unitId]->irqWaitQ, 
-                                gpRsdkCsi2Device[unitId]->irqReadP != gpRsdkCsi2Device[unitId]->irqWriteP);
+        // nothing to report, so wait for wakeup
+        if(OAL_WaitEventInterruptible((gpRsdkCsi2Device[unitId]->irqWaitQ), 
+                                ((gpRsdkCsi2Device[unitId]->irqReadP) != (gpRsdkCsi2Device[unitId]->irqWriteP))) != 0)
+        {
+            // a signal was received, so we'll stop the thread, as the driver is not able to manage this
+            rez = (uint32_t)RSDK_CSI2_DRV_POWERED_OFF;
+            break;
+        }
     }
     return rez;
 }

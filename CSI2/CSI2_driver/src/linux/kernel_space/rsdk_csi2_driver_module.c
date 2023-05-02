@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -49,7 +49,7 @@ extern "C" {
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("NXP Semiconductors");
 MODULE_DESCRIPTION("NXP MIPICSI2 Driver");
-MODULE_VERSION("4.0");
+MODULE_VERSION("4.1");
 
 
 /*==================================================================================================

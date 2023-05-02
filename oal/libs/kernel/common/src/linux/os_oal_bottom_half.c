@@ -23,6 +23,7 @@ int32_t OAL_InitializeBottomHalf(struct OAL_BottomHalf *apBtHalf,
 #else
 		tasklet_init(&apBtHalf->mTasklet, aCallback, aCallbackArg);
 #endif
+
 	}
 
 	return lRet;

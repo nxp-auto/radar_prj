@@ -1,5 +1,5 @@
 /*
-* Copyright 2020 NXP
+* Copyright 2020-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -8,7 +8,7 @@
 #define RSDK_CTE_LINUX_DEF_H
 
 #include "rsdk_cte_driver_api.h"
-#include "cte_low_level_operations.h"
+#include "Cte_Specific.h"
 
 /*==================================================================================================
 *                                        INCLUDE FILES

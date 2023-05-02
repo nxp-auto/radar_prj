@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -166,7 +166,7 @@ static uint32_t OalCommDispatcher(oal_dispatcher_t *d, uint32_t func, uintptr_t 
             ret = LaxTriggerEvent(*((rsdkLaxEventType_t*)in));
             break;
         }
-		case (uint32_t)RSDK_LAX_UAPI_REGISTER_EVENTS: 
+        case (uint32_t)RSDK_LAX_UAPI_REGISTER_EVENTS: 
         {
             LAX_LOG_DEBUG("RSDK_LAX_UAPI_REGISTER_EVENTS\n");
             if ((uint32_t)len != sizeof(rsdkLaxEventType_t))
@@ -178,7 +178,7 @@ static uint32_t OalCommDispatcher(oal_dispatcher_t *d, uint32_t func, uintptr_t 
             ret = LaxRegisterEvents(*((rsdkLaxEventType_t*)in));
             break;
         }
-		case (uint32_t)RSDK_LAX_UAPI_DEREGISTER_EVENTS: 
+        case (uint32_t)RSDK_LAX_UAPI_DEREGISTER_EVENTS: 
         {
             LAX_LOG_DEBUG("RSDK_LAX_UAPI_DEREGISTER_EVENTS\n");
             if ((uint32_t)len != sizeof(rsdkLaxEventType_t))
@@ -200,7 +200,7 @@ static uint32_t OalCommDispatcher(oal_dispatcher_t *d, uint32_t func, uintptr_t 
             break;
         }
     }
-#endif
+#endif  // #ifdef LAX_OS_sa
 
     return (uint32_t)ret;
 }
@@ -377,7 +377,7 @@ static void LaxFlags0IrqHandler(lldLaxControl_t *pLaxCtrl)
     // Handle Flags0 interrupts
     while (flags0 != 0U)
     {
-		uint32_t     seqId; // as flags0 is non-zero, ffs always returns values >=1 
+        uint32_t     seqId; // as flags0 is non-zero, ffs always returns values >=1 
         seqId = ((uint32_t)ffs((int32_t)flags0)) - 1U;
         cmdMask = RSDK_LAX_CMD_DOUBLE_IDX_BITS << seqId;
 
@@ -404,10 +404,10 @@ static void LaxFlags0IrqHandler(lldLaxControl_t *pLaxCtrl)
 static void LaxFlags1IrqHandler(lldLaxControl_t *pLaxCtrl)
 {
     uint32_t flags1, cmdMask, eventId, eventIdOffset;
-	uint32_t const  validFlags1 = (RSDK_LAX_HOST_FLAGS1_CMD_ERR_MASK | RSDK_LAX_HOST_FLAGS1_TABLE_ERR_MASK |
-								RSDK_LAX_HOST_FLAGS1_SPT_CMD_MASK | RSDK_LAX_HOST_FLAGS1_CTE_CMD_MASK |
-								RSDK_LAX_HOST_FLAGS1_LAX_CMD_MASK | RSDK_LAX_HOST_FLAGS1_PARITY_ERR_MASK);
-	uint32_t const middleBit = 16U;
+    uint32_t const  validFlags1 = (RSDK_LAX_HOST_FLAGS1_CMD_ERR_MASK | RSDK_LAX_HOST_FLAGS1_TABLE_ERR_MASK |
+                                RSDK_LAX_HOST_FLAGS1_SPT_CMD_MASK | RSDK_LAX_HOST_FLAGS1_CTE_CMD_MASK |
+                                RSDK_LAX_HOST_FLAGS1_LAX_CMD_MASK | RSDK_LAX_HOST_FLAGS1_PARITY_ERR_MASK);
+    uint32_t const middleBit = 16U;
 
     flags1 = LAX_VCPU_HOST_REG_PTR->VCPU_HOST_FLAGS[1].R;
     LAX_VCPU_HOST_REG_PTR->VCPU_HOST_FLAGS[1].R = flags1;
@@ -419,33 +419,33 @@ static void LaxFlags1IrqHandler(lldLaxControl_t *pLaxCtrl)
 
     if ((flags1 & (~validFlags1)) != (uint32_t)0)
     {
-        flags1 &= validFlags1;	
+        flags1 &= validFlags1;    
         if (OAL_RPCTriggerEvent(gsRsdkLaxEvents[RSDK_LAX_EVENT_UNEXPECTED_INT]) != 0)
         {
             LAX_LOG_ERROR("%d: OAL_RPCTriggerEvent failed for unexpected interrupt \n", pLaxCtrl->id);
             // TODO - report error event
-        }		
+        }        
     }
 
-	if ((flags1 & RSDK_LAX_HOST_FLAGS1_CMD_ERR_MASK) != (uint32_t)0)
-	{
-		flags1 &= (~(RSDK_LAX_HOST_FLAGS1_CMD_ERR_MASK));
+    if ((flags1 & RSDK_LAX_HOST_FLAGS1_CMD_ERR_MASK) != (uint32_t)0)
+    {
+        flags1 &= (~(RSDK_LAX_HOST_FLAGS1_CMD_ERR_MASK));
         if (OAL_RPCTriggerEvent(gsRsdkLaxEvents[RSDK_LAX_EVENT_CMD_CONTENT_ERR]) != 0)
         {
             LAX_LOG_ERROR("%d: OAL_RPCTriggerEvent failed for LAX command content error \n", pLaxCtrl->id);
             // TODO - report error event
         }
-	}
+    }
 
-	if ((flags1 & RSDK_LAX_HOST_FLAGS1_TABLE_ERR_MASK) != (uint32_t)0)
-	{
-		flags1 &= (~(RSDK_LAX_HOST_FLAGS1_TABLE_ERR_MASK));
+    if ((flags1 & RSDK_LAX_HOST_FLAGS1_TABLE_ERR_MASK) != (uint32_t)0)
+    {
+        flags1 &= (~(RSDK_LAX_HOST_FLAGS1_TABLE_ERR_MASK));
         if (OAL_RPCTriggerEvent(gsRsdkLaxEvents[RSDK_LAX_EVENT_TABLE_ERR]) != 0)
         {
             LAX_LOG_ERROR("%d: OAL_RPCTriggerEvent failed for graph table error \n", pLaxCtrl->id);
             // TODO - report error event
         }
-	}
+    }
 
     if ((flags1 & RSDK_LAX_HOST_FLAGS1_PARITY_ERR_MASK) != (uint32_t)0)
     {
@@ -457,7 +457,7 @@ static void LaxFlags1IrqHandler(lldLaxControl_t *pLaxCtrl)
         }
         LaxClearAllParityFailBits(pLaxCtrl);
     }
-		
+        
     // Handle Flags1 interrupts for OtherLAX/CTE/SPT-triggered commands completions
     while (flags1 != 0U)
     {   
@@ -466,24 +466,24 @@ static void LaxFlags1IrqHandler(lldLaxControl_t *pLaxCtrl)
         cmdMask = RSDK_LAX_CMD_DOUBLE_IDX_BITS << bitId;
         if(((cmdMask & flags1) == cmdMask) && (bitId < middleBit))
         {
-			if (bitId < RSDK_LAX_CTE_INT_OFFSET)
-			{  //this is a SPT-triggered command completion
-				eventIdOffset = (pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID) ?
-					(uint32_t)RSDK_LAX_EVENT_LAX0_SPT_CMD_0_DONE : (uint32_t)RSDK_LAX_EVENT_LAX1_SPT_CMD_0_DONE;
-				eventId = eventIdOffset + bitId;
-			}
-			else if (bitId < RSDK_LAX_LAX_INT_OFFSET)
-			{  //this is a CTE-triggered command completion
-				eventIdOffset = (pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID) ?
-					(uint32_t)RSDK_LAX_EVENT_LAX0_CTE_CMD_0_DONE : (uint32_t)RSDK_LAX_EVENT_LAX1_CTE_CMD_0_DONE;
-				eventId = eventIdOffset + (bitId - RSDK_LAX_CTE_INT_OFFSET);				
-			}
-			else
-			{ //this is a LAX-triggered command completion
-				eventIdOffset = (pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID) ?
-					(uint32_t)RSDK_LAX_EVENT_LAX0_LAX_CMD_0_DONE : (uint32_t)RSDK_LAX_EVENT_LAX1_LAX_CMD_0_DONE;
-				eventId = eventIdOffset + (bitId - RSDK_LAX_LAX_INT_OFFSET);					
-			}
+            if (bitId < RSDK_LAX_CTE_INT_OFFSET)
+            {  //this is a SPT-triggered command completion
+                eventIdOffset = (pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID) ?
+                    (uint32_t)RSDK_LAX_EVENT_LAX0_SPT_CMD_0_DONE : (uint32_t)RSDK_LAX_EVENT_LAX1_SPT_CMD_0_DONE;
+                eventId = eventIdOffset + bitId;
+            }
+            else if (bitId < RSDK_LAX_LAX_INT_OFFSET)
+            {  //this is a CTE-triggered command completion
+                eventIdOffset = (pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID) ?
+                    (uint32_t)RSDK_LAX_EVENT_LAX0_CTE_CMD_0_DONE : (uint32_t)RSDK_LAX_EVENT_LAX1_CTE_CMD_0_DONE;
+                eventId = eventIdOffset + (bitId - RSDK_LAX_CTE_INT_OFFSET);                
+            }
+            else
+            { //this is a LAX-triggered command completion
+                eventIdOffset = (pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID) ?
+                    (uint32_t)RSDK_LAX_EVENT_LAX0_LAX_CMD_0_DONE : (uint32_t)RSDK_LAX_EVENT_LAX1_LAX_CMD_0_DONE;
+                eventId = eventIdOffset + (bitId - RSDK_LAX_LAX_INT_OFFSET);                    
+            }
 
             // notify OtherLAX/CTE/SPT-triggered command completion
             if (OAL_RPCTriggerEvent(gsRsdkLaxEvents[eventId]) != 0)
@@ -509,8 +509,8 @@ static void LaxIllegalopIrqHandler(lldLaxControl_t *pLaxCtrl)
     uint32_t    status;
 
     status = LAX_VCPU_REG_PTR->STATUS.R;
-	status |= STATUS_REG_IRQ_ILLEGALOP;
-	/* W1C write 1 to clear vcpu_iit bit */
+    status |= STATUS_REG_IRQ_ILLEGALOP;
+    /* W1C write 1 to clear vcpu_iit bit */
     LAX_VCPU_REG_PTR->STATUS.R = status;
     
     if(pLaxCtrl->id == (int32_t)RSDK_LAX_CORE_0_ID)
@@ -535,17 +535,18 @@ static void LaxIllegalopIrqHandler(lldLaxControl_t *pLaxCtrl)
 *                   - DMA transfer complete interrupts notify that a DMA transfer has completed successfully
 *                               - RSDK_LAX_EVENT_DMA_DONE user-space event is generated for elf download
 *                               - no user-space event is generated for LAX command launches
-*                               - RSDK_LAX_EVENT_UNEXP_DMA_COMP user-space event is generated in case DMA transfer completion
-*                                 is observed on other DMA channels
-*                   - DMA configuration errors notifying that the DMA configuration was incorrect for any channel (either used for
-*                     eld download, LAX command launch or data buffer transfer in a LAX graph); in this case, the user-space
-*                     event generated is RSDK_LAX_EVENT_DMA_FLAG_CFGERR
-*                   - DMA transfer errors notifying that the DMA transfer failed for any channel (either used for eld download,
-*                      LAX command launch or data buffer transfer in a LAX graph); RSDK_LAX_EVENT_DMA_FLAG_XFRERR is the
-*                      user-space event generated in this case
+*                               - RSDK_LAX_EVENT_UNEXP_DMA_COMP user-space event is generated 
+*                                 in case DMA transfer completion is observed on other DMA channels
+*                   - DMA configuration errors notifying that the DMA configuration was incorrect for any channel 
+*                     (either used for eld download, LAX command launch or data buffer transfer in a LAX graph); 
+*                     in this case, the user-space event generated is RSDK_LAX_EVENT_DMA_FLAG_CFGERR
+*                   - DMA transfer errors notifying that the DMA transfer failed for any channel 
+*                     (either used for eld download, LAX command launch or data buffer transfer in a LAX graph); 
+*                     RSDK_LAX_EVENT_DMA_FLAG_XFRERR is the user-space event generated in this case
 *
-*                   Note: isQueuedDmaReq flag is used to identify interrupts resulting from DMA transfers originating from the driver’s
-*                   DMA Request Queue and thus DMATransmit should be called to process the next request in the queue
+*                   Note: isQueuedDmaReq flag is used to identify interrupts resulting from 
+*                   DMA transfers originating from the driver’sDMA Request Queue 
+*                   and thus DMATransmit should be called to process the next request in the queue
 *
 * @param[in]        pLaxCtrl    Pointer to lldLaxControl_t structure
 *
@@ -591,20 +592,20 @@ static void LaxDmaIrqHandler(lldLaxControl_t *pLaxCtrl)
                      LAX_LOG_ERROR("%d: OAL_RPCTriggerEvent failed for RSDK_LAX_EVENT_DMA_DONE \n", pLaxCtrl->id);
                 }
             }
-			//Check parity error bits
-			statParity = 0U;
+            //Check parity error bits
+            statParity = 0U;
             if ((pDr->type == (uint8_t)LAX_DMA_REQ_ELD) || (pDr->type == (uint8_t)LAX_DMA_REQ_CMD))
             {
-				statParity = LAX_INPUT_REG_PTR->GP_IN[1].R;
+                statParity = LAX_INPUT_REG_PTR->GP_IN[1].R;
             }
-			if((statParity & GP_IN_PARRITY_ERROR_MASK) != (uint32_t)0)
-			{
-				if(OAL_RPCTriggerEvent(gsRsdkLaxEvents[RSDK_LAX_EVENT_PARITY_ERR]) != 0)
-				{
-					 LAX_LOG_ERROR("%d: OAL_RPCTriggerEvent failed for RSDK_LAX_EVENT_PARITY_ERR \n", pLaxCtrl->id);
-				}
-				LaxClearAllParityFailBits(pLaxCtrl);
-			}
+            if((statParity & GP_IN_PARRITY_ERROR_MASK) != (uint32_t)0)
+            {
+                if(OAL_RPCTriggerEvent(gsRsdkLaxEvents[RSDK_LAX_EVENT_PARITY_ERR]) != 0)
+                {
+                     LAX_LOG_ERROR("%d: OAL_RPCTriggerEvent failed for RSDK_LAX_EVENT_PARITY_ERR \n", pLaxCtrl->id);
+                }
+                LaxClearAllParityFailBits(pLaxCtrl);
+            }
         }
         // Watch for completed DMAs from LAX with incorrect IRQ_EN
         if (statR != (uint32_t)0)
@@ -701,8 +702,8 @@ rsdkStatus_t LaxLowLevelDriverInit(lldLaxControl_t *pLaxCtrl)
 {
     uint32_t    param0, param1, param2;
     struct laxHardware *pHw;
-	rsdkStatus_t ret = RSDK_SUCCESS;
-	
+    rsdkStatus_t ret = RSDK_SUCCESS;
+    
     /* Map LAX registers */
     pLaxCtrl->pRegs = OAL_memmap((uintptr_t)pLaxCtrl->pMemAddr, pLaxCtrl->memSize, KERNEL_MAP);
     pLaxCtrl->pDbgRegs = (uint32_t*)OAL_memmap((uintptr_t)pLaxCtrl->pDbgAddr, pLaxCtrl->dbgSize, KERNEL_MAP);
@@ -723,7 +724,7 @@ rsdkStatus_t LaxLowLevelDriverInit(lldLaxControl_t *pLaxCtrl)
 
     pLaxCtrl->versions.laxHwVersion = LAX_VERS_CFG_REG_PTR->HWVERSION.R;
     pLaxCtrl->versions.ippuHwVersion = LAX_IPPU_REG_PTR->IPPUHWVER.R;
-	
+    
     /* Disbale all irqs of LAX (before IRQ registration) */
     LAX_VCPU_REG_PTR->IRQEN.R = 0u;
 
@@ -832,10 +833,10 @@ static
 #endif
 rsdkStatus_t LaxRegisterEvents(rsdkLaxEventType_t lastEvt)
 {
-	uint32_t i;
-	rsdkStatus_t ret = RSDK_SUCCESS;
+    uint32_t i;
+    rsdkStatus_t ret = RSDK_SUCCESS;
 
-	//register the driver events 
+    //register the driver events 
     for (i = 0; i < (uint32_t)lastEvt; i++)
     {
         if (OAL_RPCRegisterEvent(gsOalCommServ, i,&gsRsdkLaxEvents[i]) != 0)
@@ -844,7 +845,7 @@ rsdkStatus_t LaxRegisterEvents(rsdkLaxEventType_t lastEvt)
             break;
         }
     }
-	return ret;
+    return ret;
 }
 /*LaxRegisterEvents()=========================================================*/
 
@@ -860,18 +861,18 @@ static
 #endif
 rsdkStatus_t LaxDeregisterEvents(rsdkLaxEventType_t lastEvt)
 {
-	uint32_t i;
-	rsdkStatus_t ret = RSDK_SUCCESS;
+    uint32_t i;
+    rsdkStatus_t ret = RSDK_SUCCESS;
 
-	//deregister the driver events 
+    //deregister the driver events 
     for (i = 0; i < (uint32_t)lastEvt; i++)
-	{
+    {
         if (OAL_RPCDeregisterEvent(gsRsdkLaxEvents[i]) != 0)
         {
             ret = RSDK_LAX_ERR_OAL_EVENT_DEREGISTER;
         }
     }
-	return ret;
+    return ret;
 }
 /*LaxDeregisterEvents()=======================================================*/
 
@@ -897,11 +898,11 @@ rsdkStatus_t LaxOalCommInit(void)
 
 rsdkStatus_t LaxOalCommExit(void)
 {
-	rsdkStatus_t ret = RSDK_SUCCESS;
+    rsdkStatus_t ret = RSDK_SUCCESS;
 
     if(0 != OAL_RPCCleanup(gsOalCommServ))
     {
-    	ret = RSDK_LAX_ERR_OAL_COMM_EXIT;
+        ret = RSDK_LAX_ERR_OAL_COMM_EXIT;
     }
     return ret;
 }

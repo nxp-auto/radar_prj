@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2021 NXP
+# Copyright 2019-2023 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -12,7 +12,7 @@ all lib module debug release cleanall cleanalltmp module_clean module_cleantmp p
 	@if [ "$(OSENV)" = "linux" ]; then                                                              \
         if [ "$(PLATFORM)" = "S32R45" ]; then                                                       \
             echo "#### Building CTE driver $@ for linux environment ####" ;                         \
-            make -f project/linux/Makefile $@;                                                      \
+            make -f project/S32R45/Linux/Makefile $@;                                                      \
         else                                                                                        \
             echo "#### Can not make CTE driver $@ for linux environment and $(PLATFORM) ####" ;     \
         fi                                                                                          \

@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2022 NXP
+* Copyright 2019-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -25,10 +25,14 @@ extern "C" {
 /** Not API. Internal use only. */
 #define RSDK_RFE_STATUS_BASE  0x10000U
 #define RSDK_SPT_STATUS_BASE  0x11000U
+
 #define RSDK_DSP_STATUS_BASE  0x12000U
+
 #define RSDK_CSI2_STATUS_BASE 0x13000U
 #define RSDK_CTE_STATUS_BASE  0x12500U
+
 #define RSDK_LAX_STATUS_BASE  0x14000U
+
 #define RSDK_APP_STATUS_BASE  0x15000U
 
 
@@ -325,7 +329,6 @@ typedef enum
 	RSDK_TEF82XX_CAFC_NOSTOREINPROFILESELECTED,
 	RSDK_TEF82XX_CAFC_DVDT_COUNT_WRONG,
 	RSDK_TEF82XX_CAFC_KVCO_COUNT_STATUS_ERR,
-	RSDK_TEF82XX_CAFC_WRONG_OTP_SKIP_SB_ERR,
 	RSDK_TEF82XX_CAFC_WRONG_KVCO,
 	RSDK_TEF82XX_CAFC_WRONG_ACQUISITION_DURATION,
 	RSDK_TEF82XX_ADC_CALIBRATIONFAILED,					/**< ADC calibration failure */
@@ -384,6 +387,7 @@ typedef enum
 	RSDK_TEF82XX_TX_INPUTOUTOFRANGE,
 	RSDK_TEF82XX_TX_PRCADCTIMEOUT,
 	RSDK_TEF82XX_TX_SENSORFITFAIL,
+	RSDK_TEF82XX_TX_CALIB_BIAS_CURR_WRITE_FAILED,
 	RSDK_TEF82XX_TX_CAL_BUSY,
 	RSDK_TEF82XX_TX1_CAL_BUSY,
 	RSDK_TEF82XX_TX2_CAL_BUSY,
@@ -648,12 +652,15 @@ typedef enum
     RSDK_SPT_RET_ERR_IRQ_REG,       /**< SPT error: the irq handler was not registered. */
     RSDK_SPT_RET_ERR_UNMAP_SPT_MEM, /**< Driver error: Failed to unmap SPT registers' addresses. */
 
+
     RSDK_SPT_RET_ERR_WR,            /**< SPT hw error: WR or SPR access error.
                                          WR_ACCESS_ERR_REG register value is passed to the user callback (rsdkSptIsrCb_t)*/
+
     RSDK_SPT_RET_ERR_ILLOP_SCS0,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer0.
                                     SCS0_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
     RSDK_SPT_RET_ERR_ILLOP_SCS1,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer1.
                                     SCS1_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
+
     RSDK_SPT_RET_ERR_ILLOP_SCS2,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer2.
                                     SCS2_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
     RSDK_SPT_RET_ERR_ILLOP_SCS3,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer3.
@@ -661,6 +668,8 @@ typedef enum
     RSDK_SPT_RET_ERR_HW2_ACC, /**< SPT hw error: tried to execute an instruction with illegal operands or configuration, related to the 2nd instances
                                   of the SPT Accelerator modules (e.g. FFT2, MAXS2 etc). Triggers an ECS interrupt.
                                   HW2_ACC_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
+
+
     RSDK_SPT_RET_WARN_DRV_BUSY,     /**< Driver API warning: an API call is already in progress on another thread */
     RSDK_SPT_RET_ERR_API_INIT_LOCK_FAIL,    /**< Driver API error: could not init mutex for controlling multithreaded API call sequence */
     RSDK_SPT_RET_ERR_API_ENTER_LOCK_FAIL,   /**< Driver API error: could not lock mutex for controlling multithreaded API call sequence */
@@ -673,12 +682,19 @@ typedef enum
     RSDK_SPT_RET_ERR_CHECK_WATERMARK,       /**< Driver error: Failed to check if the watermark instruction is placed at the start of the kernel code. */
 	RSDK_SPT_RET_ERR_INIT_Q_FAIL,    /**< Driver error: Failed to init the queue used to handle irq data processing on separate thread. */
 	RSDK_SPT_RET_ERR_BBE32_REBOOT,   /**< Driver API error: could not reboot the BBE32 */
+
+
+
+
+
+
     RSDK_SPT_RET_ERR_INVALID_KERNEL, /**< Driver error: detected invalid SPT kernel code, which does not start with the mandatory watermarking instruction.
                                         See also #SPT_KERNEL_WATERMARK */
     RSDK_SPT_RET_ERR_HW_RST,         /**< SPT error: hardware is in unexpected RST state */
 
     RSDK_SPT_RET_ERR_OTHER = RSDK_SPT_STATUS_BASE + 0xFFFU, /**< Any other return status not covered above.
                                        No SPT error codes should be defined with a value greater than this one.*/
+
     RSDK_DSP_RET_ERR_CMD_INVALID = RSDK_DSP_STATUS_BASE, /**< DSP Command Error: Command ID not supported. */
 	RSDK_DSP_RET_ERR_CRC_INVALID,						 /**< DSP Command CRC Error: Recomputed CRC does not match with the received CRC */
 	RSDK_DSP_RET_ERR_CMD_NO_DATA,						  /**< DSP Command Error: New command interrupt received, but no data available in the queue. */
@@ -701,6 +717,8 @@ typedef enum
 	RSDK_DSP_RET_ERR_RC_JOBS_NOT_UPDATED, /**< DSP dispatcher was not able update the periodic radar cycle jobs, as requested by the host CPU */
 	RSDK_DSP_RET_ERR_UNKNOWN = RSDK_DSP_STATUS_BASE +  + 0xFFFU,  /**< Unexpected error in DSP Dispatcher. Reason unknown.
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 No DSP error codes should be defined with a value greater than this one.*/
+
+
 
 	RSDK_LAX_ERR_INVALID_PARAM = RSDK_LAX_STATUS_BASE, /**< LAX Driver Error: Parameter value or combination not supported. */
 	RSDK_LAX_ERR_NOT_INIT,  /**< LAX Driver Error:  Module not initialized.  */
@@ -760,6 +778,7 @@ typedef enum
 	RSDK_LAX_ERR_BOOT_MSG_MISSMATCH,        /**< Boot failure due to boot complete message mismatch */
 	RSDK_LAX_ERR_BOOT_TIMEOUT,              /**< Boot failure due to timeout waiting for HANDSHAKE Ack msg */
 	RSDK_LAX_ERR_BOOT_HANDSHAKE_FAIL,       /**< Boot failure due to HANDSHAKE Ack returned error */
+
     /*-------------------------------------------------------------------------*/
     /*Application level errors*/
     RSDK_HEAP_MEM_ALLOC_ERROR = RSDK_APP_STATUS_BASE, /**< Not enough space in heap buffer to allocate desired size*/

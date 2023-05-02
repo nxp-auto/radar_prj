@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -13,7 +13,7 @@
 #include "rsdk_S32R45.h"
 #include "rsdk_cte_driver_module.h"
 #include "rsdk_cte_interrupt.h"
-#include "cte_low_level_operations.h"
+#include "CDD_Cte.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,7 @@ irqreturn_t RsdkCteIrqHandlerLinux(int32_t iIrq, void *pParams)
 {
     (void)iIrq;
     (void)pParams;
-    CteIrqHandler();
+    Cte_IrqHandler();
     return IRQ_HANDLED;
 }
 

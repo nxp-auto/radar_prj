@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2021 NXP
+* Copyright 2019-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -74,8 +74,10 @@ typedef enum {
 typedef enum {
     RSDK_CTE_CSI2_UNIT_0 = 0u,      /**< MIPI-CSI2 unit 0                                   */
     RSDK_CTE_CSI2_UNIT_1,           /**< MIPI-CSI2 unit 1                                   */
+
     RSDK_CTE_CSI2_UNIT_2,           /**< MIPI-CSI2 unit 2,                                  */
     RSDK_CTE_CSI2_UNIT_3,           /**< MIPI-CSI2 unit 3                                   */
+
     RSDK_CTE_CSI2_UNIT_MAX,         /**< MIPI-CSI2 unit limit (not used)                    */
 } rsdkCteCsi2Unit_t;
 
@@ -280,7 +282,11 @@ typedef struct {
                                                     length means the table is not well defined and an error will be 
                                                     returned.                                               */
     uint32_t                tableTimeExecLimit; /**< The limited time for table processing, in ns. 0 means no 
-                                                    table end on time limit.                                */
+                                                    table end on time limit.
+                                                    \if (S32R41_DOCS) If the input CTE clock is 80MHz and
+                                                    at computation time the table length will be 1,
+                                                    to avoid the hardware issues, the table length will be set to 2.
+                                                    \endif                                                  */
     rsdkCteTimingEvent_t    *pEvents;           /**< Pointer to the events list, which must have the tableLength 
                                                     corrected defined events, or an error will be reported. 
                                                     A NULL value for pEventActions before the tableLength limit 
@@ -330,7 +336,7 @@ typedef struct {
     rsdkCteIrqDefinition_t      cteIrqEvents;   /**< The requested combination of interrupt sequence to be used     */
     rsdkCteIsrCb_t              pCteCallback;   /**< The application callback to be used for the requested events   */
 #ifndef linux
-    rsdkCoreId_t                irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
+    int8_t                      irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
     uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
 #endif
 } rsdkCteInitParams_t;

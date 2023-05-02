@@ -20,3 +20,9 @@ ifeq ($(OS), sa)
 		arch_oal_cache.c                    \
 
 endif
+
+ifeq ($(OS), zephyr)
+	SRCS += arch_oal_cache.c                    \
+
+endif
+

@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2020 NXP
+* Copyright 2019-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -58,7 +58,16 @@ static uint32_t SptOalCommCh0Dispatcher(oal_dispatcher_t *d, uint32_t func, uint
              */
             oalStatus = OAL_WaitEventInterruptible(sptDevice.irqWaitQ, atomic_dec_if_positive(&(sptDevice.irqsNotServed)) >= 0);
 
-            if (oalStatus != 0)
+            if (oalStatus == (-ERESTARTSYS))
+            {
+                /*
+                * Remap to EINTR which can be read in user-space from errno.h This code indicates that the system call has been
+                * interrupted by a POSIX signal and can be restarted. No error actually occurred.
+                */
+                ret = EINTR;
+                break;
+            }
+            else if (oalStatus != 0)
             {
                 PR_ERR("spt_driver module: SptOalCommCh0Dispatcher error: OAL_WaitEventInterruptible() failed!\n");
                 ret = SIGNED_ERROR_CONVERT(oalStatus);

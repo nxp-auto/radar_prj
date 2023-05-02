@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, 2021 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -348,18 +348,14 @@ static inline int32_t OAL_TimeDiffMs(const OAL_Timespec_t *acpStart,
 static inline int32_t OAL_GetElapsedNs(const OAL_Timespec_t *acpStart,
                                        int64_t *apNs)
 {
-	int32_t lRet = 0;
 	OAL_Timespec_t lNow;
-	lNow.mSec  = 0;
-	lNow.mNsec = 0;
+	int32_t lRet = 0;
 
 	if ((acpStart == NULL) || (apNs == NULL)) {
 		lRet = -EINVAL;
 	} else {
-		lRet = OAL_GetTime(&lNow);
-		if (lRet == 0) {
-			lRet = OAL_TimeDiffNs(acpStart, &lNow, apNs);
-		}
+		(void)OAL_GetTime(&lNow);
+		lRet = OAL_TimeDiffNs(acpStart, &lNow, apNs);
 	}
 
 	return lRet;

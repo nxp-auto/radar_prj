@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 NXP
+ * Copyright 2017-2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -117,7 +117,8 @@ extern "C"{
 * @brief        The maximum number of LAX graphs (at LAX sub-system level).
 * @details      This is the maximum number of LAX graphs that can be registered on all LAX cores.
 */
-#define RSDK_LAX_MAX_GRAPHS   (RSDK_LAX_CORES_NUM * (RSDK_LAX_CORE_MAX_NUM_HOST_FUNC_GRAPHS + RSDK_LAX_CTE_CMD_MAX_NUM + RSDK_LAX_SPT_CMD_MAX_NUM + RSDK_LAX_LAX_CMD_MAX_NUM))
+#define RSDK_LAX_MAX_GRAPHS   (RSDK_LAX_CORES_NUM * (RSDK_LAX_CORE_MAX_NUM_HOST_FUNC_GRAPHS + \
+                               RSDK_LAX_CTE_CMD_MAX_NUM + RSDK_LAX_SPT_CMD_MAX_NUM + RSDK_LAX_LAX_CMD_MAX_NUM))
 
 /**
 * @brief          CTE interrupt flag offset for command completion
@@ -471,7 +472,8 @@ typedef enum
     RSDK_LAX_EVENT_PARITY_ERR,              /**< @brief the LAX dispatcher identified parity error */
     RSDK_LAX_EVENT_UNEXPECTED_INT,          /**< @brief unexpected interrupt received by LAX driver */
     RSDK_LAX_EVENT_UNEXP_DMA_COMP,          /**< @brief unexpected DMA transfer complete received by LAX driver */
-    RSDK_LAX_EVENT_REGIF_ERR ,              /**< @brief potential HW fault in LAX-Host communication registers detected by LAX driver */
+    RSDK_LAX_EVENT_REGIF_ERR ,              /**< @brief potential HW fault in LAX-Host communication registers 
+                                                        detected by LAX driver */
 
     RSDK_LAX_EVENT_CLOSE,                /**< @brief LAX driver close event */
     RSDK_LAX_MAX_EVENTS

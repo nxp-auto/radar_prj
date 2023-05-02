@@ -1,5 +1,5 @@
 ##
-# Copyright 2017-2021 NXP
+# Copyright 2017-2022 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -28,7 +28,7 @@ SRCS += oal_static_pool.c                                  \
 ifeq ($(OAL_DONT_USE_FDT),)
     # Exclude FDT utilities for Integrity because
     # it has its own interface
-    ifneq (,$(filter sa qnx linux, $(OS)))
+    ifneq (,$(filter sa qnx linux zephyr, $(OS)))
         SRCS += oal_fdt_utils.c
     endif
 endif
@@ -132,6 +132,7 @@ ifeq ($(OS), zephyr)
             posix_oal_waitqueue.c                           \
             os_oal_bottomhalf.c                             \
             os_oal_irq_utils.c                              \
+            posix_kern_oal_shared_memory.c                  \
 
     ifeq ($(OAL_DONT_USE_FDT),)
         SRCS += oal_devtree_utils.c

@@ -1,5 +1,5 @@
 ############################
-# Copyright 2020 NXP
+# Copyright 2020-2023 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -17,22 +17,23 @@ ARCH     := arm64
 
 
 MODULE_NAME := rsdk_cte_driver
-EXTRA_SRCDIR = ../../src/low_level
-SRCS_DIR = ../../src/linux/kernel_space
+EXTRA_SRCDIR = ../../../src/low_level
+SRCS_DIR = ../../../src/linux/kernel_space
 ifeq ($(origin CAPATH), undefined)
-CAPATH:=$(CURDIR)/project/linux
+CAPATH:=$(CURDIR)/project/S32R45/Linux
 endif
 EXTRA_CFLAGS = -Wall -g 
-EXTRA_CFLAGS += -I$(CAPATH)/../../api
-EXTRA_CFLAGS += -I$(CAPATH)/../../include
-EXTRA_CFLAGS += -I$(CAPATH)/../../include/low_level
-EXTRA_CFLAGS += -I$(CAPATH)/../../include/linux 
-EXTRA_CFLAGS += -I$(CAPATH)/../../../../api 
-EXTRA_CFLAGS += -I$(CAPATH)/../../../../oal/include 
-EXTRA_CFLAGS += -I$(CAPATH)/../../../../oal/include/linux
+EXTRA_CFLAGS += -I$(CAPATH)/../../../api
+EXTRA_CFLAGS += -I$(CAPATH)/../../../include
+EXTRA_CFLAGS += -I$(CAPATH)/../../../include/low_level
+EXTRA_CFLAGS += -I$(CAPATH)/../../../include/linux 
+EXTRA_CFLAGS += -I$(CAPATH)/../../../../../api 
+EXTRA_CFLAGS += -I$(CAPATH)/../../../../../platform_setup/include/ARM/S32R45
+EXTRA_CFLAGS += -I$(CAPATH)/../../../../../oal/include 
+EXTRA_CFLAGS += -I$(CAPATH)/../../../../../oal/include/linux
 BINDIR := bin
 
-COMPILE_MODULES := cte_low_level_operations.o rsdk_cte_interrupt.o rsdk_cte_rpc_server.o rsdk_cte_driver_module.o 
+COMPILE_MODULES := CDD_Cte.o Cte_Irq.o rsdk_cte_interrupt.o rsdk_cte_rpc_server.o rsdk_cte_driver_module.o 
 
 # module flags
 
@@ -43,12 +44,13 @@ obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-objs := rsdk_cte_driver_module.o \
   rsdk_cte_interrupt.o \
   rsdk_cte_rpc_server.o \
-  cte_low_level_operations.o \
-  ../../../../oal/libs/kernel/linux-write/build-linux-kernel/liboal_kernel.o
+  CDD_Cte.o \
+  Cte_Irq.o \
+  ../../../../../oal/libs/kernel/linux-write/build-linux-kernel/liboal_kernel.o
 
 #specific library definitions
 CFLAGS_LIB = $(CFLAGS)
-CFLAGS_LIB += -Iapi -Iinclude -I../../api -Iinclude/linux -Iinclude/low_level -I../../oal/include -I../../oal/include/linux -Isrc/linux/user_space -I$(KERNEL_DIR)/../recipe-sysroot/usr/include
+CFLAGS_LIB += -Iapi -Iinclude -I../../api -Iinclude/linux -Iinclude/low_level -I../../oal/include -I../../oal/include/linux -Isrc/linux/user_space -I$(KERNEL_DIR)/../recipe-sysroot/usr/include -I../../platform_setup/include/ARM/S32R45
 DEFINED_SYMBOLS = -std=gnu99 -Ulinux -Dlinux -DS32R45 -Wall -pthread
 LIB_PREFIX ?= librsdk_CTE_driver
 LIBNAME := $(BINDIR)/$(LIB_PREFIX)_$(ARTIFACT_SUFFIX).a
@@ -67,7 +69,7 @@ lib: lib_debug lib_release
 debug: lib_debug 
 release: lib_release 
 
-cleanall: cleantmp_lib clean_lib
+cleanall: cleantmp_lib clean_lib module_clean
 cleanalltmp: cleantmp_lib
 
 module:
@@ -83,17 +85,15 @@ preproc lib_debug:
 	if [ ! -d "$(BINDIR)" ];then     \
 		mkdir $(BINDIR);           \
 	fi
-	$(CC) -c src/rsdk_cte_driver_api.c -O0 -g3 $(CFLAGS_LIB) $(DEFINED_SYMBOLS) -o project/linux/rsdk_cte_driver_api.o
-	$(CC) -c src/linux/user_space/rsdk_cte_linux_lib.c -O0 -g3 $(CFLAGS_LIB) $(DEFINED_SYMBOLS) -o project/linux/rsdk_cte_linux_lib.o
-	$(AR) rcs $(LIBNAMEDBG) project/linux/rsdk_cte_driver_api.o project/linux/rsdk_cte_linux_lib.o
+	$(CC) -c src/linux/user_space/rsdk_cte_linux_lib.c -O0 -g3 $(CFLAGS_LIB) $(DEFINED_SYMBOLS) -o project/S32R45/Linux/rsdk_cte_linux_lib.o
+	$(AR) rcs $(LIBNAMEDBG) project/S32R45/Linux/rsdk_cte_linux_lib.o
 
 lib_release:
 	if [ ! -d "$(BINDIR)" ];then     \
 		mkdir $(BINDIR);           \
 	fi
-	$(CC) -c src/rsdk_cte_driver_api.c -O3 -g0 $(CFLAGS_LIB) $(DEFINED_SYMBOLS) -o project/linux/rsdk_cte_driver_api.o
-	$(CC) -c src/linux/user_space/rsdk_cte_linux_lib.c -O3 -g0 $(CFLAGS_LIB) $(DEFINED_SYMBOLS) -o project/linux/rsdk_cte_linux_lib.o
-	$(AR) rcs $(LIBNAME) project/linux/rsdk_cte_driver_api.o project/linux/rsdk_cte_linux_lib.o
+	$(CC) -c src/linux/user_space/rsdk_cte_linux_lib.c -O3 -g0 $(CFLAGS_LIB) $(DEFINED_SYMBOLS) -o project/S32R45/Linux/rsdk_cte_linux_lib.o
+	$(AR) rcs $(LIBNAME) project/S32R45/Linux/rsdk_cte_linux_lib.o
 
 module_cleantmp:
 	make -C $(KERNEL_DIR) M=$(CAPATH)/ clean
@@ -101,9 +101,9 @@ module_clean clean: module_cleantmp
 	rm -f $(BINDIR)/$(MODULE_NAME).ko
 
 cleantmp_lib: 
-	rm -f project/linux/*.o
-	rm -f project/linux/*.su
-	rm -f project/linux/*.dfinish
+	rm -f project/S32R45/Linux/*.o
+	rm -f project/S32R45/Linux/*.su
+	rm -f project/S32R45/Linux/*.dfinish
 
 clean_lib:
 	rm -f $(LIBNAME)

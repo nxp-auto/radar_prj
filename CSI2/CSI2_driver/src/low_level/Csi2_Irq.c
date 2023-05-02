@@ -1,5 +1,5 @@
 /*
-* Copyright 2022 NXP
+* Copyright 2022-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -108,6 +108,7 @@ extern "C"{
             void
     #endif
     );
+
         static void Csi2_IrqHandlerRxErr1(
         #if defined(__ZEPHYR__)
                 const void * pParams
@@ -116,6 +117,7 @@ extern "C"{
         #endif
 
         );
+
             static void Csi2_IrqHandlerRxErr2(
             #if defined(__ZEPHYR__)
                     const void * pParams
@@ -133,6 +135,8 @@ extern "C"{
 
             );
 
+
+
     // Individual irq unit handlers for Path errors
     static void Csi2_IrqHandlerPathErr0(
     #if defined(__ZEPHYR__)
@@ -141,6 +145,7 @@ extern "C"{
             void
     #endif
     );
+
         static void Csi2_IrqHandlerPathErr1(
         #if defined(__ZEPHYR__)
                 const void * pParams
@@ -148,6 +153,7 @@ extern "C"{
                 void
         #endif
         );
+
             static void Csi2_IrqHandlerPathErr2(
             #if defined(__ZEPHYR__)
                     const void * pParams
@@ -163,6 +169,8 @@ extern "C"{
             #endif
             );
 
+
+
     // Individual irq unit handlers for Events (Rx)
     static void Csi2_IrqHandlerEvents0(
     #if defined(__ZEPHYR__)
@@ -171,6 +179,7 @@ extern "C"{
             void
     #endif
     );
+
         static void Csi2_IrqHandlerEvents1(
         #if defined(__ZEPHYR__)
                 const void * pParams
@@ -178,6 +187,7 @@ extern "C"{
                 void
         #endif
         );
+
             static void Csi2_IrqHandlerEvents2(
             #if defined(__ZEPHYR__)
                     const void * pParams
@@ -192,6 +202,8 @@ extern "C"{
                     void
             #endif
             );
+
+
 #endif  /* #if !defined(linux)        */
 
 /*==================================================================================================
@@ -204,18 +216,28 @@ extern "C"{
             = {
             {// unit 1 handlers
              Csi2_IrqHandlerRxErr0, Csi2_IrqHandlerPathErr0, Csi2_IrqHandlerEvents0},
+
             {// unit 2 handlers
              Csi2_IrqHandlerRxErr1, Csi2_IrqHandlerPathErr1, Csi2_IrqHandlerEvents1},
+
             {// unit 3 handlers
              Csi2_IrqHandlerRxErr2, Csi2_IrqHandlerPathErr2, Csi2_IrqHandlerEvents2},
             {// unit 4 handlers
              Csi2_IrqHandlerRxErr3, Csi2_IrqHandlerPathErr3, Csi2_IrqHandlerEvents3}
+
+
     };
 
     static uint32_t gsCsi2IrqUnitRemap[RSDK_CSI2_MAX_UNITS] = {
+
+
+
+
+
         (uint32_t)RSDK_CSI2_UNIT_1, (uint32_t)RSDK_CSI2_UNIT_0, (uint32_t)RSDK_CSI2_UNIT_3, (uint32_t)RSDK_CSI2_UNIT_2
+
     };
-    #endif  // #if !defined(linux)
+    #endif  /* #if !defined(linux) */
 
 
 /*==================================================================================================
@@ -259,7 +281,9 @@ static void Csi2_InitRxIrq(volatile GENERIC_CSI2_Type *pRegs, const Csi2_SetupPa
     uint32                  vcId;                       /* VC ID, from CSI2_VC_0 to MAX                         */
 
     /* real irq enablement                                                                                      */
+
     pRegs->RX_PHYERRIE = 0xffffffffu;                   /* enable all error flags                               */
+
     for (vcId = (uint32)CSI2_VC_0; vcId < (uint32)CSI2_MAX_VC; vcId++)  /* check all VC                         */
     {
         if (pParams->vcConfigPtr[vcId] != NULL)         /* only for active VC                                   */
@@ -297,8 +321,12 @@ static void Csi2_InitPathIrq(volatile GENERIC_CSI2_Type *pRegs)
     * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
     * which use only UPPERCASE
     */
+
+
+
     CSI2_SET_REGISTRY32(&pRegs->RX_CHNL_INTRE, MIPICSI2_RX_CHNL_INTRE_BUFFOVFIE_MASK, 
                                                                             MIPICSI2_RX_CHNL_INTRE_BUFFOVFIE(1u));
+
     pRegs->CBUF_INTRE = 0xffffffu;                                      /* enable all interrupts for line len & cnt */
 }
 /* Csi2_InitPathIrq *************************/
@@ -333,11 +361,19 @@ static void Csi2_SetVCEventIrq(const uint32 vcId, volatile GENERIC_CSI2_Type *pR
             * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
             * which use only UPPERCASE
             */
+
+
+
+
+
+
+
             CSI2_SET_REGISTRY32(
                 &pRegs->RX_VCINTRE,
                 MIPICSI2_RX_VCINTRE_GNSPIE0_MASK | MIPICSI2_RX_VCINTRE_FSIE0_MASK | MIPICSI2_RX_VCINTRE_FEIE0_MASK,
                 MIPICSI2_RX_VCINTRE_GNSPIE0(valFE) | MIPICSI2_RX_VCINTRE_FSIE0(valFS) | MIPICSI2_RX_VCINTRE_FEIE0(valFE)
                 );
+
             pRegs->RX[0].CBUF_LPDI = (uint8)numeLinesTrigger;   /* trigger after each chirp (for stat. process)     */
             break;
         case (uint32)CSI2_VC_1:
@@ -348,11 +384,19 @@ static void Csi2_SetVCEventIrq(const uint32 vcId, volatile GENERIC_CSI2_Type *pR
             * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
             * which use only UPPERCASE
             */
+
+
+
+
+
+
+
             CSI2_SET_REGISTRY32(
                 &pRegs->RX_VCINTRE,
                 MIPICSI2_RX_VCINTRE_GNSPIE1_MASK | MIPICSI2_RX_VCINTRE_FSIE1_MASK | MIPICSI2_RX_VCINTRE_FEIE1_MASK,
                 MIPICSI2_RX_VCINTRE_GNSPIE1(valFE) | MIPICSI2_RX_VCINTRE_FSIE1(valFS) | MIPICSI2_RX_VCINTRE_FEIE1(valFE)
                 );
+
             pRegs->RX[1u].CBUF_LPDI = (uint8)numeLinesTrigger;
             break;
         case (uint32)CSI2_VC_2:
@@ -363,11 +407,19 @@ static void Csi2_SetVCEventIrq(const uint32 vcId, volatile GENERIC_CSI2_Type *pR
             * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
             * which use only UPPERCASE
             */
+
+
+
+
+
+
+
             CSI2_SET_REGISTRY32(
                 &pRegs->RX_VCINTRE,
                 MIPICSI2_RX_VCINTRE_GNSPIE2_MASK | MIPICSI2_RX_VCINTRE_FSIE2_MASK | MIPICSI2_RX_VCINTRE_FEIE2_MASK,
                 MIPICSI2_RX_VCINTRE_GNSPIE2(valFE) | MIPICSI2_RX_VCINTRE_FSIE2(valFS) | MIPICSI2_RX_VCINTRE_FEIE2(valFE)
                 );
+
             pRegs->RX[2].CBUF_LPDI = (uint8)numeLinesTrigger;
             break;
         case (uint32)CSI2_VC_3:
@@ -378,11 +430,19 @@ static void Csi2_SetVCEventIrq(const uint32 vcId, volatile GENERIC_CSI2_Type *pR
             * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
             * which use only UPPERCASE
             */
+
+
+
+
+
+
+
             CSI2_SET_REGISTRY32(
                 &pRegs->RX_VCINTRE,
                 MIPICSI2_RX_VCINTRE_GNSPIE3_MASK | MIPICSI2_RX_VCINTRE_FSIE3_MASK | MIPICSI2_RX_VCINTRE_FEIE3_MASK,
                 MIPICSI2_RX_VCINTRE_GNSPIE3(valFE) | MIPICSI2_RX_VCINTRE_FSIE3(valFS) | MIPICSI2_RX_VCINTRE_FEIE3(valFE)
                 );
+
             pRegs->RX[3].CBUF_LPDI = (uint8)numeLinesTrigger;
             break;
     }  /* switch    */
@@ -406,7 +466,12 @@ static void Csi2_InitEventIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2
     uint8                   setLDevt;                   /* set LINEDONE event                                       */
     const Csi2_DriverParamsType   *pDriverState;              /* pointer to unit driver state                       */
 
+
+
+
+
         pDriverState = &gCsi2Settings[(uint8)iUnit];
+
 
         /* irq enablement for skew calibration                                                                       */
         pRegs->RX_VCINTRE = 0u;                         /* first disable the interrupts                              */
@@ -440,8 +505,13 @@ static void Csi2_InitEventIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2
             * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
             * which use only UPPERCASE
             */
+
+
+
+
             CSI2_SET_REGISTRY32(&pRegs->RX_CHNL_INTRE, MIPICSI2_RX_CHNL_INTRE_LINEDONEIE_MASK,
                                                         MIPICSI2_RX_CHNL_INTRE_LINEDONEIE(1u));
+
         }
         else
         {       /* do not process statistics at LINEDONE    */
@@ -452,7 +522,11 @@ static void Csi2_InitEventIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2
             * Using a macro produce a smaller code; there is a clear distinction between functions and macros,
             * which use only UPPERCASE
             */
+
+
+
             CSI2_SET_REGISTRY32(&pRegs->RX_CHNL_INTRE, MIPICSI2_RX_CHNL_INTRE_LINEDONEIE_MASK, 0u);
+
         }
 }
 /* Csi2_InitEventIrq *************************/
@@ -480,23 +554,27 @@ void Csi2_IrqHandlerRxErr0(
 }
 /* Csi2_IrqHandlerRxErr0 *************************/
 
+
 /*================================================================================================*/
 /*
  * @brief       Interrupt handler for unit 1/ PHY error irq.
  *
  */
-static
-void Csi2_IrqHandlerRxErr1(
-#if defined(__ZEPHYR__)
-        const void * pParams
-#else
-        void
-#endif
-        )
-{
-    Csi2_IrqHandlerRxErr(CSI2_UNIT_1);
-}
+
+        static
+        void Csi2_IrqHandlerRxErr1(
+    #if defined(__ZEPHYR__)
+            const void * pParams
+    #else
+            void
+    #endif
+            )
+        {
+            Csi2_IrqHandlerRxErr(CSI2_UNIT_1);
+        }
+
 /* Csi2_IrqHandlerRxErr1 *************************/
+
 
 /*================================================================================================*/
 /*
@@ -532,6 +610,8 @@ static void Csi2_IrqHandlerRxErr3(
 }
 /* Csi2_IrqHandlerRxErr3 *************************/
 
+
+
 /*================================================================================================*/
 /*
  * @brief       Irq handler for unit 0/ errors in protocol & packet level irq.
@@ -550,23 +630,27 @@ void Csi2_IrqHandlerPathErr0(
 }
 /* Csi2_IrqHandlerPathErr0 *************************/
 
+
 /*================================================================================================*/
 /*
  * @brief       Irq handler for unit 1/ errors in protocol & packet level irq.
  *
  */
-static
-void Csi2_IrqHandlerPathErr1(
-#if defined(__ZEPHYR__)
-        const void * pParams
-#else
-        void
-#endif
-        )
-{
-    Csi2_IrqHandlerPathErr(CSI2_UNIT_1);
-}
+
+        static
+        void Csi2_IrqHandlerPathErr1(
+    #if defined(__ZEPHYR__)
+            const void * pParams
+    #else
+            void
+    #endif
+            )
+        {
+            Csi2_IrqHandlerPathErr(CSI2_UNIT_1);
+        }
+
 /* Csi2_IrqHandlerPathErr1 *************************/
+
 
 /*================================================================================================*/
 /*
@@ -602,6 +686,8 @@ static void Csi2_IrqHandlerPathErr3(
 }
 /* Csi2_IrqHandlerPathErr3 *************************/
 
+
+
 /*================================================================================================*/
 /*
  * @brief       Irq handler for unit 0/ events irq.
@@ -620,23 +706,27 @@ void Csi2_IrqHandlerEvents0(
 }
 /* Csi2_IrqHandlerEvents0 *************************/
 
+
 /*================================================================================================*/
 /*
  * @brief       Irq handler for unit 1/ events irq.
  *
  */
-static
-void Csi2_IrqHandlerEvents1(
-#if defined(__ZEPHYR__)
-        const void * pParams
-#else
-        void
-#endif
-        )
-{
-    Csi2_IrqHandlerEvents(CSI2_UNIT_1);
-}
+
+        static
+        void Csi2_IrqHandlerEvents1(
+    #if defined(__ZEPHYR__)
+            const void * pParams
+    #else
+            void
+    #endif
+            )
+        {
+            Csi2_IrqHandlerEvents(CSI2_UNIT_1);
+        }
+
 /* Csi2_IrqHandlerEvents1 *************************/
+
 
 /*================================================================================================*/
 /*
@@ -671,6 +761,8 @@ static void Csi2_IrqHandlerEvents3(
     Csi2_IrqHandlerEvents(CSI2_UNIT_3);
 }
 /* Csi2_IrqHandlerEvents3 *************************/
+
+
 #endif /* !defined(linux)    */
 
 /*================================================================================================*/
@@ -689,7 +781,11 @@ Csi2_SetupUIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2_Type *pRegs,
     Csi2_IsrCbType              *pDriverStateCallbacks;          /* pointer to callbacks                        */
     rsdkStatus_t                rez = RSDK_SUCCESS;
 
+
+
+
     pDriverStateCallbacks = (Csi2_IsrCbType*)gCsi2Settings[(uint8)iUnit].pCallback;
+
 #if !defined(linux)
     if (RsdkGlueIrqHandlerRegister(sgIrqHandlers[iUnit][RSDK_CSI2_EVENTS_IRQ_ID],
                                    (uint32_t)CSI2_IRQ_EVENT_BASE_ID_GIC +
