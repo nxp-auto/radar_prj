@@ -43,7 +43,6 @@ extern "C" {
 
 #define E_OK        RSDK_SUCCESS
 #define E_NOT_OK    RSDK_ERROR
-#define NULL_PTR    0U
 
 // interrupt definitions
 #define CSI2_IRQ_RX_BASE_ID_GIC         204         // irq number for CSI2 Rx error interrupt, unit 0

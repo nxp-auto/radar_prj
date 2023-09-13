@@ -22,10 +22,11 @@ extern "C" {
 #include "Spt_Irq_Config.h"
 #include "Spt_Hw_Check.h"
 #include "Spt_Hw_Ctrl.h"
+#include "rsdk_version.h"
 
-
+#if defined(RSDK_AUTOSAR) || (!RSDK_OSENV_SA)
 #include "Spt_Seq_Ctrl.h"
-
+#endif
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -76,27 +77,21 @@ Std_ReturnType Spt_Run(Spt_DriverContextType const *const sptContext)
     Std_ReturnType                  retStatus = (Std_ReturnType)E_OK;
     volatile SPT_Type *const        pSptRegs = Spt_GetMemMap();
 
-
-
-
+#if (!RSDK_OSENV_SA)
     Std_ReturnType seqStatus;
-
+#endif
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_START, (uint16)RSDK_TRACE_JOB_SPT_DRV_RUN, (uint32)gSptMemPer.state);
 
-
+#if (!RSDK_OSENV_SA)
     retStatus = Spt_ApiSequenceTryEnter(&gSptMemPer.apiSeqCtrl);
 
-
-
-
-
-
-
-
+#endif
 
 #if (SPT_DEV_ERROR_DETECT == STD_ON)
+#if ((!RSDK_OSENV_SA) || (defined(RSDK_AUTOSAR) && (SPT_SINGLE_THREAD == STD_OFF)))
     if (retStatus == (Std_ReturnType)E_OK)
+#endif
     {
         retStatus = Spt_ParamCheckRun(sptContext, gSptMemPer.state);
     }
@@ -111,14 +106,8 @@ Std_ReturnType Spt_Run(Spt_DriverContextType const *const sptContext)
     {
         /* Copy information to persistent memory to make it visible from the ISR: */
         gSptMemPer.ecsIsrCb = sptContext->ecsIsrCb;
-        gSptMemPer.kernelRetPar = sptContext->kernelRetPar;
         gSptMemPer.evtIsrCb = sptContext->evtIsrCb;
-
-        /* Clear all core event flags: */
-
-
-
-
+        gSptMemPer.kernelRetPar = sptContext->kernelRetPar;
 
         /* Prevent erroneous flags that could remain from a previous error */
         Spt_ClearEcsInterruptFlags(pSptRegs);
@@ -130,7 +119,8 @@ Std_ReturnType Spt_Run(Spt_DriverContextType const *const sptContext)
         }
 
         /* Initialize program start address register */
-        SPT_HW_WRITE_BITS(pSptRegs->CS_PG_ST_ADDR, SPT_CS_PG_ST_ADDR_PG_ST_ADDR_MASK, SPT_CS_PG_ST_ADDR_PG_ST_ADDR(sptContext->kernelCodeAddr));
+        SPT_HW_WRITE_BITS(pSptRegs->CS_PG_ST_ADDR, SPT_CS_PG_ST_ADDR_PG_ST_ADDR_MASK,
+                            SPT_CS_PG_ST_ADDR_PG_ST_ADDR(sptContext->kernelCodeAddr));
 
         /* Parse parameter list and pass them to SPT according to the calling convention: */
         retStatus = Spt_SetInputParams(sptContext->kernelParList);
@@ -157,34 +147,18 @@ Std_ReturnType Spt_Run(Spt_DriverContextType const *const sptContext)
         else  /* Assume OP_MODE_BLOCK */
         {
             retStatus = Spt_WaitForSptDone(pSptRegs, sptContext->kernelRetPar);
-
-
-
-
-
-
-
-
-
-
         }
 #endif
     }
 
-
-    seqStatus = Spt_ApiSequenceExit(&gSptMemPer.apiSeqCtrl);  /* Must be called unconditionally, otherwise any subsequent API
-                                                                 call will fail with RSDK_SPT_RET_WARN_DRV_BUSY. */
+#if (!RSDK_OSENV_SA)
+    seqStatus = Spt_ApiSequenceExit(&gSptMemPer.apiSeqCtrl);  /* Must be called unconditionally, otherwise subsequent
+                                                                 API calls will fail with RSDK_SPT_RET_WARN_DRV_BUSY */
     if (retStatus == (Std_ReturnType)E_OK)
     {
         retStatus = seqStatus;  /* Report ApiSequenceExit failure only if it does not overwrite other error flags. */
     }
-
-
-
-
-
-
-
+#endif /* RSDK_OSENV_SA */
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_END, (uint16)RSDK_TRACE_JOB_SPT_DRV_RUN, (uint32)gSptMemPer.state);
 
@@ -194,34 +168,30 @@ Std_ReturnType Spt_Run(Spt_DriverContextType const *const sptContext)
 /*================================================================================================*/
 Std_ReturnType Spt_Setup(Spt_DriverInitType const *const pSptInitInfo)
 {
-    volatile SPT_Type *         pSptRegs = NULL;
+    volatile SPT_Type *         pSptRegs = NULL_PTR;
     Std_ReturnType              retStatus = (Std_ReturnType)E_OK;
     Spt_DrvStateType            drvState = gSptMemPer.state;
-
+#if (!RSDK_OSENV_SA)
     Std_ReturnType seqStatus;
-
+#endif
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_START, (uint16)RSDK_TRACE_JOB_SPT_DRV_INIT, (uint32)gSptMemPer.state);
 
-
+#if (!RSDK_OSENV_SA)
     if (OAL_ExecuteOnce(&gSptMemPer.apiSeqCtrl.mutexOnceInitCtrl, Spt_ApiSequenceMutexInit) != 0)
     {
-        retStatus = SPT_REPORT_ERROR(RSDK_SPT_RET_ERR_API_INIT_LOCK_FAIL, SPT_API_CALL, SPT_E_OTHER);
+        retStatus = SPT_REPORT_ERROR(RSDK_SPT_RET_ERR_API_INIT_LOCK_FAIL, SPT_API_CALL, SPT_E_API_INIT_LOCK_FAIL);
     }
     else
     {
         retStatus = Spt_ApiSequenceTryEnter(&gSptMemPer.apiSeqCtrl);
     }
-
-
-
-
-
-
-
+#endif
 
 #if (SPT_DEV_ERROR_DETECT == STD_ON)
+#if ((!RSDK_OSENV_SA) || (defined(RSDK_AUTOSAR) && (SPT_SINGLE_THREAD == STD_OFF)))
     if (retStatus == (Std_ReturnType)E_OK)
+#endif
     {
         retStatus = Spt_ParamCheckInit(pSptInitInfo);
     }
@@ -234,31 +204,32 @@ Std_ReturnType Spt_Setup(Spt_DriverInitType const *const pSptInitInfo)
         if ((drvState == SPT_STATE_INITIALIZED) || (drvState == SPT_STATE_HW_BUSY) || (drvState == SPT_STATE_FAULT))
         {
             retStatus = Spt_UnmapMem();
-
+#if (!RSDK_OSENV_SA)
             if (retStatus == (Std_ReturnType)E_OK)
             {
                 retStatus = SptIrqCaptureThreadStop(&(gSptMemPer.irqCapThreadData));
             }
-
+#endif
         }
     }
 
     if (retStatus == (Std_ReturnType)E_OK)
     {
-        /* Initialize driver's persistent memory. This must be done after the 'cleanup' section above, but before calling Spt_GetMemMap() */
+        /* Initialize driver's persistent memory.
+         * This must be done after the 'cleanup' section above, but before calling Spt_GetMemMap() */
         Spt_InitPersistentMem(&gSptMemPer, pSptInitInfo);
 
         /* Map SPT peripheral memory to the driver: */
         pSptRegs = Spt_GetMemMap();
 
-
+#if (!RSDK_OSENV_SA)
         /* Start a separate thread to intercept SPT interrupts which are treated in the OS kernel */
         retStatus = SptIrqCaptureThreadStart(&(gSptMemPer.irqCapThreadData));
     }
 
     if (retStatus == (Std_ReturnType)E_OK)
     {
-
+#endif
         retStatus = Spt_ConfigHw(pSptInitInfo, pSptRegs);
     }
 
@@ -267,20 +238,14 @@ Std_ReturnType Spt_Setup(Spt_DriverInitType const *const pSptInitInfo)
         Spt_SetDrvState(SPT_STATE_INITIALIZED);
     }
 
-
+#if (!RSDK_OSENV_SA)
     seqStatus = Spt_ApiSequenceExit(&gSptMemPer.apiSeqCtrl);  /* Must be called unconditionally */
 
     if (retStatus == (Std_ReturnType)E_OK)
     {
         retStatus = seqStatus;  /* Report ApiSequenceExit failure only if it does not overwrite other error flags. */
     }
-
-
-
-
-
-
-
+#endif
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_END, (uint16)RSDK_TRACE_JOB_SPT_DRV_INIT, (uint32)gSptMemPer.state);
 
@@ -293,24 +258,22 @@ Std_ReturnType Spt_Command(Spt_DriverCommandType const *const pSptCommand, Spt_D
     Std_ReturnType                  retStatus = (Std_ReturnType)E_OK;
     Spt_DrvStateType                drvState = gSptMemPer.state;
     volatile SPT_Type *const        pSptRegs = Spt_GetMemMap();
-
+#if (!RSDK_OSENV_SA)
     Std_ReturnType seqStatus;
-
+#endif
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_START, (uint16)RSDK_TRACE_JOB_SPT_DRV_CMD, (uint32)gSptMemPer.state);
 
-
+#if (!RSDK_OSENV_SA)
     retStatus = Spt_ApiSequenceTryEnter(&gSptMemPer.apiSeqCtrl);
-
-
-
-
-
-
-
+#endif
 
 #if (SPT_DEV_ERROR_DETECT == STD_ON)
-    if ((retStatus == (Std_ReturnType)E_OK) && ((pSptCommand == NULL) || (pSptCmdResult == NULL)))
+#if ((!RSDK_OSENV_SA) || (defined(RSDK_AUTOSAR) && (SPT_SINGLE_THREAD == STD_OFF)))
+    if ((retStatus == (Std_ReturnType)E_OK) && ((pSptCommand == NULL_PTR) || (pSptCmdResult == NULL_PTR)))
+#else
+    if ((pSptCommand == NULL_PTR) || (pSptCmdResult == NULL_PTR))
+#endif
     {
         retStatus = SPT_REPORT_ERROR(RSDK_SPT_RET_ERR_INVALID_PARAM, SPT_API_CALL, SPT_E_INVALID_PARAM);
     }
@@ -330,12 +293,11 @@ Std_ReturnType Spt_Command(Spt_DriverCommandType const *const pSptCommand, Spt_D
     {
         switch ((uint32)pSptCommand->cmdId)
         {
-
 #if(SPT_DSP_ENABLE == STD_ON)
             case (uint32)SPT_CMD_GEN_DSP_CMD_CRC:
                 {
 #if (SPT_DEV_ERROR_DETECT == STD_ON)
-                    if((pSptCommand->cmdParam == (uintptr)NULL))
+                    if((pSptCommand->cmdParam == (uintptr_t)NULL_PTR))
                     {
                         retStatus = SPT_REPORT_ERROR(RSDK_SPT_RET_ERR_INVALID_PARAM, SPT_API_CALL, SPT_E_INVALID_PARAM);
                     }
@@ -344,53 +306,53 @@ Std_ReturnType Spt_Command(Spt_DriverCommandType const *const pSptCommand, Spt_D
                     {
                         Spt_DspCmdType* pDspCmd = (Spt_DspCmdType*)pSptCommand->cmdParam;
                         uint8 dspCmdVec[sizeof(pDspCmd->id)+sizeof(pDspCmd->arg)];
+
                         (void)memcpy(&dspCmdVec[0], &(pDspCmd->id), sizeof(pDspCmd->id));
-                        (void)memcpy(&dspCmdVec[sizeof(pDspCmd->id)], (uint8*)(&pDspCmd->arg) , sizeof(pDspCmd->arg));
+                        (void)memcpy(&dspCmdVec[sizeof(pDspCmd->id)], (uint8*)(&pDspCmd->arg), sizeof(pDspCmd->arg));
+
                         /* Compute 8-bit CRC on the DSP commmand "id" and "arg" fields. */
                         pDspCmd->crc = Spt_GenCrc8(dspCmdVec, (uint8)sizeof(dspCmdVec));
                     }
                 }
                 break;
 #endif /* #if(SPT_DSP_ENABLE == STD_ON) */
-
             case (uint32)SPT_CMD_MEM_ERR_INJECT_EN:
                 /* Enable injection of all possible parity errors for OPRAM and TRAM */
-                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ_MASK, SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ(0xFu));
-                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ_MASK, SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ(0xFu));
+                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ_MASK,
+                                    SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ(0xFu));
+                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ_MASK,
+                                    SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ(0xFu));
                 break;
             case (uint32)SPT_CMD_MEM_ERR_INJECT_DIS:
-                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ_MASK, SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ(0x0u));
-                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ_MASK, SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ(0x0u));
+                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ_MASK,
+                                    SPT_MEM_ERR_INJECT_CTRL_OR_PAR_ERR_INJ(0x0u));
+                SPT_HW_WRITE_BITS(pSptRegs->MEM_ERR_INJECT_CTRL, SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ_MASK,
+                                    SPT_MEM_ERR_INJECT_CTRL_TR_PAR_ERR_INJ(0x0u));
                 break;
             case (uint32)SPT_CMD_TRIGGER_SW_EVENT:
                 /* Set all bits to cover all possible events configured in the SPT "wait" instruction */
-                SPT_HW_WRITE_BITS(pSptRegs->CS_SW_EVTREG, SPT_CS_SW_EVTREG_SW_EVTREG_MASK, SPT_CS_SW_EVTREG_SW_EVTREG(pSptCommand->cmdParam));
+                SPT_HW_WRITE_BITS(pSptRegs->CS_SW_EVTREG, SPT_CS_SW_EVTREG_SW_EVTREG_MASK,
+                                    SPT_CS_SW_EVTREG_SW_EVTREG(pSptCommand->cmdParam));
                 break;
-
+#if defined(S32R45) && (!RSDK_OSENV_SA)
             case (uint32)SPT_CMD_BBE32_REBOOT:
-				retStatus = SptBbe32Reboot(&(gSptMemPer.irqCapThreadData));
-				break;
-
+                retStatus = SptBbe32Reboot(&(gSptMemPer.irqCapThreadData));
+                break;
+#endif
             default:
                 retStatus = SPT_REPORT_ERROR(RSDK_SPT_RET_ERR_INVALID_PARAM, SPT_API_CALL, SPT_E_INVALID_PARAM);
                 break;
         }
     }
 
-
+#if (!RSDK_OSENV_SA)
     seqStatus = Spt_ApiSequenceExit(&gSptMemPer.apiSeqCtrl);  /* Must be called unconditionally */
 
     if (retStatus == (Std_ReturnType)E_OK)
     {
         retStatus = seqStatus;  /* Report ApiSequenceExit failure only if it does not overwrite other error flags. */
     }
-
-
-
-
-
-
-
+#endif
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_END, (uint16)RSDK_TRACE_JOB_SPT_DRV_CMD, (uint32)gSptMemPer.state);
 
@@ -401,23 +363,19 @@ Std_ReturnType Spt_Stop(void)
 {
     Std_ReturnType      retStatus = (Std_ReturnType)E_OK;
     Spt_DrvStateType    drvState = gSptMemPer.state;
-
+#if (!RSDK_OSENV_SA)
     Std_ReturnType      seqStatus;
-
+#endif
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_START, (uint16)RSDK_TRACE_JOB_SPT_DRV_STOP, (uint32)gSptMemPer.state);
 
-
+#if (!RSDK_OSENV_SA)
     retStatus = Spt_ApiSequenceTryEnter(&gSptMemPer.apiSeqCtrl);
+#endif
 
-
-
-
-
-
-
-
+#if ((!RSDK_OSENV_SA) || (defined(RSDK_AUTOSAR) && (SPT_SINGLE_THREAD == STD_OFF)))
     if (retStatus == (Std_ReturnType)E_OK)
+#endif
     {
         if ((drvState <= SPT_STATE_DISABLED) || (drvState > SPT_STATE_FAULT))
         {
@@ -433,19 +391,19 @@ Std_ReturnType Spt_Stop(void)
     if (retStatus == (Std_ReturnType)E_OK)
     {
         retStatus = Spt_UnmapMem();
-
+#if (!RSDK_OSENV_SA)
         if (retStatus == (Std_ReturnType)E_OK)
         {
             retStatus = SptIrqCaptureThreadStop(&(gSptMemPer.irqCapThreadData));
         }
-
+#endif
         if (retStatus == (Std_ReturnType)E_OK)
         {
             Spt_SetDrvState(SPT_STATE_DISABLED);
         }
     }
 
-
+#if (!RSDK_OSENV_SA)
     seqStatus = Spt_ApiSequenceExit(&gSptMemPer.apiSeqCtrl);  /* Must be called unconditionally */
 
     if (retStatus == (Std_ReturnType)E_OK)
@@ -453,13 +411,7 @@ Std_ReturnType Spt_Stop(void)
         retStatus = seqStatus;  /* Report ApiSequenceExit failure only if it does not overwrite other error flags. */
     }
     /* No need to destroy the mutex here, rely on the OS to clean it up when the user application process is terminated. */
-
-
-
-
-
-
-
+#endif /* RSDK_OSENV_SA */
 
     RsdkTraceLogEvent(RSDK_TRACE_EVENT_FUNC_END, (uint16)RSDK_TRACE_JOB_SPT_DRV_STOP, (uint32)gSptMemPer.state);
 

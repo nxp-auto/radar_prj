@@ -23,6 +23,7 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 #include "CDD_Csi2.h"
+#include "rsdk_version.h"
 #if defined(linux)
     #include <linux/string.h>
 #else
@@ -194,7 +195,7 @@ static uint32 Csi2_ProcessVcEvents(Csi2_DriverParamsType *pDriverState, Csi2_Err
     const Csi2_VCDriverStateType        *pVCDriverState;
 
     pVCDriverState = pDriverState->workingParamVC;
-    pRegs = gpMipiCsi2Regs[(uint8)iUnit];                               /* get the  registry pointer for the unit   */
+    pRegs = gMipiCsi2RegsPtr[(uint8)iUnit];                               /* get the  registry pointer for the unit   */
     optionalFlags = 0;                                                  /* no optional flags                        */
     toCall = 0;
     regStat = pRegs->RX_VCINTRS;
@@ -247,6 +248,7 @@ static uint32 Csi2_ProcessVcEvents(Csi2_DriverParamsType *pDriverState, Csi2_Err
 }
 /* Csi2_ProcessVcEvents *************************/
 
+#if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
 /*================================================================================================*/
 /*
  * @brief       VC FrameEnd process.
@@ -259,17 +261,13 @@ static uint32 Csi2_ProcessVcEvents(Csi2_DriverParamsType *pDriverState, Csi2_Err
  *                  bits not toggled if necessary and/or 1 on MSbit if NEXTLINE is incorrect
  */
 static uint32 Csi2_ProcessChannelFrameEnd(volatile GENERIC_CSI2_Type *pRegs, const uint8 vcId,
-                                           Csi2_VCDriverStateType *pVCState, Csi2_ErrorReportType *pErrorS
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
-                                           ,Csi2_AutoDCComputeTimeType statFlag
-#endif
-
-                                           )
+                 Csi2_VCDriverStateType *pVCState, Csi2_ErrorReportType *pErrorS,Csi2_AutoDCComputeTimeType statFlag)
 {
     uint32              idChannel, numChannel, rez;
     uint16              fToggle, iToggle;
 
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
+    /* autoDC data processing                   */
     uint32              dcAdj;
     sint64              dcTmp;
     sint64              dcDiv;
@@ -290,13 +288,11 @@ static uint32 Csi2_ProcessChannelFrameEnd(volatile GENERIC_CSI2_Type *pRegs, con
             pDCReg = (volatile uint32 *)(&pRegs->RX_CBUF3_CHNLOFFSET0_3);
             break;
     }
-#endif
     numChannel = (uint32)Csi2_GetChannelNum(pVCState);      /* get the real number of channels                      */
     if (numChannel > (uint32)CSI2_MAX_CHANNEL)
     {
         numChannel = (uint32)CSI2_MAX_CHANNEL;
     }
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
     /* divisor for channel statistic sum                                                                            */
     dcDiv = (sint64)pVCState->vcParamsPtr->expectedNumSamples;
     if (statFlag == CSI2_AUTODC_EVERY_LINE)
@@ -311,11 +307,8 @@ static uint32 Csi2_ProcessChannelFrameEnd(volatile GENERIC_CSI2_Type *pRegs, con
         }
     }
     dcAdj = 0u;
-#endif
-    fToggle = 0u;                                                   /* toggle bits indicator                        */
     for (idChannel = (uint32)CSI2_CHANNEL_A; idChannel < numChannel; idChannel++)
     {
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
         /* change the DC offsets, according the new values                                                          */
         if (pVCState->statDC[idChannel].reqChannelDC == (sint16)CSI2_OFFSET_AUTOCOMPUTE)
         {                                                           /* auto compute DC offset                       */
@@ -339,15 +332,20 @@ static uint32 Csi2_ProcessChannelFrameEnd(volatile GENERIC_CSI2_Type *pRegs, con
             pDCReg++;
             dcAdj = 0u;
         }
-#endif
+    }
+#endif  /* #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)        */
+
+    rez = 0u;
+    /* process bit toggle                                                                                           */
+    fToggle = 0u;                                                   /* toggle bits indicator                        */
+    for (idChannel = (uint32)CSI2_CHANNEL_A; idChannel < numChannel; idChannel++)
+    {
         /* test for bit toggle                                                                                      */
         iToggle = (uint16)((~pVCState->statDC[idChannel].channelBitToggle) & CSI2_TOGGLE_BITS_MASK);
         fToggle |= iToggle;                                         /* reversed toggled bit status                  */
         pErrorS->notToggledBits[idChannel] = iToggle;               /* the current bits not toggled (1=not toggled) */
         pVCState->statDC[idChannel].channelBitToggle = 0u;          /* reset toggle bits for next frame             */
     }
-    /* process bit toggle                                                                                           */
-    rez = 0u;
     if (fToggle != 0u)
     {
         rez = (uint32)CSI2_EVT_BIT_NOT_TOGGLE;                      /* report issue to caller                       */
@@ -357,8 +355,6 @@ static uint32 Csi2_ProcessChannelFrameEnd(volatile GENERIC_CSI2_Type *pRegs, con
 }
 /* Csi2_ProcessChannelFrameEnd *************************/
 
-
-#if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
 
 /*================================================================================================*/
 /*
@@ -418,8 +414,6 @@ static void Csi2_ProcessChannelStatistics(Csi2_VCDriverStateType *pVCState, uint
         }
         sumBase = (sint64)sumU;
         pVCState->statDC[idChannel].channelSum += (sumBase / (sint64)CSI2_STAT_CHANNEL_SUM_ADJUST);
-#endif
-        pVCState->statDC[idChannel].channelBitToggle |= pStat->channelBitToggle;  /* toggled bits                   */
         if (pVCState->statDC[idChannel].channelMin > pStat->channelMin)
         {
             pVCState->statDC[idChannel].channelMin = pStat->channelMin;             /* current min value            */
@@ -428,13 +422,17 @@ static void Csi2_ProcessChannelStatistics(Csi2_VCDriverStateType *pVCState, uint
         {
             pVCState->statDC[idChannel].channelMax = pStat->channelMax;             /* current max value            */
         }
+#endif
+        pVCState->statDC[idChannel].channelBitToggle |= pStat->channelBitToggle;  /* toggled bits                   */
 
         pStat++;                                                                    /* next channel statistics      */
     }
 }
 /* Csi2_ProcessChannelStatistics *************************/
 
-#endif
+#endif  /* #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)        */
+
+#if (CSI2_FRAMES_COUNTER_USED == STD_ON)
 
 /*================================================================================================*/
 /*
@@ -455,7 +453,7 @@ static void Csi2_IncFramesCounter(const Csi2_UnitIdType unitId, const uint32 vcI
     }
 }
 /* Csi2_IncFramesCounter *************************/
-
+#endif
 
 
 /*==================================================================================================
@@ -473,15 +471,15 @@ void Csi2_IrqHandlerRxErr(const Csi2_UnitIdType iUnit)
 {
     uint32                              toCall;
     Csi2_ErrorReportType                errorS = {0};       /* error structure                                      */
-    volatile GENERIC_CSI2_Type          *pRegs;             /* pointer to CSI2 registers                            */
     uint32                              vcId;               /* index for VC                                         */
     static uint32                       regStat;
     const Csi2_DriverParamsType         *pDriverParams;
-
-    CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_PHY_ERR_ISR, (uint32_t)CSI2_SEQ_BEGIN);
+    volatile GENERIC_CSI2_Type          *pRegs;             /* pointer to CSI2 registers                            */
     uint32                              i;
     uint32                              mask;
-    pRegs = gpMipiCsi2Regs[(uint8)iUnit];                   /* get the  registry pointer for the unit               */
+
+    CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_PHY_ERR_ISR, (uint32_t)CSI2_SEQ_BEGIN);
+    pRegs = gMipiCsi2RegsPtr[(uint8)iUnit];                   /* get the  registry pointer for the unit               */
     pDriverParams = &gCsi2Settings[(uint8)iUnit];
     if (pRegs != (GENERIC_CSI2_Type*)NULL_PTR)
     {
@@ -543,7 +541,7 @@ void Csi2_IrqHandlerRxErr(const Csi2_UnitIdType iUnit)
             errorS.errMaskU = (uint32)CSI2_ERR_SPURIOUS_PHY;
         }
         CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_PHY_ERR_ISR, (uint32_t)CSI2_SEQ_END);
-        pDriverParams->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+        pDriverParams->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID](&errorS);
     } /* if (pRegs != NULL)     */
 }
 /* Csi2_IrqHandlerRxErr *************************/
@@ -559,7 +557,10 @@ void Csi2_IrqHandlerRxErr(const Csi2_UnitIdType iUnit)
 void Csi2_IrqHandlerPathErr(const Csi2_UnitIdType iUnit)
 {
     uint32                              vcId;                       /* VC index                                     */
-    uint32                              mask, toCall, offset;
+    uint32                              mask, toCall;
+#if (CSI2_METADATA_DATA_USAGE == STD_ON)
+    uint32                              offset;
+#endif
     static uint32                       regStat;
     Csi2_ErrorReportType                errorS = {0};               /* reporting error structure                    */
     volatile GENERIC_CSI2_Type          *pRegs;                     /* pointer to unit registry                     */
@@ -567,7 +568,7 @@ void Csi2_IrqHandlerPathErr(const Csi2_UnitIdType iUnit)
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_PKT_ERR_ISR, (uint32_t)CSI2_SEQ_BEGIN);
 
-    pRegs = gpMipiCsi2Regs[(uint8)iUnit];                           /* get the  registry pointer for the unit       */
+    pRegs = gMipiCsi2RegsPtr[(uint8)iUnit];                           /* get the  registry pointer for the unit       */
     pDriverParams = &gCsi2Settings[(uint8)iUnit];
     if (pRegs != NULL)
     {
@@ -636,6 +637,7 @@ void Csi2_IrqHandlerPathErr(const Csi2_UnitIdType iUnit)
                 mask <<= 2u;                                        /* pass to the next VC                          */
             }
         }   /* for      */
+#if (CSI2_METADATA_DATA_USAGE == STD_ON)
         offset = (uint32)CSI2_MAX_VC * 2u;                          /* the  real used buffer for metadata           */
         mask = (uint32)1 << (offset * 2u);                          /* the first bit mask for the metadata error    */
         for (vcId = (uint32)CSI2_VC_0; vcId < (uint32)CSI2_MAX_VC; vcId++)
@@ -666,6 +668,7 @@ void Csi2_IrqHandlerPathErr(const Csi2_UnitIdType iUnit)
                 mask <<= 2u;
             }
         }   /* for  */
+#endif  /* #if (CSI2_METADATA_DATA_USAGE == STD_ON)                 */
         /*THIRD step - callback to the application                  */
         if (toCall == 0u)
         {  /* if no flags till here     */
@@ -674,11 +677,11 @@ void Csi2_IrqHandlerPathErr(const Csi2_UnitIdType iUnit)
         CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_PKT_ERR_ISR, (uint32_t)CSI2_SEQ_END);
         if(pDriverParams->pCallback[RSDK_CSI2_PATH_ERR_IRQ_ID] != NULL)
         {
-            pDriverParams->pCallback[RSDK_CSI2_PATH_ERR_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+            pDriverParams->pCallback[RSDK_CSI2_PATH_ERR_IRQ_ID](&errorS);
         }
         else
         {
-            pDriverParams->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+            pDriverParams->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID](&errorS);
         }
     } /* if (pRegs != NULL)     */
 }
@@ -709,7 +712,7 @@ void Csi2_IrqHandlerEvents(const Csi2_UnitIdType iUnit)
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_DATA_ERR_ISR, (uint32_t)CSI2_SEQ_BEGIN);
 
-    pRegs = gpMipiCsi2Regs[(uint8)iUnit];                       /* get the  registry pointer for the unit           */
+    pRegs = gMipiCsi2RegsPtr[(uint8)iUnit];                       /* get the  registry pointer for the unit           */
     if (pRegs != NULL)
     {
         (void)memset(&errorS, 0, sizeof(uint32) * 7u);   /* set the masks to 0                           */
@@ -735,18 +738,18 @@ void Csi2_IrqHandlerEvents(const Csi2_UnitIdType iUnit)
                  * if both LINEDONE and FrameEnd occurred, the call for FE will be done at handler end          */
                 if(pDriverState->pCallback[RSDK_CSI2_EVENTS_IRQ_ID] != NULL)
                 {
-                    pDriverState->pCallback[RSDK_CSI2_EVENTS_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+                    pDriverState->pCallback[RSDK_CSI2_EVENTS_IRQ_ID](&errorS);
                 }
                 else
                 {
-                    pDriverState->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+                    pDriverState->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID](&errorS);
                 }
                 errorS.evtMaskVC[workVcIdFe] = 0u;                          /* reset the LINEDONE bit           */
             }
             pVCDriverState->lastReceivedChirpLine = (uint16)nextLine;           /* keep the line for the next irq   */
             nextLine = pVCDriverState->lastReceivedBufLine;                     /* keep the buffer pointer          */
             /* do processing for VC/channels statistics                                                             */
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
+#if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
             if (pDriverState->statisticsFlag == CSI2_AUTODC_EVERY_LINE)
             {
                 Csi2_ProcessChannelStatistics(pVCDriverState, (uint16)nextLine);
@@ -788,11 +791,7 @@ void Csi2_IrqHandlerEvents(const Csi2_UnitIdType iUnit)
                 /* process FrameEnd => statistics, so is possible to have toggle_bit problems                       */
                 regStat =
                     Csi2_ProcessChannelFrameEnd(pRegs, (uint8)workVcIdFe, &pDriverState->workingParamVC[workVcIdFe],
-                                               &errorS
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
-                                               , pDriverState->statisticsFlag
-#endif
-                                               );
+                                               &errorS, pDriverState->statisticsFlag);
                 /* be sure next time will detect correct the first line if necessary                                */
                 pVCDriverState->lastReceivedChirpLine = CSI2_CHIRP_NOT_STARTED;
                 pVCDriverState->lastReceivedBufLine = CSI2_CHIRP_NOT_STARTED;
@@ -807,7 +806,9 @@ void Csi2_IrqHandlerEvents(const Csi2_UnitIdType iUnit)
             }
 #endif
 #endif /* #if (CSI2_STATISTIC_DATA_USAGE == STD_ON) */
+#if (CSI2_FRAMES_COUNTER_USED == STD_ON)
             Csi2_IncFramesCounter(iUnit, workVcIdFe);
+#endif
         }   /* while    */
         /* FOURTH step - application callback                                                                       */
         if ((toCall == 0u) && (optionalFlags == 0u))
@@ -822,11 +823,11 @@ void Csi2_IrqHandlerEvents(const Csi2_UnitIdType iUnit)
         {
             if(pDriverState->pCallback[RSDK_CSI2_EVENTS_IRQ_ID] != NULL)
             {
-                pDriverState->pCallback[RSDK_CSI2_EVENTS_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+                pDriverState->pCallback[RSDK_CSI2_EVENTS_IRQ_ID](&errorS);
             }
             else
             {
-                pDriverState->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID]((rsdkCsi2Report_t*)&errorS);
+                pDriverState->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID](&errorS);
             }
         }
     }   /* if (pRegs != NULL)   */

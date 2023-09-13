@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, 2021 NXP
+ * Copyright 2017-2019, 2021, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -62,6 +62,12 @@ typedef long intptr_t;
 #ifndef OAL_PRINT
 #define OAL_PRINT(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 #endif
+
+static inline void *OAL_memset(void *str, int c, size_t n)
+{
+	return memset(str, c, n);
+}
+
 #endif
 
 #ifndef OAL_COMP_EXTENSION
@@ -71,6 +77,11 @@ typedef long intptr_t;
 __BEGIN_DECLS
 
 typedef char char8_t;
+
+static inline size_t OAL_strnlen(const char *s, size_t maxlen)
+{
+	return strnlen(s, maxlen);
+}
 
 __END_DECLS
 

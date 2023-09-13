@@ -75,7 +75,7 @@ extern "C" {
 
 #ifdef LAX_OS_sa
 
-#define IRQ_HANDLED						1u				// return for normal handled interrupt request
+#define IRQ_HANDLED                        1u                // return for normal handled interrupt request
 #endif
 
 

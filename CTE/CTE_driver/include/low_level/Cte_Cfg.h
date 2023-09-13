@@ -69,7 +69,7 @@ extern "C"{
 
 /* Formal API id for some CTE driver functions groups, to be used at development time          */
 #define CTE_VERSION_INFO_CHECK                 0u      /* error at VersionInfo call                        */
-#define CTE_SETUP_PARAM_CHECK               2u      /* error at setup, VC parameters check              */
+#define CTE_SETUP_PARAM_CHECK                  2u      /* error at setup, VC parameters check              */
 #define CTE_SETUP_AUX_PARAM_CHECK              3u      /* error at setup, auxiliary data parameters check  */
 #define CTE_SETUP_MD_PARAM_CHECK               4u      /* error at setup, metadata parameters check        */
 #define CTE_SETUP_MODULE_INIT                  5u      /* error at setup, during real setup                */
@@ -80,7 +80,7 @@ extern "C"{
 #define CTE_GET_VALUE                          10u     /* error when calling a get function                */
 
 /* error report management      */
-    #define CTE_REPORT_ERROR(a,c,d)  rez = (a)
+    #define CTE_REPORT_ERROR(a,b,c)  rez = (a)
 
 
 #if (CTE_DEV_HALT_ON_ERROR == STD_ON)

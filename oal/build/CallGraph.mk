@@ -1,5 +1,5 @@
 ##
-# Copyright 2017-2020 NXP
+# Copyright 2017-2020, 2022 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -31,13 +31,16 @@ ifeq ($(OS)$(OS_WORLD),linuxkernel)
     override CDEFS += "-D__KERNEL__"
 endif
 
+ifeq ($(OS),linux)
+    override CDEFS += -nostdinc -DOAL_LOG_SUPPRESS_ERROR -DOAL_LOG_SUPPRESS_WARNING -DOAL_LOG_SUPPRESS_DEBUG -DOAL_LOG_SUPPRESS_NOTE
+endif
+
 ifeq ($(OS),sa)
     ARCH ?= arm64
     CC = $(CROSS_COMPILE)gcc
     NM = $(CROSS_COMPILE)nm
     override CDEFS += -DNEED_STDINT_DEFS
 endif
-
 
 override CDEFS += "-DPAGE_SIZE=0x1000"
 
@@ -56,4 +59,3 @@ override CDEFS += "-DPAGE_SIZE=0x1000"
 
 clean clean_graph:
 	@rm -f *.callgraph *.expand *.funcs
-

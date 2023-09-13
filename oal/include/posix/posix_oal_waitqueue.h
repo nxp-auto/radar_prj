@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2019, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -41,6 +41,7 @@ int32_t OAL_OS_WaitQueue(OAL_waitqueue_t *apWq);
 				OAL_LOG_ERROR("Failed to release mutex\n");    \
 			}                                                      \
 		} else {                                                       \
+			(void)OAL_UnlockMutex(&_wq->mMutex);                   \
 			OAL_LOG_ERROR("OAL_OS_WaitQueue failed\n");            \
 		}                                                              \
 		_ret;                                                          \

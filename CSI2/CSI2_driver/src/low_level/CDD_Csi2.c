@@ -71,17 +71,11 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 #include "CDD_Csi2.h"
-
-
-
-
+#include "rsdk_status.h"
+#include "rsdk_status_helper.h"
 
     #include "S32R45_MIPICSI2.h"
     #include "S32R45_DFS.h"
-
-
-
-
 
 
 /*==================================================================================================
@@ -101,7 +95,7 @@ extern "C"{
 ==================================================================================================*/
 /* error report management      */
 #if !defined(CSI2_REPORT_ERROR)
-        #define CSI2_REPORT_ERROR(a,c,d)  rez = (a)
+        #define CSI2_REPORT_ERROR(a,b,c)  (a)
 #endif
 
 /* upper and lower alignment of data to specified value                                                     */
@@ -109,42 +103,41 @@ extern "C"{
 
 /* definitions for DPHY registry, not existing in the NXP header file,
  * but defined in the MIPI-CSI2 errata for manual calibration                                               */
-#define DPHY_CLKCALVAL_COMPS_OFFSET             0x09a0u /* offset toDPHY_CLKCALVAL_COMPS registry           */
-#define DPHY_DATALOFFSETCAL_VALUE0_OFFSET       0x0ba5u /* offset to DPHY_DATALOFFSETCAL_VALUE0 registry    */
-#define DPHY_DATALOFFSETCAL_VALUE1_OFFSET       0x0da5u /* offset to DPHY_DATALOFFSETCAL_VALUE1 registry    */
-#define DPHY_DATALOFFSETCAL_VALUE2_OFFSET       0x0fa5u /* offset to DPHY_DATALOFFSETCAL_VALUE2 registry    */
-#define DPHY_DATALOFFSETCAL_VALUE3_OFFSET       0x11a5u /* offset to DPHY_DATALOFFSETCAL_VALUE3 registry    */
-#define DPHY_TX_TERM_CAL_0_OFFSET               0x1520u /* offset to DPHY_TX_TERM_CAL_0 registry            */
-#define DPHY_TX_RDWR_TERM_CAL_0_OFFSET          0x080du /* offset to DPHY_TX_RDWR_TERM_CAL_0 registry       */
-#define DPHY_TX_RDWR_TERM_CAL_1_OFFSET          0x080eu /* offset to DPHY_TX_RDWR_TERM_CAL_1 registry       */
-#define DPHY_CLKOFFSETCAL_OVRRIDE_OFFSET        0x097fu /* offset to DPHY_CLKOFFSETCAL_OVRRIDE registry     */
-#define DPHY_CLKOFFSETCAL_OVRRIDEVAL_OFFSET     0x0980u /* offset to DPHY_CLKOFFSETCAL_OVRRIDEVAL registry  */
-#define DPHY_DATALOFFSETCAL_OVRVALUE0_OFFSET    0x0b80u /* offset to DPHY_DATALOFFSETCAL_OVRVALUE0 registry */
-#define DPHY_DATALOFFSETCAL_OVRVALUE1_OFFSET    0x0d80u /* offset to DPHY_DATALOFFSETCAL_OVRVALUE1 registry */
-#define DPHY_DATALOFFSETCAL_OVRVALUE2_OFFSET    0x0f80u /* offset to DPHY_DATALOFFSETCAL_OVRVALUE2 registry */
-#define DPHY_DATALOFFSETCAL_OVRVALUE3_OFFSET    0x1180u /* offset to DPHY_DATALOFFSETCAL_OVRVALUE3 registry */
-#define DPHY_DATAL0OFFSETCAL_OVRCNTRL_OFFSET    0x0b7fu /* offset to DPHY_DATAL0OFFSETCAL_OVRCNTRL registry */
-#define DPHY_DATAL1OFFSETCAL_OVRCNTRL_OFFSET    0x0d7fu /* offset to DPHY_DATAL1OFFSETCAL_OVRCNTRL registry */
-#define DPHY_DATAL2OFFSETCAL_OVRCNTRL_OFFSET    0x0f7fu /* offset to DPHY_DATAL2OFFSETCAL_OVRCNTRL registry */
-#define DPHY_DATAL3OFFSETCAL_OVRCNTRL_OFFSET    0x117fu /* offset to DPHY_DATAL3OFFSETCAL_OVRCNTRL registry */
-#define DPHY_RX_STARTUP_OVERRIDE_OFFSET         0x06e4u /* offset to DPHY_RX_STARTUP_OVERRIDE registry      */
+#define DPHY_CLKCALVAL_COMPS_OFFSET             0x09a0U /* offset toDPHY_CLKCALVAL_COMPS registry           */
+#define DPHY_DATALOFFSETCAL_VALUE0_OFFSET       0x0ba5U /* offset to DPHY_DATALOFFSETCAL_VALUE0 registry    */
+#define DPHY_DATALOFFSETCAL_VALUE1_OFFSET       0x0da5U /* offset to DPHY_DATALOFFSETCAL_VALUE1 registry    */
+#define DPHY_DATALOFFSETCAL_VALUE2_OFFSET       0x0fa5U /* offset to DPHY_DATALOFFSETCAL_VALUE2 registry    */
+#define DPHY_DATALOFFSETCAL_VALUE3_OFFSET       0x11a5U /* offset to DPHY_DATALOFFSETCAL_VALUE3 registry    */
+#define DPHY_TX_TERM_CAL_0_OFFSET               0x1520U /* offset to DPHY_TX_TERM_CAL_0 registry            */
+#define DPHY_TX_RDWR_TERM_CAL_0_OFFSET          0x080dU /* offset to DPHY_TX_RDWR_TERM_CAL_0 registry       */
+#define DPHY_TX_RDWR_TERM_CAL_1_OFFSET          0x080eU /* offset to DPHY_TX_RDWR_TERM_CAL_1 registry       */
+#define DPHY_CLKOFFSETCAL_OVRRIDE_OFFSET        0x097fU /* offset to DPHY_CLKOFFSETCAL_OVRRIDE registry     */
+#define DPHY_CLKOFFSETCAL_OVRRIDEVAL_OFFSET     0x0980U /* offset to DPHY_CLKOFFSETCAL_OVRRIDEVAL registry  */
+#define DPHY_DATALOFFSETCAL_OVRVALUE0_OFFSET    0x0b80U /* offset to DPHY_DATALOFFSETCAL_OVRVALUE0 registry */
+#define DPHY_DATALOFFSETCAL_OVRVALUE1_OFFSET    0x0d80U /* offset to DPHY_DATALOFFSETCAL_OVRVALUE1 registry */
+#define DPHY_DATALOFFSETCAL_OVRVALUE2_OFFSET    0x0f80U /* offset to DPHY_DATALOFFSETCAL_OVRVALUE2 registry */
+#define DPHY_DATALOFFSETCAL_OVRVALUE3_OFFSET    0x1180U /* offset to DPHY_DATALOFFSETCAL_OVRVALUE3 registry */
+#define DPHY_DATAL0OFFSETCAL_OVRCNTRL_OFFSET    0x0b7fU /* offset to DPHY_DATAL0OFFSETCAL_OVRCNTRL registry */
+#define DPHY_DATAL1OFFSETCAL_OVRCNTRL_OFFSET    0x0d7fU /* offset to DPHY_DATAL1OFFSETCAL_OVRCNTRL registry */
+#define DPHY_DATAL2OFFSETCAL_OVRCNTRL_OFFSET    0x0f7fU /* offset to DPHY_DATAL2OFFSETCAL_OVRCNTRL registry */
+#define DPHY_DATAL3OFFSETCAL_OVRCNTRL_OFFSET    0x117fU /* offset to DPHY_DATAL3OFFSETCAL_OVRCNTRL registry */
+#define DPHY_RX_STARTUP_OVERRIDE_OFFSET         0x06e4U /* offset to DPHY_RX_STARTUP_OVERRIDE registry      */
 
-#define CSI2_SOFTRESET_BIT                  0x80000000u /* the 32 bits value to reset all registry          */
+#define CSI2_SOFTRESET_BIT              0x80000000UL    /* the 32 bits value to reset all registry          */
 #define CSI2_FLUSH_CNT_FREQ_LIMIT               200U    /* the max value for flash_cnt limit (200MHz)       */
-#define CSI2_CHIRP_NOT_STARTED                  0u      /* value for first chirp line received              */
-#define CSI2_VC_CFG_OFFSET                      0x04u   /* offset between two similar VC config registry    */
+#define CSI2_CHIRP_NOT_STARTED                  0U      /* value for first chirp line received              */
+#define CSI2_VC_CFG_OFFSET                      0x04U   /* offset between two similar VC config registry    */
 #define CSI2_MAX_WAIT_FOR_STOP                  1200    /* maximum time to wait for stop state [us]         */
-#define CSI2_RXEN_RXEN_DISABLED                 0       /* MIPICSI2_RXEN register, RXEN field, Rx disabled. */
-#define CSI2_RXEN_RXEN_ENABLED                  1       /* MIPICSI2_RXEN register, RXEN field, Rx enabled.  */
+#define CSI2_RXEN_RXEN_DISABLED                 0UL     /* MIPICSI2_RXEN register, RXEN field, Rx disabled. */
+#define CSI2_RXEN_RXEN_ENABLED                  1UL     /* MIPICSI2_RXEN register, RXEN field, Rx enabled.  */
 
-#define CSI2_LAN_CS_MARK            (1UL << 5u) /* MIPICSI2_LANxCS register, DxULMA field, Data lane in Mark state. */
-#define CSI2_LAN_CS_ULPA            (1UL << 4u) /* MIPICSI2_LANxCS register, DxULPA field, Data lane ULPS active.   */
-#define CSI2_LAN_CS_STOP            (1UL << 3u) /* MIPICSI2_LANxCS register, DxSTOP field, Data lane in stop state.
+#define CSI2_LAN_CS_MARK            (1UL << 5U) /* MIPICSI2_LANxCS register, DxULMA field, Data lane in Mark state. */
+#define CSI2_LAN_CS_ULPA            (1UL << 4U) /* MIPICSI2_LANxCS register, DxULPA field, Data lane ULPS active.   */
+#define CSI2_LAN_CS_STOP            (1UL << 3U) /* MIPICSI2_LANxCS register, DxSTOP field, Data lane in stop state.
                                                  *  data reception ongoing.                                         */
-#define CSI2_LAN_CS_RXACTH          (1UL << 1u) /* MIPICSI2_LANxCS register, RXACTH field, High Speed data reception on.
+#define CSI2_LAN_CS_RXACTH          (1UL << 1U) /* MIPICSI2_LANxCS register, RXACTH field, High Speed data reception on.
                                                  *  data being driven.                                              */
-#define CSI2_LAN_CS_RXVALH          (1UL << 0u) /* MIPICSI2_LANxCS register, RXVALH field, Valid High Speed data on.*/
-
+#define CSI2_LAN_CS_RXVALH          (1UL << 0U) /* MIPICSI2_LANxCS register, RXVALH field, Valid High Speed data on.*/
 
 /*==================================================================================================
 *                                         LOCAL CONSTANTS
@@ -154,28 +147,21 @@ extern "C"{
 *                                         LOCAL VARIABLES
 ==================================================================================================*/
 
+/* copies of the Virtual Channel data parameters                                */
+/*
+* @section Csi2_c_REF_3
+* Violates MISRA C-2012 Advisory Rule 8.9,
+* #An object should be defined at block scope if its identifier only appears in a single function.
+* To not mix code and data storage, for proper memory mapping,
+* some of the static variables are not defined at block scope.
+*/
+    static Csi2_VCParamsType gsCsi2VCParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
+
+
 #if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 
     /* Copy for CSI2 actual params, to use if reset needed.                         */
-
-
-
     static Csi2_SetupParamsType gsCsi2UnitParamCopy[CSI2_MAX_UNITS];
-
-
-    /* copies of the Virtual Channel data parameters                                */
-    /*
-    * @section Csi2_c_REF_3
-    * Violates MISRA C-2012 Advisory Rule 8.9,
-    * #An object should be defined at block scope if its identifier only appears in a single function.
-    * To not mix code and data storage, for proper memory mapping,
-    * some of the static variables are not defined at block scope.
-    */
-
-
-
-    static Csi2_VCParamsType gsCsi2VCParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
-
 
     #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
         /* copies of the auxiliary data parameters                                  */
@@ -186,11 +172,7 @@ extern "C"{
         * To not mix code and data storage, for proper memory mapping,
         * some of the static variables are not defined at block scope.
         */
-
-
-
         static Csi2_VCParamsType gsCsi2AuxParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
-
     #endif /* (CSI2_AUXILIARY_DATA_USAGE == STD_ON)                                 */
 
 #if (CSI2_METADATA_DATA_USAGE == STD_ON)
@@ -202,27 +184,18 @@ extern "C"{
     * To not mix code and data storage, for proper memory mapping,
     * some of the static variables are not defined at block scope.
     */
-
-
-
     static Csi2_MetaDataParamsType gsCsi2MdParamCopy[CSI2_MAX_UNITS][CSI2_MAX_VC];
-
 #endif /* (CSI2_AUXILIARY_DATA_USAGE == STD_ON)                                 */
 
 #endif /* (CSI2_POWER_ON_OFF_USAGE == STD_ON)                                       */
 
 #if (CSI2_DEV_ERROR_DETECT == STD_ON)
 
-    /* Loop exit signal.                                             */
-    static volatile boolean gsCsi2LoopExit = FALSE;
-
 #endif  /* #if (CSI2_DEV_ERROR_DETECT == STD_ON)                    */
-
 
     #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE)
         static uint8_t gsCsi2DfsReset = 0u;         /* variable to manage the DFS usage         */
     #endif
-
 
 
 /*==================================================================================================
@@ -235,30 +208,19 @@ extern "C"{
 
 #if (CSI2_FRAMES_COUNTER_USED == STD_ON)
     /* Counter for received frames.                                             */
-
-
-
         volatile uint32 gsCsi2FramesCounter[CSI2_MAX_UNITS][CSI2_MAX_VC];
-
 #endif /* (CSI2_FRAMES_COUNTER_USED == STD_ON)                                  */
 
 /* Pointer to MIPICSI2 memory map                                               */
-
-
-
-        volatile GENERIC_CSI2_Type *gpMipiCsi2Regs[CSI2_MAX_UNITS];
+        volatile GENERIC_CSI2_Type *gMipiCsi2RegsPtr[CSI2_MAX_UNITS];
 
 
     /* settings to be kept during the execution
      * only run-time necessary parameters are kept                                  */
-
-
-
     Csi2_DriverParamsType gCsi2Settings[CSI2_MAX_UNITS] = {{
             .driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED,
             .pCallback = { NULL_PTR },
     }};
-
 
 /*==================================================================================================
 *                                    LOCAL FUNCTION PROTOTYPES
@@ -271,6 +233,7 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
                                                 const Csi2_SetupParamsType *pCsi2SetupParam);
 #endif
 
+static void HaltOnError(void);
 
     /* DFS reset                                */
     #if (CSI2_DFS_USAGE == CSI2_DFS_NOT_USED)
@@ -286,10 +249,25 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
     #endif
 
 
-
 /*==================================================================================================
 *                                         LOCAL FUNCTIONS
 ==================================================================================================*/
+/*================================================================================================*/
+/*
+ * Function to stop the execution thread
+ */
+static void HaltOnError(void)
+{
+    /* Loop exit signal.                                             */
+    static volatile boolean gsCsi2LoopExit = FALSE;
+
+    while(gsCsi2LoopExit != TRUE)
+    {
+        ;   /* empty loop */
+    }
+    gsCsi2LoopExit = FALSE;
+}
+
 #if (CSI2_DEV_ERROR_DETECT == STD_ON)
 /*================================================================================================*/
 /*
@@ -307,32 +285,36 @@ static Std_ReturnType Csi2_CheckBaseParams(const Csi2_UnitIdType unitId, const C
     Std_ReturnType  rez;
 
     if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
-    {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK, (uint8)CSI2_E_PARAM_HANDLE);
-        CSI2_HALT_ON_ERROR;
-    }
-    else if (pCsi2SetupParam == (Csi2_SetupParamsType*)NULL_PTR)
-    {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NULL_PARAM_PTR, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_POINTER);
-        CSI2_HALT_ON_ERROR;
-    }
-    else if (pCsi2SetupParam->numLanesRx >= (uint8)CSI2_MAX_LANE)
-    {  /* wrong number of lanes         */
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_LANES_NR, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+
+    {   /* the required unit is bigger than the platform general specs              */
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_SETUP, (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     else
     {
-        rez = (Std_ReturnType)E_OK;
+        if (pCsi2SetupParam == (Csi2_SetupParamsType*)NULL_PTR)
+        {
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NULL_PARAM_PTR, (uint8)CSI2_API_ID_SETUP,
+                                                            (uint8)CSI2_E_DRV_NULL_PARAM_PTR);
+            CSI2_HALT_ON_ERROR;
+        }
+        else if (pCsi2SetupParam->numLanesRx >= (uint8)CSI2_MAX_LANE)
+        {  /* wrong number of lanes         */
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_LANES_NR, (uint8)CSI2_API_ID_SETUP,
+                                                            (uint8)CSI2_E_DRV_INVALID_LANES_NR);
+            CSI2_HALT_ON_ERROR;
+        }
+        else
+        {
+            rez = (Std_ReturnType)E_OK;
+        }
     }
     if(rez == (Std_ReturnType)E_OK)
     {
         if((uint8)pCsi2SetupParam->initOptions >= (uint8)CSI2_DPHY_INIT_MAX)
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_INIT_PARAMS, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_INIT_PARAMS, (uint8)CSI2_API_ID_SETUP,
+                                                            (uint8)CSI2_E_DRV_INVALID_INIT_PARAMS);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -347,8 +329,8 @@ static Std_ReturnType Csi2_CheckBaseParams(const Csi2_UnitIdType unitId, const C
         }
         if (i >= (uint32)CSI2_MAX_VC)
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_VC_PARAMS, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_VC_PARAMS, (uint8)CSI2_API_ID_SETUP,
+                                                            (uint8)CSI2_E_DRV_INVALID_VC_PARAMS);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -390,8 +372,8 @@ static Std_ReturnType Csi2_CheckAuxiliaryMode(const Csi2_VCParamsType *pVC)
              (outputType != (uint32)CSI2_VC_BUF_5TH_CH_MODE_1)) ||
              (streamType > (uint32)CSI2_DATA_TYPE_MAX))
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_SETUP_AUX_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_DATA_TYPE);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -441,8 +423,8 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
 
         if (t != pCsi2SetupParam->numLanesRx)
         {       /* wrong configuration for receiving lanes swap                         */
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_RX_SWAP, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_RX_SWAP, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_RX_SWAP);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -450,13 +432,10 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
     {       /* good configuration for lanes swap                                        */
         if (((pCsi2SetupParam->rxClkFreq < (uint32)CSI2_MIN_RX_FREQ) ||
             (pCsi2SetupParam->rxClkFreq > (uint32)CSI2_MAX_RX_FREQ))
-
-
-
                 )
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_CLOCK_FREQ, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_CLOCK_FREQ, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_CLOCK_FREQ);
             CSI2_HALT_ON_ERROR;
         }
         else
@@ -477,15 +456,15 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
                      ((pCsi2SetupParam->auxConfigPtr[i] != (Csi2_VCParamsType*)NULL_PTR) &&
                       (pCsi2SetupParam->auxConfigPtr[i]->streamDataType < (uint16)CSI2_DATA_TYPE_AUX_0_NO_DROP))))
                 {       /* check for correct stream data type on normal/auxiliary flow  */
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_DATA_TYPE);
                     CSI2_HALT_ON_ERROR;
                 }
                 if ((pCsi2SetupParam->vcConfigPtr[i] == (Csi2_VCParamsType*)NULL_PTR) &&
                         (pCsi2SetupParam->auxConfigPtr[i] != (Csi2_VCParamsType*)NULL_PTR))
                 {
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_VC_AUX_MISMATCH, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_VC_AUX_MISMATCH, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_VC_AUX_MISMATCH);
                     CSI2_HALT_ON_ERROR;
                 }
 #endif
@@ -496,8 +475,8 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
             }  /* for   */
             if(pCsi2SetupParam->pCallback[(uint8)RSDK_CSI2_RX_ERR_IRQ_ID] == (Csi2_IsrCbType)NULL_PTR)
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NULL_ERR_CB_PTR, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NULL_ERR_CB_PTR, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_NULL_ERR_CB_PTR);
                 CSI2_HALT_ON_ERROR;
             }
 #if !defined(linux)
@@ -505,8 +484,8 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
             {
                 if(pCsi2SetupParam->irqExecCore != RSDK_CURRENT_CORE)
                 {
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_INVALID_CORE_NR, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_INVALID_CORE_NR, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_ERR_INVALID_CORE_NR);
                     CSI2_HALT_ON_ERROR;
                 }
             }
@@ -518,8 +497,8 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
                 if ((autoDC != 0u) && ((pCsi2SetupParam->statManagement == (uint8)CSI2_AUTODC_NO) ||
                                        (pCsi2SetupParam->statManagement >= (uint8)CSI2_AUTODC_MAX)))
                 {
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DC_PARAMS, (uint8)CSI2_SETUP_MAIN_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DC_PARAMS, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_DC_PARAMS);
                     CSI2_HALT_ON_ERROR;
                 }
             }
@@ -543,7 +522,7 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
 static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAutoStat)
 {
     Std_ReturnType  rez;
-    uintptr         addrAlign;
+    uintptr_t       addrAlign;
     uint32          bufLen;
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
     uint8           i;
@@ -560,8 +539,8 @@ static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAu
                 );
         if ((bufLen == 0u) && ((pVC->streamDataType * pVC->expectedNumSamples) != 0u))
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_SETUP_VC_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_DATA_TYPE);
             CSI2_HALT_ON_ERROR;
         }
         else
@@ -572,7 +551,7 @@ static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAu
             * #A cast shall not be performed between pointer to void and an arithmetic type
             * In some contexts, is necessary to process pointers using arithmetic operations.
             */
-            addrAlign = (uintptr)(pVC->bufDataPtr);
+            addrAlign = (uintptr_t)(pVC->bufDataPtr);
             addrAlign &= 0xfu;
 #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
             if (((uint32)pVC->outputDataMode & (uint32)CSI2_VC_BUF_FIFTH_CH_ON) != 0u)
@@ -590,33 +569,25 @@ static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAu
                             (pVC->channelsNum > ((uint8)CSI2_MAX_ANTENNA_NR * (uint8)2u)))
                             )
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_VC_PARAMS, (uint8)CSI2_SETUP_VC_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_VC_PARAMS, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_VC_PARAMS);
                 CSI2_HALT_ON_ERROR;
             }
             if (    ((pVC->bufLineLen & 0xfu) != (uint16)0)         ||
-                    (addrAlign != (uintptr)0u)                      ||
+                    (addrAlign != (uintptr_t)0u)                      ||
                     (   (((uint8)pVC->vcEventsReq & (uint8)CSI2_EVT_LINE_END) != 0u) &&
                         (pVC->bufNumLinesTrigger == 0u) )   )
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_BUF_PTR_NOT_ALIGNED, (uint8)CSI2_SETUP_VC_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_VALUE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_BUF_PTR_NOT_ALIGNED, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_BUF_PTR_NOT_ALIGNED);
                 CSI2_HALT_ON_ERROR;
             }
             if (pVC->bufDataPtr == (void*)NULL_PTR)
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_BUF_PTR_NULL, (uint8)CSI2_SETUP_VC_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_POINTER);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_BUF_PTR_NULL, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_BUF_PTR_NULL);
                 CSI2_HALT_ON_ERROR;
             }
-
-
-
-
-
-
-
-
 
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
             for (i = 0; i < pVC->channelsNum; i++)
@@ -702,10 +673,6 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
 #if defined(linux)
         *pRegs = (volatile GENERIC_CSI2_Type*)gpRsdkCsi2Device[unitId]->pMemMapVirtAddr;
 #else
-
-
-
-
         switch (unitId)
         {
             case CSI2_UNIT_0:
@@ -715,13 +682,8 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 * #A conversion should not be performed between a pointer to object and an integer type
                 * Some initialization need to be done for pointers.
                 */
-
-
-
                 *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_0;
-
                 break;
-
             case CSI2_UNIT_1:
                 /*
                 * @section Csi2_c_REF_4
@@ -729,14 +691,8 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 * #A conversion should not be performed between a pointer to object and an integer type
                 * Some initialization need to be done for pointers.
                 */
-
-
-
                 *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_1;
-
                 break;
-
-
             case CSI2_UNIT_2:
                 /*
                 * @section Csi2_c_REF_4
@@ -755,59 +711,14 @@ static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERI
                 */
                 *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_3;
                 break;
-
             default:
                 rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
                 break;
         }  /* switch    */
-
 #endif  /* #if defined(linux)   */
     return rez;
 }
 /* Csi2_RegsMap *************************/
-
-
-/*================================================================================================*/
-/*
- * @brief       Procedure to introduce a simple and very short delay in execution.
- * @details     The execution counts loops, not time divisions
- *
- * @param[in]   loops   Number of loops to wait (usually considered as ns)
- *
- */
-static void Csi2_WaitLoopNs(uint32 loops)
-{
-    uint32 iLoop;
-
-    iLoop = loops;
-    while (iLoop != 0u)
-    {
-        iLoop--;
-    }
-}
-/* Csi2_WaitLoopNs *************************/
-
-
-/*================================================================================================*/
-/*
- * @brief       Procedure to introduce a microseconds delay in execution.
- * @details     For AUTOSAR, the internal OsOf timer implementation is used
- *
- * @param[in]   loops   Number of microseconds to wait
- *
- * @pre         The OsIf_Init must be called before and the appropriate timer type to be selected for CSI2_TIMER_TYPE
- */
-static uint8 Csi2_WaitLoopUs(uint32 uSec)
-{
-    uint8   rez = 0u;               /* no error     */
-    volatile uint32 i = CSI2_US_DELAY * uSec;
-    while(i != 0u)
-    {
-        i--;
-    }
-    return rez;
-}
-/* Csi2_WaitLoopUs *************************/
 
 /*================================================================================================*/
 /*
@@ -875,8 +786,6 @@ static void Csi2_GetOperatingSpeedMask(const uint16 speed, uint8 *pHSFREQRNG, ui
     *pDDLOSCFREQ = gsCsi2OscFreqTarget[i];
 }
 /* Csi2_GetOperatingSpeedMask *************************/
-
-
 
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
 /*================================================================================================*/
@@ -1051,7 +960,8 @@ static void Csi2_UnitConfigVCSpec(volatile GENERIC_CSI2_Type *pRegs, const Csi2_
     pRegs->RX[bufNr].CBUF_SRTPTR = (uint32)pVCparams->bufDataPtr;
 
     /* buffer number of lines                                                                           */
-    pRegs->RX[bufNr].CBUF_NUMLINE = pVCparams->bufNumLines;
+    pRegs->RX[bufNr].CBUF_NUMLINE = pVCparams->bufNumLines
+            ;
 
     /* buffer line length                                                                               */
     pRegs->RX[bufNr].CBUF_BUFLEN = rxBufLen;
@@ -1196,12 +1106,7 @@ static Std_ReturnType Csi2_ConfigVC(const Csi2_UnitIdType csi2UnitNum, const uin
     pRegs->RX_VCENABLE |= val1 + val2;     /* enable the VC and the buffer                                 */
     if (vcId < (uint8)CSI2_MAX_VC)
     {
-
-
-
-
         pDriverParams = &gCsi2Settings[(uint8)csi2UnitNum];
-
         pDriverStateVC = &pDriverParams->workingParamVC[vcId];
         /*
         * @section Csi2_c_REF_1
@@ -1226,7 +1131,7 @@ static Std_ReturnType Csi2_ConfigVC(const Csi2_UnitIdType csi2UnitNum, const uin
             pDriverStateVC->lastReceivedBufLine = CSI2_CHIRP_NOT_STARTED;
             pDriverStateVC->lastReceivedChirpLine = pVCparams->expectedNumLines;
             cfg2 = (uint32)Csi2_GetChannelNum(pDriverStateVC);   /* the real number for channels     */
-            cfg2 = (val1 << cfg2) - ((uint32)1);                        /* mask for enable the real channels */
+            cfg2 = ((uint32)1 << cfg2) - ((uint32)1);                        /* mask for enable the real channels */
             pRegs->RX_CBUF_CHNLENBL[vcId] = cfg2;                       /* the receiving channels           */
             /* no 5th channel influence
              * check for data translation and add SWAPRAWDATA, even it was asked or not explicitly          */
@@ -1237,8 +1142,8 @@ static Std_ReturnType Csi2_ConfigVC(const Csi2_UnitIdType csi2UnitNum, const uin
         }
         else
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_TOO_SMALL_BUFFER, (uint8)CSI2_SETUP_MODULE_INIT,
-                                                    (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_TOO_SMALL_BUFFER, (uint8)CSI2_API_ID_SETUP,
+                                                    (uint8)CSI2_E_DRV_TOO_SMALL_BUFFER);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -1246,8 +1151,8 @@ static Std_ReturnType Csi2_ConfigVC(const Csi2_UnitIdType csi2UnitNum, const uin
     {           /* auxiliary data       */
         if(lenBufData > pVCparams->bufLineLen)
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_TOO_SMALL_BUFFER, (uint8)CSI2_SETUP_MODULE_INIT,
-                                                    (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_TOO_SMALL_BUFFER, (uint8)CSI2_API_ID_SETUP,
+                                                    (uint8)CSI2_E_DRV_TOO_SMALL_BUFFER);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -1279,6 +1184,7 @@ static Std_ReturnType Csi2_ConfigVC(const Csi2_UnitIdType csi2UnitNum, const uin
 /* Csi2_ConfigVC *************************/
 
 
+#if (CSI2_METADATA_DATA_USAGE == STD_ON)
 /*================================================================================================*/
 /*
  * @brief       Procedure for general programming a MetaData channel.
@@ -1308,7 +1214,8 @@ static Std_ReturnType Csi2_ConfigMD(const uint8 vcId, volatile GENERIC_CSI2_Type
     dataType = ((uint32)pMDparams->streamDataType & (uint32)CSI2_NORM_DTYPE_MASK);
     if (lenBufData > pMDparams->bufLineLen)
     {   /* wrong buffer  length, the buffer line length is not enough   */
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_TOO_SMALL_BUFFER, (uint8)CSI2_SETUP_MD_PARAM_CHECK, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_TOO_SMALL_BUFFER, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_TOO_SMALL_BUFFER);
         CSI2_HALT_ON_ERROR;
     }
     else
@@ -1317,8 +1224,8 @@ static Std_ReturnType Csi2_ConfigMD(const uint8 vcId, volatile GENERIC_CSI2_Type
                 (CSI2_UPPER_ALIGN_TO_(lenBufData, 16u) != lenBufData))
         {
             /* buffer not aligned       */
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_BUF_LEN_NOT_ALIGNED, (uint8)CSI2_SETUP_MD_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_BUF_LEN_NOT_ALIGNED, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_BUF_LEN_NOT_ALIGNED);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -1336,7 +1243,7 @@ static Std_ReturnType Csi2_ConfigMD(const uint8 vcId, volatile GENERIC_CSI2_Type
         pRegs->RX[bufNr].CBUF_CONFIG = ((bufNr & CSI2_MAX_VC_MASK) << 8u) + (dataType << 2u);
 
         /* buffer pointer           */
-        pRegs->RX[bufNr].CBUF_SRTPTR = (uint32)pMDparams->pBufData;
+        pRegs->RX[bufNr].CBUF_SRTPTR = (uint32)pMDparams->bufDataPtr;
 
         /* buffer number of lines   */
         pRegs->RX[bufNr].CBUF_NUMLINE = pMDparams->bufNumLines;
@@ -1357,7 +1264,7 @@ static Std_ReturnType Csi2_ConfigMD(const uint8 vcId, volatile GENERIC_CSI2_Type
     return rez;
 }
 /* Csi2ConfigMD *************************/
-
+#endif /*         #if (CSI2_METADATA_DATA_USAGE == STD_ON)      */
 
 /*================================================================================================*/
 /*
@@ -1375,8 +1282,10 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
                                      const Csi2_SetupParamsType *pParams)
 {
     Std_ReturnType  rez;
-    uint32          val, i;
-
+    uint32          i;
+#if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
+    uint32          val;
+#endif
     rez = (Std_ReturnType)E_OK;
     for (i = 0u; i < (uint32)CSI2_MAX_VC; i++)
     {
@@ -1385,7 +1294,7 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
             /* virtual channel real configuration                       */
             rez = Csi2_ConfigVC(csi2UnitNum, (uint8)i, pRegs, pParams->vcConfigPtr[i]);
         }
-#if (CSI2_AUXILIARY_DATA_USAGE == STD_ON) || (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
+#if (CSI2_AUXILIARY_DATA_USAGE == STD_ON) || (CSI2_METADATA_DATA_USAGE == STD_ON)
         if (rez == (Std_ReturnType)E_OK)
         {
 #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
@@ -1401,26 +1310,26 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
                 rez = Csi2_ConfigVC(csi2UnitNum, (uint8)i + (uint8)CSI2_MAX_VC, pRegs, pParams->auxConfigPtr[i]);
             }
 #endif
-#if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
-            if ((rez == (Std_ReturnType)E_OK) && (pParams->pMetaData[i] != (Csi2_MetaDataParamsType*)NULL_PTR))
+#if (CSI2_METADATA_DATA_USAGE == STD_ON)
+            if ((rez == (Std_ReturnType)E_OK) && (pParams->metaDataPtr[i] != (Csi2_MetaDataParamsType*)NULL_PTR))
             {
-                if(((uint16)pParams->pMetaData[i]->streamDataType != (uint16)CSI2_DATA_TYPE_EMBD) &&
-                (((uint16)pParams->pMetaData[i]->streamDataType < (uint16)CSI2_DATA_TYPE_USR0) ||
-                ((uint16)pParams->pMetaData[i]->streamDataType > (uint16)CSI2_DATA_TYPE_USR7)))
+                if(((uint16)pParams->metaDataPtr[i]->streamDataType != (uint16)CSI2_DATA_TYPE_EMBD) &&
+                (((uint16)pParams->metaDataPtr[i]->streamDataType < (uint16)CSI2_DATA_TYPE_USR0) ||
+                ((uint16)pParams->metaDataPtr[i]->streamDataType > (uint16)CSI2_DATA_TYPE_USR7)))
                 {
                     /*  only embedded or image data can be received   */
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_SETUP_MD_PARAM_CHECK,
-                                                        (uint8)CSI2_E_PARAM_HANDLE);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_DATA_TYPE, (uint8)CSI2_API_ID_SETUP,
+                                                        (uint8)CSI2_E_DRV_INVALID_DATA_TYPE);
                     CSI2_HALT_ON_ERROR;
                 }
                 else
                 {
-                    rez = Csi2_ConfigMD((uint8)i, pRegs, pParams->pMetaData[i]);
+                    rez = Csi2_ConfigMD((uint8)i, pRegs, pParams->metaDataPtr[i]);
                 }
             }
 #endif
         }
-#endif /* #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON) || (CSI2_AUXILIARY_DATA_USAGE == STD_ON) */
+#endif /* #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON) || (CSI2_METADATA_DATA_USAGE == STD_ON) */
         if (rez != (Std_ReturnType)E_OK)
         {
             break;      /* error in VC initialization, so stop here and report the error        */
@@ -1429,6 +1338,98 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
     return rez;
 }
 /* Csi2_SetupAllVcAux *************************/
+
+
+/*================================================================================================*/
+/*
+ * @brief       Procedure to introduce a simple and very short delay in execution.
+ * @details     The execution counts loops, not time divisions
+ *
+ * @param[in]   loops   Number of loops to wait (usually considered as ns)
+ *
+ */
+static void Csi2_WaitLoopNs(uint32 loops)
+{
+    uint32 iLoop;
+
+    iLoop = loops;
+    while (iLoop != 0u)
+    {
+        iLoop--;
+    }
+}
+/* Csi2_WaitLoopNs *************************/
+
+
+/*================================================================================================*/
+/*
+ * @brief       Procedure to introduce a microseconds delay in execution.
+ * @details     For AUTOSAR, the internal OsOf timer implementation is used
+ *
+ * @param[in]   loops   Number of microseconds to wait
+ *
+ * @pre         The OsIf_Init must be called before and the appropriate timer type to be selected for CSI2_TIMER_TYPE
+ */
+static uint8 Csi2_WaitLoopUs(uint32 uSec)
+{
+    uint8   rez = 0u;               /* no error     */
+    volatile uint32 i = CSI2_US_DELAY * uSec;
+    while(i != 0u)
+    {
+        i--;
+    }
+    return rez;
+}
+/* Csi2_WaitLoopUs *************************/
+
+
+/*================================================================================================*/
+/*
+ * @brief       Procedure which wait for STOP state on data lanes.
+ * @details     The time-out is set to 1.2 ms.
+ *
+ * @param[in]   pInitParams     - pointer to the parameters structure
+ *
+ * @return      Std_ReturnType  - success or error
+ *
+ */
+static Std_ReturnType Csi2_WaitForStopState(const volatile
+        GENERIC_CSI2_Type
+        *pRegs, const uint32 maxLane)
+{
+    Std_ReturnType  rez = (Std_ReturnType)E_OK;
+    uint32          i, stp;
+    uint32          j;
+
+    /* Wait for about 1.2ms for STOP state on data lines or error reported
+     * If the frontend CSI2 interface isn't powered up this check (step 25) could fail.
+     * But the interface will start working correctly once the front-end CSI2 powers up.    */
+    for(i = 0u; i < (uint32)CSI2_MAX_WAIT_FOR_STOP; i++)
+    {
+        (void)Csi2_WaitLoopUs(1u);
+
+        stp = pRegs->RX_LANCS[0];
+        for(j = (uint32)CSI2_LANE_1; j < maxLane; j++)
+        {
+            stp &= pRegs->RX_LANCS[j];
+        }
+        stp &= MIPICSI2_RX_LANCS_DSTOP_MASK;
+        if((stp != 0u)
+            )
+        {
+            break;
+        }
+    }
+    if((stp == 0u) && (i >= (uint32)CSI2_MAX_WAIT_FOR_STOP))
+    {       /* time-out waiting for STOP state      */
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_CALIBRATION_TIMEOUT, (uint8)CSI2_API_ID_SETUP,
+                                                                (uint8)CSI2_E_DRV_CALIBRATION_TIMEOUT);
+
+        CSI2_HALT_ON_ERROR;
+    }
+    return rez;
+}
+/* Csi2_WaitForStopState *************************/
 
 
 #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE) || (CSI2_DFS_USAGE == CSI2_DFS_ALWAYS)
@@ -1441,7 +1442,6 @@ static Std_ReturnType Csi2_SetupAllVcAux(const Csi2_UnitIdType csi2UnitNum, vola
 static void DfsTilt(void)
 {
     uint32_t regVal, i, testVal = (1u << 2u);
-
     volatile DFS_Type *pDfs;
 
 #ifdef linux
@@ -1450,11 +1450,6 @@ static void DfsTilt(void)
 #else
     pDfs = (volatile DFS_Type *)IP_PERIPH_DFS;
 #endif /* linux                                    */
-
-
-
-
-
     regVal = pDfs->PORTRESET;
     regVal |= testVal;
     pDfs->PORTRESET = regVal;                               /* step 2 - Gate the MIPI_CSI_TXRX_LI_CLK   */
@@ -1469,50 +1464,6 @@ static void DfsTilt(void)
 }
 /* DfsTilt *************************/
 #endif /* #if defined(CSI2_DFS_ONCE) || defined(CSI2_DFS_ALWAYS)    */
-
-
-
-/*================================================================================================*/
-/*
- * @brief       Procedure which wait for STOP state on data lanes.
- * @details     The time-out is set to 1.2 ms.
- *
- * @param[in]   pInitParams     - pointer to the parameters structure
- *
- * @return      Std_ReturnType  - success or error
- *
- */
-static Std_ReturnType Csi2_WaitForStopState(const volatile GENERIC_CSI2_Type *pRegs, const uint32 maxLane)
-{
-    Std_ReturnType  rez = (Std_ReturnType)E_OK;
-    uint32          i, j, stp;
-
-    /* Wait for about 1.2ms for STOP state on data lines or error reported
-     * If the frontend CSI2 interface isn't powered up this check (step 25) could fail.
-     * But the interface will start working correctly once the front-end CSI2 powers up.    */
-    for(i = 0u; i < (uint32)CSI2_MAX_WAIT_FOR_STOP; i++)
-    {
-        (void)Csi2_WaitLoopUs(1u);
-                
-        stp = pRegs->RX_LANCS[0];
-        for(j = (uint32)CSI2_LANE_1; j <= maxLane; j++)
-        {
-            stp &= pRegs->RX_LANCS[j];
-        }
-        if(((stp & MIPICSI2_RX_LANCS_DSTOP_MASK) != 0u)
-            )
-        {
-            break;
-        }
-    }
-    if(stp == 0u)
-    {       /* time-out waiting for STOP state      */
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_CALIBRATION_TIMEOUT, (uint8)CSI2_SETUP_MODULE_INIT, (uint8)CSI2_E_SETUP_FAILED);
-        CSI2_HALT_ON_ERROR;
-    }
-    return rez;
-}
-/* Csi2_WaitForStopState *************************/
 
 
 #if (CSI2_GPIO_USED == STD_ON)
@@ -1637,7 +1588,6 @@ static void Csi2_SetSdma(volatile GENERIC_CSI2_Type *pRegs, const uint8 csi2VC,
 #endif
 
 
-
 /*================================================================================================*/
 /*
  * @brief       Procedure for specific unit setup.
@@ -1655,32 +1605,25 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
     Std_ReturnType                      rez;
     Csi2_DriverParamsType *             pDriverState;
     Csi2_UnitIdType                     usedUnit = csi2UnitNum;
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
+#if (CSI2_AUTO_DC_COMPENSATION == STD_ON) || (CSI2_SAF85XX_PHY_USED == STD_ON)
     uint32                              i;
+#endif
+#if ((CSI2_GPIO_USED == STD_ON) || (CSI2_SDMA_USED == STD_ON))
+    uint8                               vcId;
 #endif
 
     rez = (Std_ReturnType)E_OK;
-
-
-
-
 
     volatile uint8 *                    pDphyRegs = (volatile uint8*)(NULL_PTR);    /* pointer to DPHY registry     */
                                         /* temporary values for quick DPHY calibration                              */
     uint8                               lVal0 = 0u, lVal1 = 0u, lVal2 = 0u, lVal3 = 0u, lVal4 = 0u;
     uint16                              DdlOscFreq;
     uint8                               laneId;
-    uint8                               vcId;
     uint32                              val;
     uint8                               HsFreqRange, lanesSwap;
     Csi2_UnitIdType                     pllUnit;
 
     pDriverState = &gCsi2Settings[(uint8)usedUnit];
-
-
-
-
-
     if((uint8)usedUnit < (uint8)CSI2_UNIT_2)
     {
         pllUnit = CSI2_UNIT_0;
@@ -1689,39 +1632,27 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
     {
         pllUnit = CSI2_UNIT_2;
     }
-
-
-
     /* check first to have UNIT_1 used/setup before UNIT_0                                                          */
     if (usedUnit != pllUnit)
     {
         if (gCsi2Settings[(uint8)pllUnit].driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)     /* unit 0 not setup */
         {
             /* error, unit 0 must be setup first                                                                    */
-
-
-
-
             if(pllUnit == CSI2_UNIT_2)
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_UNIT_2_MUST_BE_FIRST, (uint8)CSI2_SETUP_MODULE_INIT, 
-                                                                            (uint8)CSI2_E_PARAM_POINTER);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_UNIT_2_MUST_BE_FIRST, (uint8)CSI2_API_ID_SETUP,
+                                                                            (uint8)CSI2_E_DRV_ERR_UNIT_2_MUST_BE_FIRST);
             }
             else
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_UNIT_0_MUST_BE_FIRST, (uint8)CSI2_SETUP_MODULE_INIT, 
-                                                                            (uint8)CSI2_E_PARAM_POINTER);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_UNIT_0_MUST_BE_FIRST, (uint8)CSI2_API_ID_SETUP,
+                                                                            (uint8)CSI2_E_DRV_ERR_UNIT_0_MUST_BE_FIRST);
             }
-
-
-
-
             CSI2_HALT_ON_ERROR;
         }
     }
     if (rez == (Std_ReturnType)E_OK)
     {
-
 #ifdef linux
         if(pDriverState->driverState != CSI2_DRIVER_STATE_NOT_INITIALIZED)
         {
@@ -1740,10 +1671,7 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
         rez = Csi2_RegsMap(usedUnit, &pRegs);                           /* get the  registry pointer for the unit   */
         if (rez == (Std_ReturnType)E_OK)
         {       /* valid registry pointer   */
-
-
-
-            gpMipiCsi2Regs[(uint8)usedUnit] = pRegs;                    /* keep the registry pointer for future     */
+            gMipiCsi2RegsPtr[(uint8)usedUnit] = pRegs;                    /* keep the registry pointer for future     */
             /* execute short calibration only if required by application                                            */
             if(((uint8)pParams->initOptions & (uint8)CSI2_DPHY_INIT_SHORT_CALIB) != 0u)
             {
@@ -1756,30 +1684,26 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 lVal4 = pDphyRegs[DPHY_CLKCALVAL_COMPS_OFFSET];
             }
 
-
             /* supplementary step : SoftReset
              * not present in RM (at least for the moment)
              * necessary to reset the NEXTLINE registry and implicitly the start of the next frame                  */
-            pRegs->RX_SR = CSI2_SOFTRESET_BIT;
+            pRegs->RX_SR = (uint32)CSI2_SOFTRESET_BIT;
             pRegs->RX_SR = 0u;
 
             /* start of DPHY subsystem initialization ===========================================================   */
-
             /* setup CSI2 subsystem : RM/rev.1/draft O pag.1957
              * according to the latest RM, only Rx can be used, no Tx available                                     */
 
             pRegs->RX_RXNULANE = (uint32)pParams->numLanesRx + 1u;  /* step 1 - set the Rx num. lanes               */
-
-#if (CSI2_DFS_USAGE == CSI2_DFS_ONCE)
+        #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE)
             if(gsCsi2DfsReset == 0u)
             {
                 DfsTilt();  /* step 2&3 - Gate/ungate the MIPI_CSI_TXRX_LI_CLK                                      */
                 gsCsi2DfsReset = 1u;
             }
-#elif (CSI2_DFS_USAGE == CSI2_DFS_ALWAYS)
+        #elif (CSI2_DFS_USAGE == CSI2_DFS_ALWAYS)
             DfsTilt();      /* step 2&3 - Gate/ungate the MIPI_CSI_TXRX_LI_CLK                                      */
-#endif
-
+        #endif  /* #if (CSI2_DFS_USAGE == CSI2_DFS_ONCE)    */
 
             pRegs->DPHY_RSTCFG = 0u;                                /* step 4 & 5 - clear RSTZ & SHUTDWNZ           */
 
@@ -2016,12 +1940,6 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 CSI2_SET_REGISTRY32(&pRegs->RX_RXENABLE, MIPICSI2_RX_RXENABLE_CFG_FLUSH_CNT_MASK,
                         MIPICSI2_RX_RXENABLE_CFG_FLUSH_CNT(3u)); /* rates over to 200MHz */
             }  /* if(pParams->dphyClkFreq < CSI2_FLUSH_CNT_FREQ_LIMIT)  */
-
-
-
-
-
-
             /* end of DPHY subsystem initialization ===========================================================     */
 
             /* step 20 - configure the circular buffers                                                             */
@@ -2052,16 +1970,17 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
                 if (pDriverState->statisticsFlag != CSI2_AUTODC_NO)
                 {
-                    pRegs->RX_STAT_CONFIG = 1u; /* at least one channel with auto DC offset or statistics required  */
+                    pRegs->RX_STAT_CONFIG = (uint32)1
+                    ; /* at least one channel with auto DC offset or statistics required  */
                 }
                 else
                 {
 #endif
-                    pRegs->RX_STAT_CONFIG = 0u;                         /* no statistics at all                     */
+                    pRegs->RX_STAT_CONFIG = (uint32)0
+                    ;                         /* no statistics at all                     */
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
                 }
 #endif
-
 
                 /* step 21 - Configure noext_burnin_res_cal_rw                                                      */
                 /*
@@ -2080,16 +1999,16 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 pRegs->DPHY_RSTCFG = 3u;                                /* step 25 - Set the field RSTZ             */
 
                 /* step 26 - Wait till stop state is observed                                                       */
-                if(((uint8)pParams->initOptions & (uint8)CSI2_DPHY_INIT_W_STOP_STATE) != 0u)
+                        if(((uint8)pParams->initOptions & (uint8)CSI2_DPHY_INIT_W_STOP_STATE) != 0u)
                 {
-                    rez = Csi2_WaitForStopState(pRegs, (uint32)pParams->numLanesRx);
+                    rez = Csi2_WaitForStopState(
+                            pRegs
+                            , (uint32)pParams->numLanesRx + 1u);
                 }
-
             }
             if (rez == (Std_ReturnType)E_OK)
             {
 #if (CSI2_GPIO_USED == STD_ON) || (CSI2_SDMA_USED == STD_ON)
-
                 /* assume step 26 done with success => setup ok
                  * do the other VC setup - GPIO, SDMA, irq handling                                                 */
                 for (vcId = (uint8)CSI2_VC_0; vcId < (uint8)CSI2_MAX_VC; vcId++)
@@ -2102,13 +2021,11 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                     Csi2_SetSdma(pRegs, vcId, pParams->vcConfigPtr[vcId]);
         #endif
                 }  /* for   */
-
 #endif /* #if (CSI2_GPIO_USED == STD_ON) || (CSI2_SDMA_USED == STD_ON) */
                 /* interrupts programming                                                                           */
                 rez =
                         Csi2_SetupUIrq(usedUnit, pRegs, pParams);
                 pDriverState->driverState = CSI2_DRIVER_STATE_ON;   /* setup done ok                                */
-
 
                 /* step 27 - Clear FORCERXMODE                                                                      */
                 /*
@@ -2124,13 +2041,10 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                         MIPICSI2_TURNCFG_FORCERXMODE3_MASK |
                         MIPICSI2_TURNCFG_FORCERXMODE4_MASK, 0u);
 
-
                 /* at this moment the interface is setup                                                            */
             } /* if (rez == (Std_ReturnType)E_OK)   */
         } /* if (rez == (Std_ReturnType)E_OK)       */
-
     } /* if if (rez == (Std_ReturnType)E_OK)        */
-
     return rez;
 }
 /* Csi2_ModuleSetup *************************/
@@ -2194,18 +2108,25 @@ uint8 Csi2_GetChannelNum(const Csi2_VCDriverStateType *pVCState)
 Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsType *setupParamPtr)
 {
 #if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
-    uint32                  i;
     Csi2_SetupParamsType    *pStaticParams;
-    Csi2_VCParamsType       *pStaticVcParams, *pStaticAuxParams;
-    Csi2_MetaDataParamsType *pStaticMdParams;
-    Csi2_DriverParamsType   *pDrvParams;
+    #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
+        Csi2_VCParamsType       *pStaticAuxParams;
+    #endif
+    #if (CSI2_METADATA_DATA_USAGE == STD_ON)
+        Csi2_MetaDataParamsType *pStaticMdParams;
+    #endif
+    #ifdef linux
+        Csi2_VCDriverStateType  *pVcDriverState;
+        uint64_t     dataRange;
+    #endif
+#endif
+#if (CSI2_FRAMES_COUNTER_USED == STD_ON)
     volatile uint32         *pFramesCntr;
-#ifdef linux
-    Csi2_VCDriverStateType  *pVcDriverState;
-    uint64_t     dataRange;
 #endif
+    uint32                  i;
+    Csi2_VCParamsType       *pStaticVcParams;
+    Csi2_DriverParamsType   *pDrvParams;
 
-#endif
     Std_ReturnType  rez = (Std_ReturnType)E_OK;                     /*call result, intialized as good               */
 
     CSI2_TRACE(RSDK_TRACE_EVENT_FUNC_START, (uint16_t)RSDK_TRACE_DBG_CSI2_INIT, (uint32_t)CSI2_SEQ_BEGIN);
@@ -2216,24 +2137,36 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
     {       /* correct parameters, continue     */
 #endif /* (CSI2_DEV_ERROR_DETECT == STD_ON)     */
 
+        /* initialize the driver parameters pointer and the VC specific parameters, needed at run-time    */
+        pDrvParams = &gCsi2Settings[(uint8)unitId];
+        pStaticVcParams = &gsCsi2VCParamCopy[(uint8)unitId][0u];
+    #if (CSI2_FRAMES_COUNTER_USED == STD_ON)
+        pFramesCntr = &gsCsi2FramesCounter[(uint8)unitId][0];
+    #endif
+        for (i = 0; i < (uint32)CSI2_MAX_VC; i++)
+        {
+            if (setupParamPtr->vcConfigPtr[i] != (Csi2_VCParamsType*)NULL_PTR)
+            {
+                /* copy the VC parameters                                                                       */
+                pStaticVcParams[i] = *setupParamPtr->vcConfigPtr[i];
+                pDrvParams->workingParamVC[i].vcParamsPtr = &pStaticVcParams[i];
+            }
+            else
+            {
+                pDrvParams->workingParamVC[i].vcParamsPtr = (Csi2_VCParamsType*)NULL_PTR;
+            }
+        }
+
+
 #if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 
-
-
-
-
-
-
-
-
-
         pStaticParams = &gsCsi2UnitParamCopy[(uint8)unitId];
-        pStaticVcParams = &gsCsi2VCParamCopy[(uint8)unitId][0u];
-        pStaticAuxParams = &gsCsi2AuxParamCopy[(uint8)unitId][0u];
-        pStaticMdParams = &gsCsi2MdParamCopy[(uint8)unitId][0u];
-        pDrvParams = &gCsi2Settings[(uint8)unitId];
-        pFramesCntr = &gsCsi2FramesCounter[(uint8)unitId][0];
-
+        #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
+            pStaticAuxParams = &gsCsi2AuxParamCopy[(uint8)unitId][0u];
+        #endif
+        #if (CSI2_METADATA_DATA_USAGE == STD_ON)
+            pStaticMdParams = &gsCsi2MdParamCopy[(uint8)unitId][0u];
+        #endif
         /* copy the current parameters for future use, if it will be required                                       */
         if (pStaticParams != setupParamPtr)
         {
@@ -2242,17 +2175,11 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
             {
                 if (setupParamPtr->vcConfigPtr[i] != (Csi2_VCParamsType*)NULL_PTR)
                 {
-                    /* copy the VC parameters                                                                       */
-                    pStaticVcParams[i] = *setupParamPtr->vcConfigPtr[i];
                     pStaticParams->vcConfigPtr[i] = &pStaticVcParams[i];
-                    pDrvParams->workingParamVC[i].vcParamsPtr = &pStaticVcParams[i];
                     /* clear the frames counters                                                                    */
+    #if (CSI2_FRAMES_COUNTER_USED == STD_ON)
                     pFramesCntr[i] = 0;
-                }
-                else
-                {
-                    pStaticParams->vcConfigPtr[i] = (Csi2_VCParamsType*)NULL_PTR;
-                    pDrvParams->workingParamVC[i].vcParamsPtr = (Csi2_VCParamsType*)NULL_PTR;
+    #endif
                 }
     #if (CSI2_AUXILIARY_DATA_USAGE == STD_ON)
                 if (setupParamPtr->auxConfigPtr[i] != (Csi2_VCParamsType*)NULL_PTR)
@@ -2267,16 +2194,16 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
                 }
     #endif
     #if (CSI2_METADATA_DATA_USAGE == STD_ON)
-                if (setupParamPtr->pMetaData[i] != (Csi2_MetaDataParamsType*)NULL_PTR)
+                if (setupParamPtr->metaDataPtr[i] != (Csi2_MetaDataParamsType*)NULL_PTR)
                 {
                     /* copy the aux VC parameters                                                                   */
-                    pStaticMdParams[i] = *setupParamPtr->pMetaData[i];
-                    pStaticParams->pMetaData[i] = &pStaticMdParams[i];
+                    pStaticMdParams[i] = *setupParamPtr->metaDataPtr[i];
+                    pStaticParams->metaDataPtr[i] = &pStaticMdParams[i];
                     pDrvParams->workingParamVC[i].metaDataUsage = 1u;
                 }
                 else
                 {
-                    pStaticParams->pMetaData[i] = (Csi2_MetaDataParamsType*)NULL_PTR;
+                    pStaticParams->metaDataPtr[i] = (Csi2_MetaDataParamsType*)NULL_PTR;
                     pDrvParams->workingParamVC[i].metaDataUsage = 0u;
                 }
     #endif
@@ -2315,7 +2242,6 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
 /**************************************************************/
 /* Using the DPHY                                             */
 
-
 #if (CSI2_RX_START_STOP_USAGE == STD_ON) || (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 /*================================================================================================*/
 /**
@@ -2336,9 +2262,9 @@ Std_ReturnType Csi2_RxStop(const Csi2_UnitIdType unitId)
     Csi2_DriverParamsType       *pDriverState;
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_RX_STOP, (uint32_t)CSI2_SEQ_BEGIN);
-    if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
+    if (((uint8)unitId >= (uint8)CSI2_MAX_UNITS))
     {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_RX_STOP, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_RX_STOP, (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     else
@@ -2349,12 +2275,13 @@ Std_ReturnType Csi2_RxStop(const Csi2_UnitIdType unitId)
         {
             if(pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_RX_STOP, (uint8)CSI2_E_WRONG_STATE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_API_ID_RX_STOP, (uint8)CSI2_E_DRV_NOT_INIT);
                 CSI2_HALT_ON_ERROR;
             }
             else
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_STATE, (uint8)CSI2_RX_STOP, (uint8)CSI2_E_WRONG_STATE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_STATE, (uint8)CSI2_API_ID_RX_STOP,
+                                                                (uint8)CSI2_E_DRV_WRG_STATE);
                 CSI2_HALT_ON_ERROR;
             }
         }
@@ -2370,15 +2297,15 @@ Std_ReturnType Csi2_RxStop(const Csi2_UnitIdType unitId)
             * which use only UPPERCASE
             */
             CSI2_SET_REGISTRY32(
-                    &gpMipiCsi2Regs[(uint8)unitId]->RX_RXENABLE,
+                    &gMipiCsi2RegsPtr[(uint8)unitId]->RX_RXENABLE,
                     MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_MASK,
                     MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN((uint32)CSI2_RXEN_RXEN_DISABLED)
                     );
-
-            if (((gpMipiCsi2Regs[(uint8)unitId]->RX_RXENABLE & MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_MASK) >>
+            if (((gMipiCsi2RegsPtr[(uint8)unitId]->RX_RXENABLE & MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_MASK) >>
                     MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_SHIFT) != (uint32)CSI2_RXEN_RXEN_DISABLED)
             {
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_HW_RESPONSE_ERROR, (uint8)CSI2_RX_STOP, (uint8)CSI2_E_HW_ERROR);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_HW_RESPONSE_ERROR, (uint8)CSI2_API_ID_RX_STOP,
+                                                                (uint8)CSI2_E_DRV_HW_RESPONSE_ERROR);
                 CSI2_HALT_ON_ERROR;
             }
             else
@@ -2420,9 +2347,9 @@ Std_ReturnType Csi2_RxStart(const Csi2_UnitIdType unitId)
     Csi2_DriverParamsType       *pDriverState;
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_RX_START, (uint32_t)CSI2_SEQ_BEGIN);
-    if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
+    if (((uint8)unitId >= (uint8)CSI2_MAX_UNITS))
     {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_RX_START, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_RX_START, (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     else
@@ -2440,14 +2367,15 @@ Std_ReturnType Csi2_RxStart(const Csi2_UnitIdType unitId)
                 * which use only UPPERCASE
                 */
                 CSI2_SET_REGISTRY32(
-                        &gpMipiCsi2Regs[(uint8)unitId]->RX_RXENABLE,
+                        &gMipiCsi2RegsPtr[(uint8)unitId]->RX_RXENABLE,
                         MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_MASK,
                         MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN((uint32)CSI2_RXEN_RXEN_ENABLED)
                         );                                  /* enable clk                                           */
-                if (((gpMipiCsi2Regs[(uint8)unitId]->RX_RXENABLE & MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_MASK) >>
+                if (((gMipiCsi2RegsPtr[(uint8)unitId]->RX_RXENABLE & MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_MASK) >>
                         MIPICSI2_RX_RXENABLE_CFG_CLK_LANE_EN_SHIFT) != (uint32)CSI2_RXEN_RXEN_ENABLED)
                 {
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_HW_RESPONSE_ERROR, (uint8)CSI2_RX_START, (uint8)CSI2_E_HW_ERROR);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_HW_RESPONSE_ERROR, (uint8)CSI2_API_ID_RX_START,
+                                                                (uint8)CSI2_E_DRV_HW_RESPONSE_ERROR);
                     CSI2_HALT_ON_ERROR;
                     pDriverState->driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED;  /* interface in an wrong state  */
                 }
@@ -2459,11 +2387,13 @@ Std_ReturnType Csi2_RxStart(const Csi2_UnitIdType unitId)
             case CSI2_DRIVER_STATE_ON:                      /* nothing to do, the interface is already on           */
                 break;
             case CSI2_DRIVER_STATE_NOT_INITIALIZED:
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_RX_START, (uint8)CSI2_E_WRONG_STATE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_API_ID_RX_START,
+                                                                    (uint8)CSI2_E_DRV_NOT_INIT);
                 CSI2_HALT_ON_ERROR;
                 break;
             default:                                        /* wrong interface status (not init or off)             */
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_STATE, (uint8)CSI2_RX_START, (uint8)CSI2_E_WRONG_STATE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_STATE, (uint8)CSI2_API_ID_RX_START,
+                                                                    (uint8)CSI2_E_DRV_WRG_STATE);
                 CSI2_HALT_ON_ERROR;
                 break;
         }
@@ -2473,10 +2403,10 @@ Std_ReturnType Csi2_RxStart(const Csi2_UnitIdType unitId)
 }
 /* Csi2_RxStart *************************/
 
-#endif  /* (CSI2_RX_START_STOP_USAGE == STD_ON) */
+    #endif  /* (CSI2_RX_START_STOP_USAGE == STD_ON) */
 
 
-#if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
+    #if (CSI2_POWER_ON_OFF_USAGE == STD_ON)
 /*================================================================================================*/
 /**
  * @brief       The function power off the CSI2 module.
@@ -2497,9 +2427,9 @@ Std_ReturnType Csi2_PowerOff(const Csi2_UnitIdType unitId)
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_POWER_OFF, (uint32_t)CSI2_SEQ_BEGIN);
     rez = (Std_ReturnType)E_OK;
-    if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
+    if (((uint8)unitId >= (uint8)CSI2_MAX_UNITS))
     {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_POWER_OFF, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_POWER_OFF, (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     else
@@ -2507,7 +2437,7 @@ Std_ReturnType Csi2_PowerOff(const Csi2_UnitIdType unitId)
         pDriverState = &gCsi2Settings[(uint8)unitId];
         if (pDriverState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED)
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_POWER_OFF, (uint8)CSI2_E_WRONG_STATE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_API_ID_POWER_OFF, (uint8)CSI2_E_DRV_NOT_INIT);
             CSI2_HALT_ON_ERROR;
         }
         else
@@ -2518,10 +2448,11 @@ Std_ReturnType Csi2_PowerOff(const Csi2_UnitIdType unitId)
             }
             if (rez == (Std_ReturnType)E_OK)
             {
-                gpMipiCsi2Regs[(uint8)unitId]->DPHY_RSTCFG = 0u;        /* poweroff PHY                             */
-                if ((gpMipiCsi2Regs[(uint8)unitId]->DPHY_RSTCFG & MIPICSI2_DPHY_RSTCFG_RSTZ_MASK) != 0u)
+                gMipiCsi2RegsPtr[(uint8)unitId]->DPHY_RSTCFG = 0u;        /* poweroff PHY                             */
+                if ((gMipiCsi2RegsPtr[(uint8)unitId]->DPHY_RSTCFG & MIPICSI2_DPHY_RSTCFG_RSTZ_MASK) != 0u)
                 {
-                    CSI2_REPORT_ERROR(RSDK_CSI2_DRV_HW_RESPONSE_ERROR, (uint8)CSI2_POWER_OFF, (uint8)CSI2_E_HW_ERROR);
+                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_HW_RESPONSE_ERROR, (uint8)CSI2_API_ID_POWER_OFF,
+                                                                    (uint8)CSI2_E_DRV_HW_RESPONSE_ERROR);
                     CSI2_HALT_ON_ERROR;
                 }
                 else
@@ -2561,20 +2492,22 @@ Std_ReturnType Csi2_PowerOn(const Csi2_UnitIdType unitId)
     Std_ReturnType              rez;
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_POWER_ON, (uint32_t)CSI2_SEQ_BEGIN);
-    if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
+    if (((uint8)unitId >= (uint8)CSI2_MAX_UNITS))
     {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_POWER_ON, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_POWER_ON, (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     else
     {
         if (gCsi2Settings[(uint8)unitId].driverState == CSI2_DRIVER_STATE_OFF)
         {   /* only in an appropriate state     */
-            rez = Csi2_ModuleSetup(unitId, &gsCsi2UnitParamCopy[(uint8)unitId]);    /* return the init status       */
+            rez = Csi2_ModuleSetup(unitId,
+                    &gsCsi2UnitParamCopy[(uint8)unitId]
+                                         );    /* return the init status       */
         }
         else
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_POWER_OFF, (uint8)CSI2_E_WRONG_STATE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_API_ID_POWER_ON, (uint8)CSI2_E_DRV_NOT_INIT);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -2583,10 +2516,10 @@ Std_ReturnType Csi2_PowerOn(const Csi2_UnitIdType unitId)
 }
 /* Csi2_PowerOn *************************/
 
-#endif  /* (CSI2_POWER_ON_OFF_USAGE == STD_ON)  */
+    #endif  /* (CSI2_POWER_ON_OFF_USAGE == STD_ON)  */
 
 
-#if (CSI2_SECONDARY_FUNCTIONS_USAGE == STD_ON)
+    #if (CSI2_SECONDARY_FUNCTIONS_USAGE == STD_ON)
 
 /*================================================================================================*/
 /**
@@ -2606,28 +2539,33 @@ Csi2_LaneStatusType Csi2_GetInterfaceStatus(const Csi2_UnitIdType unitId)
 {
     Std_ReturnType      rez = (Std_ReturnType)E_OK;
     Csi2_LaneStatusType ret = CSI2_LANE_STATE_ERR;
+    Csi2_DriverParamsType *pState;
+    pState = &gCsi2Settings[unitId];
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_IFACE_STAT, (uint32_t)CSI2_SEQ_BEGIN);
-    if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
+    if (((uint8)unitId >= (uint8)CSI2_MAX_UNITS))
     {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_GET_VALUE, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_GET_INTERFACE,
+                                                                    (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     if (rez == (Std_ReturnType)E_OK)
     {
-        if((gpMipiCsi2Regs[(uint8)unitId] == (GENERIC_CSI2_Type*)NULL_PTR) ||
-                              (gCsi2Settings[(uint8)unitId].driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED))
+        if(
+                (gMipiCsi2RegsPtr[(uint8)unitId] == (GENERIC_CSI2_Type*)NULL_PTR)
+                || (pState->driverState == CSI2_DRIVER_STATE_NOT_INITIALIZED))
         {
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_GET_VALUE, (uint8)CSI2_E_WRONG_STATE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_API_ID_GET_INTERFACE,
+                                                                   (uint8)CSI2_E_DRV_NOT_INIT);
             CSI2_HALT_ON_ERROR;
         }
         else
         {
-            if (gCsi2Settings[(uint8)unitId].driverState == CSI2_DRIVER_STATE_STOP)
+            if (pState->driverState == CSI2_DRIVER_STATE_STOP)
             {
                 ret = CSI2_LANE_STATE_STOP;
             }
-            else if (gCsi2Settings[(uint8)unitId].driverState == CSI2_DRIVER_STATE_ON)
+            else if (pState->driverState == CSI2_DRIVER_STATE_ON)
             {
                 ret = CSI2_LANE_STATE_ON;
             }
@@ -2663,9 +2601,10 @@ Csi2_LaneStatusType Csi2_GetLaneStatus(const Csi2_UnitIdType unitId, const Csi2_
     Csi2_LaneStatusType ret = CSI2_LANE_STATE_ERR;
 
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_LANE_STAT, (uint32_t)CSI2_SEQ_BEGIN);
-    if ((uint8)unitId >= (uint8)CSI2_MAX_UNITS)
+    if (((uint8)unitId >= (uint8)CSI2_MAX_UNITS))
     {
-        CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_GET_VALUE, (uint8)CSI2_E_PARAM_HANDLE);
+        rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_UNIT_ID, (uint8)CSI2_API_ID_GET_INTERFACE,
+                                                                    (uint8)CSI2_E_DRV_WRG_UNIT_ID);
         CSI2_HALT_ON_ERROR;
     }
     if (rez == (Std_ReturnType)E_OK)
@@ -2673,12 +2612,14 @@ Csi2_LaneStatusType Csi2_GetLaneStatus(const Csi2_UnitIdType unitId, const Csi2_
         switch(gCsi2Settings[unitId].driverState)
         {
             case CSI2_DRIVER_STATE_NOT_INITIALIZED:
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_GET_VALUE, (uint8)CSI2_E_WRONG_STATE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NOT_INIT, (uint8)CSI2_API_ID_GET_INTERFACE,
+                                                                    (uint8)CSI2_E_DRV_NOT_INIT);
                 CSI2_HALT_ON_ERROR;
                 break;
             case CSI2_DRIVER_STATE_OFF:
                 ret = CSI2_LANE_STATE_OFF;
-                CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_STATE, (uint8)CSI2_GET_VALUE, (uint8)CSI2_E_WRONG_STATE);
+                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_WRG_STATE, (uint8)CSI2_API_ID_GET_INTERFACE,
+                                                                    (uint8)CSI2_E_DRV_WRG_STATE);
                 CSI2_HALT_ON_ERROR;
                 break;
             case CSI2_DRIVER_STATE_STOP:
@@ -2692,11 +2633,11 @@ Csi2_LaneStatusType Csi2_GetLaneStatus(const Csi2_UnitIdType unitId, const Csi2_
     }
     if (rez == (Std_ReturnType)E_OK)
     {
-        regStat = gpMipiCsi2Regs[unitId]->RX_RXNULANE;
+        regStat = gMipiCsi2RegsPtr[unitId]->RX_RXNULANE;
         if ((uint32)laneId < regStat)
         {
             ret = CSI2_LANE_STATE_ON;                                   /* default - line on                        */
-            regStat = gpMipiCsi2Regs[unitId]->RX_LANCS[(uint8)laneId];
+            regStat = gMipiCsi2RegsPtr[unitId]->RX_LANCS[(uint8)laneId];
             if ((regStat & CSI2_LAN_CS_MARK) != 0u)
             {
                 ret = CSI2_LANE_STATE_MARK;                             /* default - line on                        */
@@ -2721,7 +2662,8 @@ Csi2_LaneStatusType Csi2_GetLaneStatus(const Csi2_UnitIdType unitId, const Csi2_
         else
         {
             ret = CSI2_LANE_STATE_ERR;
-            CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_LANES_NR, (uint8)CSI2_GET_VALUE, (uint8)CSI2_E_PARAM_HANDLE);
+            rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_INVALID_LANES_NR, (uint8)CSI2_API_ID_GET_INTERFACE,
+                                                                (uint8)CSI2_E_DRV_INVALID_LANES_NR);
             CSI2_HALT_ON_ERROR;
         }
     }
@@ -2729,8 +2671,7 @@ Csi2_LaneStatusType Csi2_GetLaneStatus(const Csi2_UnitIdType unitId, const Csi2_
     return ret;
 }
 /* Csi2_GetLaneStatus *************************/
-#endif  /* (CSI2_SECONDARY_FUNCTIONS_USAGE == STD_ON)   */
-
+    #endif  /* (CSI2_SECONDARY_FUNCTIONS_USAGE == STD_ON)   */
 
 /* Using the DPHY                                             */
 /**************************************************************/
@@ -2803,11 +2744,10 @@ uint32 Csi2_GetBufferRealLineLen(const Csi2_DataStreamType dataType, const uint3
 #endif
             {   /* it is regular data
                  * add the required space for statistics                                                        */
-                rez +=
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
-                        (uint32)autoStatistics *
+                rez += (uint32)autoStatistics * (uint32)CSI2_LINE_STAT_LENGTH;  /* adding the stats             */
 #endif
-                        (uint32)CSI2_LINE_STAT_LENGTH;          /* adding the stats                             */
+
                 /*
                 * @section Csi2_c_REF_1
                 * Violates MISRA 2012 Advisory Directive 4.9,
@@ -2845,24 +2785,16 @@ uint32 Csi2_GetFramesCounter(const Csi2_UnitIdType unitId, const Csi2_VirtChnlId
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_FRM_CNTR, (uint32_t)CSI2_SEQ_BEGIN);
 
     uint32 rez = 0xffffffffu;
-
-
-
-
-
-
-
     if (((uint8)unitId < (uint8)CSI2_MAX_UNITS) && ((uint8)vcId < (uint8)CSI2_MAX_VC))
     {
         rez = gsCsi2FramesCounter[(uint8)unitId][(uint8)vcId];
     }
 
-
     CSI2_TRACE(RSDK_TRACE_EVENT_DBG_INFO, (uint16_t)RSDK_TRACE_DBG_CSI2_GET_FRM_CNTR, (uint32_t)CSI2_SEQ_END);
     return rez;
 }
 /* Csi2_GetFramesCounter *************************/
-#endif
+#endif  /* #if (CSI2_FRAMES_COUNTER_USED == STD_ON)     */
 
 
 #ifdef __cplusplus

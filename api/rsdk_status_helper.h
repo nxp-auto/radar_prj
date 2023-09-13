@@ -1,62 +1,47 @@
 /*
-* Copyright 2019-2020 NXP
+* Copyright 2019-2023 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
 
-#ifndef SPI_DRIVER_MODULE_H
-#define SPI_DRIVER_MODULE_H
+#ifndef RSDK_STATUS_HELPER_H
+#define RSDK_STATUS_HELPER_H
 
 /*==================================================================================================
 *                                        INCLUDE FILES
 ==================================================================================================*/
-#include <linux/cdev.h>
-#include <linux/interrupt.h>
-#include <linux/atomic.h>
-#include "rsdk_S32R45.h"
+
+#include "rsdk_toolchain_helper.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*==================================================================================================
+*                                          CONSTANTS
+==================================================================================================*/
+
+/*==================================================================================================
 *                                      DEFINES AND MACROS
 ==================================================================================================*/
-#define PR_ERR(fmt, ...) pr_err(fmt, ##__VA_ARGS__)
-#ifdef PRINTK_ENABLE
-#define PR_ALERT(fmt, ...) pr_alert(fmt, ##__VA_ARGS__)
-#else
-#define PR_ALERT(fmt, ...) 
-#endif
+
+#define E_OK        RSDK_SUCCESS
+#define E_NOT_OK    RSDK_ERROR
+
+#define RSDK_REPORT_ERROR(rsdkErrCode, moduleId, instanceId, apiId, errCode)    rsdkErrCode
+
+/*==================================================================================================
+*                                             ENUMS
+==================================================================================================*/
 
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
-typedef struct
-{
-    uint32_t devId;
-
-    uint32_t *pMemMapBaseAddr;
-    uint64_t  memSize;
-
-} spiDtsInfo_t;
-
-typedef struct
-{
-    struct device *dev;
-    struct cdev    cdevice;
-    dev_t          deviceNum;
-    int32_t        gUserPid;
-
-    spiDtsInfo_t       dtsInfo;
-    volatile struct SPI_tag *pSpiRegs;
-
-} spiDevice_t;
+typedef rsdkStatus_t Std_ReturnType;
 
 /*==================================================================================================
 *                                GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
-extern spiDevice_t spiDevice;
 
 /*==================================================================================================
 *                                    FUNCTION PROTOTYPES
@@ -66,4 +51,4 @@ extern spiDevice_t spiDevice;
 }
 #endif
 
-#endif  //SPI_DRIVER_MODULE_H
+#endif /* RSDK_STATUS_HELPER_H */

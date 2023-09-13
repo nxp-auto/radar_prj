@@ -24,9 +24,14 @@ extern "C" {
 *                                      DEFINES AND MACROS
 ==================================================================================================*/
 
-//identifies stand-alone build option (no OS support)
-#define RSDK_OSENV_SA (!(defined(__linux__) || defined(__QNX__) || defined(__INTEGRITY) || defined(__ZEPHYR__)))
-
+/* Identifies stand-alone build option (no OS support) */
+#ifndef RSDK_OSENV_SA
+#if ( defined(__linux__) || defined(__QNX__) || defined(__INTEGRITY) || defined(__ZEPHYR__) )
+	#define RSDK_OSENV_SA 0
+#else
+	#define RSDK_OSENV_SA 1
+#endif
+#endif
 /*==================================================================================================
 *                                             ENUMS
 ==================================================================================================*/

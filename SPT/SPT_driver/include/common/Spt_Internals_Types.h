@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -19,6 +19,7 @@ extern "C"{
 ==================================================================================================*/
 #include "Spt_Types.h"
 #include "Spt_Cfg.h"
+#include "rsdk_version.h"
 
 #if (!RSDK_OSENV_SA) && !defined(__KERNEL__)
 #include "Spt_Oal.h"
@@ -41,11 +42,11 @@ extern "C"{
 /*==================================================================================================
 *                                       DEFINES AND MACROS
 ==================================================================================================*/
-
 #define SPT_TIMEOUT_CNT_BLOCK_MODE      (100000u)   /* preload value for blocking mode wait loop */
 #define SPT_TIMEOUT_CNT_START           (10000u)
 
-#define SPT_TIMEOUT_CNT_DISABLE         (100u)      /* preload value for SPT disable wait loop (needs to be least 100 AHB clock cycles) */
+#define SPT_TIMEOUT_CNT_DISABLE         (100u)      /* preload value for SPT disable wait loop
+                                                     * (needs to be least 100 AHB clock cycles) */
 
 #define SPT_SEQUENCER_STATE_RST         ((uint32)0)
 #define SPT_SEQUENCER_STATE_START       ((uint32)1)

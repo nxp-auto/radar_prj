@@ -38,7 +38,7 @@ COMPILE_MODULES := CDD_Csi2.o Csi2_Irq.o rsdk_csi2_interrupts.o rsdk_csi2_rpc_se
 
 # module flags
 
-CFLGS += -std=gnu99 -Ulinux -Dlinux -DS32R45 -DCONFIG_OF_PROMTREE -DS32R45_COMMON_H_ $(EXTRA_CFLAGS)
+CFLGS += -std=gnu99 -Ulinux -Dlinux -DS32R45 -DCONFIG_OF_PROMTREE $(EXTRA_CFLAGS)
 VPATH += . $(CAPATH)/$(SRCS_DIR) $(CAPATH)/$(EXTRA_SRCDIR) 
 src = .
 obj-m := $(MODULE_NAME).o

@@ -25,20 +25,11 @@ extern "C" {
 /** Not API. Internal use only. */
 #define RSDK_RFE_STATUS_BASE  0x10000U
 #define RSDK_SPT_STATUS_BASE  0x11000U
-
 #define RSDK_DSP_STATUS_BASE  0x12000U
-
 #define RSDK_CSI2_STATUS_BASE 0x13000U
 #define RSDK_CTE_STATUS_BASE  0x12500U
-
 #define RSDK_LAX_STATUS_BASE  0x14000U
-
 #define RSDK_APP_STATUS_BASE  0x15000U
-
-
-#define RSDK_REPORT_ERROR(errCode) errCode
-#define E_OK RSDK_SUCCESS
-#define E_NOT_OK RSDK_ERROR
 
 /*==================================================================================================
 *                                             ENUMS
@@ -54,8 +45,10 @@ typedef enum
     RSDK_ERROR,
     RSDK_INVALID_PARAMETER,
 
-    RSDK_RFE_EXCEDDED_MAX_SUPPORTED_DEVICES = RSDK_RFE_STATUS_BASE, /**< The frontendId is bigger than @ref
-                                                                          RSDK_RFE_MAX_SUPPORTED_DEVICES */
+    RSDK_RFE_EXCEDDED_MAX_SUPPORTED_DEVICES = RSDK_RFE_STATUS_BASE, /**< The frontendId is bigger than 
+                                                        \ifnot (RF_ABSTRACT_2_0) @ref RSDK_RFE_MAX_SUPPORTED_DEVICES
+                                                        \else maximum supported devices
+                                                        \endif */
     RSDK_RFE_UNSUPPORTED_FRONT_END_DEVICE,                          /**< the device specified isn't supported */
     RSDK_RFE_INVALID_MODE,                                          /**< the mode requested isn't supported */
     RSDK_RFE_MR3003_EXCEEDED_LAST_REGISTER_PAGE, /**< driver tried to access register page that doesn't exist */
@@ -618,6 +611,8 @@ typedef enum
     RSDK_CTE_DRV_ERR_COPY_DATA_ERROR,       /**< The data couldn't be copied between kernel<->user_space - Linux only */
     RSDK_CTE_DRV_ERR_EVT_CONN,              /**< Error when trying to connect to kernel events */
     RSDK_CTE_DRV_ERR_START_EVT_MGR,         /**< Error starting the events manager */
+    RSDK_CTE_DRV_ERR_TT1_IN_EXECUTION,      /**< TimeTable 1 execution, which not allow sw RFS generation */
+    RSDK_CTE_DRV_ERR_SW_RFS_ERROR,          /**< TimeTable 1 execution after software RFS, which is not normal */
 
     /*-------------------------------------------------------------------------*/
     /*SPT Driver API error codes:*/
@@ -633,7 +628,7 @@ typedef enum
     RSDK_SPT_RET_ERR_MEM,    /**< SPT hw error: internal memory handling, triggers an ECS interrupt.
                                 MEM_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
     RSDK_SPT_RET_ERR_DMA,    /**< SPT hw error: SDMA operation, triggers an ECS interrupt.
-                                DMA_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
+                                \if S32R294_DOCS DMA_ERR_STATUS \else GBL_STATUS \endif register value is passed to the user callback (rsdkSptIsrCb_t) */
     RSDK_SPT_RET_ERR_HW_ACC, /**< SPT hw error: tried to execute an instruction with illegal operands or configuration, triggered an ECS interrupt.
                                 HW_ACC_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
     RSDK_SPT_RET_ERR_ILLOP,  /**< SPT hw error: Illegal SPT instruction, triggers an ECS interrupt.
@@ -652,15 +647,12 @@ typedef enum
     RSDK_SPT_RET_ERR_IRQ_REG,       /**< SPT error: the irq handler was not registered. */
     RSDK_SPT_RET_ERR_UNMAP_SPT_MEM, /**< Driver error: Failed to unmap SPT registers' addresses. */
 
-
     RSDK_SPT_RET_ERR_WR,            /**< SPT hw error: WR or SPR access error.
                                          WR_ACCESS_ERR_REG register value is passed to the user callback (rsdkSptIsrCb_t)*/
-
     RSDK_SPT_RET_ERR_ILLOP_SCS0,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer0.
                                     SCS0_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
     RSDK_SPT_RET_ERR_ILLOP_SCS1,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer1.
                                     SCS1_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
-
     RSDK_SPT_RET_ERR_ILLOP_SCS2,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer2.
                                     SCS2_STATUS1 register value is passed to the user callback (rsdkSptIsrCb_t)*/
     RSDK_SPT_RET_ERR_ILLOP_SCS3,    /**< SPT hw error: Illegal SPT instruction in Slave Command Sequencer3.
@@ -668,8 +660,6 @@ typedef enum
     RSDK_SPT_RET_ERR_HW2_ACC, /**< SPT hw error: tried to execute an instruction with illegal operands or configuration, related to the 2nd instances
                                   of the SPT Accelerator modules (e.g. FFT2, MAXS2 etc). Triggers an ECS interrupt.
                                   HW2_ACC_ERR_STATUS register value is passed to the user callback (rsdkSptIsrCb_t) */
-
-
     RSDK_SPT_RET_WARN_DRV_BUSY,     /**< Driver API warning: an API call is already in progress on another thread */
     RSDK_SPT_RET_ERR_API_INIT_LOCK_FAIL,    /**< Driver API error: could not init mutex for controlling multithreaded API call sequence */
     RSDK_SPT_RET_ERR_API_ENTER_LOCK_FAIL,   /**< Driver API error: could not lock mutex for controlling multithreaded API call sequence */
@@ -682,25 +672,19 @@ typedef enum
     RSDK_SPT_RET_ERR_CHECK_WATERMARK,       /**< Driver error: Failed to check if the watermark instruction is placed at the start of the kernel code. */
 	RSDK_SPT_RET_ERR_INIT_Q_FAIL,    /**< Driver error: Failed to init the queue used to handle irq data processing on separate thread. */
 	RSDK_SPT_RET_ERR_BBE32_REBOOT,   /**< Driver API error: could not reboot the BBE32 */
-
-
-
-
-
-
     RSDK_SPT_RET_ERR_INVALID_KERNEL, /**< Driver error: detected invalid SPT kernel code, which does not start with the mandatory watermarking instruction.
                                         See also #SPT_KERNEL_WATERMARK */
     RSDK_SPT_RET_ERR_HW_RST,         /**< SPT error: hardware is in unexpected RST state */
 
     RSDK_SPT_RET_ERR_OTHER = RSDK_SPT_STATUS_BASE + 0xFFFU, /**< Any other return status not covered above.
                                        No SPT error codes should be defined with a value greater than this one.*/
-
     RSDK_DSP_RET_ERR_CMD_INVALID = RSDK_DSP_STATUS_BASE, /**< DSP Command Error: Command ID not supported. */
-	RSDK_DSP_RET_ERR_CRC_INVALID,						 /**< DSP Command CRC Error: Recomputed CRC does not match with the received CRC */
+
 	RSDK_DSP_RET_ERR_CMD_NO_DATA,						  /**< DSP Command Error: New command interrupt received, but no data available in the queue. */
+	RSDK_DSP_RET_ERR_CRC_INVALID,						 /**< DSP Command CRC Error: Recomputed CRC does not match with the received CRC */
 	RSDK_DSP_RET_WARN_CMD_CRC_DISABLED, /**< DSP Command Warning: CRC verification is disabled. This might be intentional, or due to a communication error.*/
-	RSDK_DSP_RET_ERR_EXCEPTION,			/**< TODO: remove? DSP Exception error. BBE32 exception context (registers exccause, exvaddr, ps, epc1) is saved to DSP_DEBUG<1..4>_REG.
-	 	 	 	 	 	 	 	 	 	 	 "exccause" register value is also passed to the user callback (rsdkSptIsrCb_t dspIsrCb).
+
+	RSDK_DSP_RET_ERR_EXCEPTION,			/**<  DSP Exception error. "exccause" register value is also passed to the user callback (rsdkSptIsrCb_t dspIsrCb).
 	 	 	 	 	 	 	 	 	 	 	 BBE32 execution is halted in the exception handler. */
 	RSDK_DSP_RET_ERR_AXI_WRITE,		/**< DSP AXI WriteErr interrupt was received. BBE32 interrupt context (exccause, exvaddr, ps, epc1) is saved to DSP_DEBUG<1..4>_REG.
 	 	 	 	 	 	 	 	 	 	 "exccause" register value is also passed to the user callback (rsdkSptIsrCb_t dspIsrCb) */
@@ -710,15 +694,36 @@ typedef enum
 	RSDK_DSP_RET_ERR_INT_ENABLE,		/**< DSP xos_interrupt_enable has encountered an error. */
 	RSDK_DSP_RET_ERR_THR_RESUME,	/**< DSP xos_thread_resume has encountered an error. */
 	RSDK_DSP_RET_ERR_TIMER_START,   /**< DSP xos_start_system_timer has encountered an error. */
-	RSDK_DSP_RET_ERR_DISP_CONFIG,	/**< DSP dispatcher was not able to start its scheduling loop. It retuns to the caller. */
+
+	RSDK_DSP_RET_ERR_COMM_INIT_FAIL, /**< DSP dispatcher has encountered an error in the initialization of the Inter-Platform Communication Framework(IPCF). */
 	RSDK_DSP_RET_ERR_INVALID_PARAM, /**< DSP Dispatcher API error: Input parameter value or combination of values not supported. */
-	RSDK_DSP_RET_ERR_INVALID_MSG_BUFF, /**< DSP Dispatcher API error: Message buffer not allocated properly at address RSDK_DSPHD_MSG_BASE_ADDR. */
-	RSDK_DSPHD_RET_ERR_INVALID_MSG_BUFF, /**< DSP Host Driver error: Message buffer not allocated properly at address RSDK_DSPHD_MSG_BASE_ADDR. */
+	RSDK_DSP_RET_ERR_INVALID_MSG_BUFF, /**< DSP Dispatcher error: Message buffer not allocated properly. */
+	RSDK_DSP_RET_ERR_RELEASE_MSG_BUFF, /**< DSP Dispatcher error: Failed to release message buff. */
+	RSDK_DSP_RET_ERR_TX_FAILED, /**< DSP Dispatcher error: Message sent from DSP Dispatcher to DSP Host Driver failed. */
+
+	RSDK_DSP_RET_ERR_CE_JOBS_NOT_UPDATED, /**< DSP dispatcher was not able update the periodic chirp done jobs, as requested by the host CPU */
 	RSDK_DSP_RET_ERR_RC_JOBS_NOT_UPDATED, /**< DSP dispatcher was not able update the periodic radar cycle jobs, as requested by the host CPU */
-	RSDK_DSP_RET_ERR_UNKNOWN = RSDK_DSP_STATUS_BASE +  + 0xFFFU,  /**< Unexpected error in DSP Dispatcher. Reason unknown.
+	RSDK_DSP_RET_ERR_LONG_JOBS_NOT_UPDATED, /**< DSP dispatcher was not able update the periodic long jobs, as requested by the host CPU */
+	RSDK_DSP_RET_ERR_TRACE_DISABLED,	/**< DSP dispatcher was not built with trace support */
+	RSDK_DSP_RET_ERR_TRACE_START,	/**< DSP dispatcher reported an error when initializing the trace logger*/
+
+	RSDK_DSP_RET_ERR_DISP_CONFIG,	/**< DSP dispatcher was not able to start its scheduling loop. It retuns to the caller. */
+	RSDK_DSP_RET_ERR_FP, /**< DSP dispatcher reported a Floating-Point Error */
+	RSDK_DSP_ALGO_WRONG_PARAM, /**< DSP algo reported a bad parameter error */
+	RSDK_DSP_ALGO_WRONG_ALIGN, /**< DSP algo reported an allignment error */
+	RSDK_DSP_ALGO_CANNOT_CONVERT_TO_FIXED_POINT,  /**< DSP algo reported a conversion error to Q15 */
+
+	RSDK_DSPHD_RET_ERR_INVALID_PARAMETER,   /**< DSP Host Driver error: Parameter value or combination of values not supported. */
+	RSDK_DSPHD_RET_ERR_IRQ_REG, /**< DSP dispatcher has encountered an error in the initialization of IPCF, the irq handler was not registered */
+	RSDK_DSPHD_RET_ERR_INVALID_MSG_BUFF, /**< DSP Host Driver error: Message buffer not allocated properly. */
+	RSDK_DSPHD_RET_ERR_RELEASE_MSG_BUFF, /**< DSP Host Driver error: Failed to release message buff. */
+	RSDK_DSPHD_RET_ERR_TX_FAILED, /**< DSP Host Driver error: Message sent from DSP Host Driver to DSP Dispatcher failed. */
+	RSDK_DSPHD_RET_ERR_COMM_INIT_FAIL, /**< DSP Host Driver error: The initialization of Inter-Platform Communication Framework(IPCF) has encountered an error. */
+	RSDK_DSPHD_RET_ERR_ACK_OUT_OF_ORDER, /**< DSP Host Driver error: ACK received for another message than the one sent (should not happen). */
+	RSDK_DSPHD_RET_ERR_ACK_TIMEOUT, /**< DSP Host Driver error: ACK not received fast enough. */
+
+	RSDK_DSP_RET_ERR_UNKNOWN = RSDK_DSP_STATUS_BASE + 0xFFFU,  /**< Unexpected error in DSP Dispatcher. Reason unknown.
 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 No DSP error codes should be defined with a value greater than this one.*/
-
-
 
 	RSDK_LAX_ERR_INVALID_PARAM = RSDK_LAX_STATUS_BASE, /**< LAX Driver Error: Parameter value or combination not supported. */
 	RSDK_LAX_ERR_NOT_INIT,  /**< LAX Driver Error:  Module not initialized.  */
@@ -778,7 +783,6 @@ typedef enum
 	RSDK_LAX_ERR_BOOT_MSG_MISSMATCH,        /**< Boot failure due to boot complete message mismatch */
 	RSDK_LAX_ERR_BOOT_TIMEOUT,              /**< Boot failure due to timeout waiting for HANDSHAKE Ack msg */
 	RSDK_LAX_ERR_BOOT_HANDSHAKE_FAIL,       /**< Boot failure due to HANDSHAKE Ack returned error */
-
     /*-------------------------------------------------------------------------*/
     /*Application level errors*/
     RSDK_HEAP_MEM_ALLOC_ERROR = RSDK_APP_STATUS_BASE, /**< Not enough space in heap buffer to allocate desired size*/
@@ -787,7 +791,6 @@ typedef enum
 	RSDK_SPT_RET_ERR_TRAM_CHK_FAIL/**< SPT error: TRAM memory check failed */
 } rsdkStatus_t;
 
-typedef rsdkStatus_t Std_ReturnType;
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/

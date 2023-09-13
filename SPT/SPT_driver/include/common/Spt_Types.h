@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -18,6 +18,7 @@ extern "C"{
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 #include "Spt_Cfg.h"
+#include "rsdk_version.h"
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -32,16 +33,12 @@ extern "C"{
 ==================================================================================================*/
 
 /** @addtogroup spt_driver_api_const
-* @{
+*  @{
 */
 
 /*==================================================================================================
 *                                       DEFINES AND MACROS
 ==================================================================================================*/
-
-/** @addtogroup spt_driver_api_const
-* @{
-*/
 
 /**
 * @brief    Maximum number of input parameters to an SPT kernel.
@@ -72,7 +69,7 @@ extern "C"{
 * @brief    Alignment constraint for start address of the SPT data buffers.
 * */
 #define SPT_DATA_ADDR_ALIGN_BYTES   (8u)
-
+/** @}*/
 /*==================================================================================================
 *                                              ENUMS
 ==================================================================================================*/
@@ -96,7 +93,7 @@ extern "C"{
 * hence the need for differentiation between 'address' and 'data' argument types.
 *
 * \attention The SPT hardware instructions cannot handle full-width 32bit addresses, instead they work
-* with an implicit memory base address (which is #SPT_CUBE_BASE_ADDR or #SPT_OTHER_BASE_ADDR)
+* with an implicit memory base address (which is #RSDK_SPT_CUBE_BASE_ADDR or #RSDK_SPT_OTHER_BASE_ADDR)
 * and an address offset on maximum 23 bits.
 *
 * See the @ref spt_call_conv for details.
@@ -106,7 +103,7 @@ typedef enum
     SPT_PARAM_TYPE_NOTINIT = 0U, /**< Parameter is not initialized  */
     SPT_PARAM_TYPE_ADDR,         /**< Parameter represents a memory address.
                                           NOTE that all system memory data addresses which are passed to the SPT
-                                          must be aligned to an #SPT_DATE_ADDR_ALIGN_BYTES boundary*/
+                                          must be aligned to an #SPT_CODE_ADDR_ALIGN_BYTES boundary*/
     SPT_PARAM_TYPE_VALUE,        /**< Parameter represents a scalar value. The SPT driver splits this 32-bit value,
                                           then copies the 8 most significant bits into the imaginary part of a Work
                                           Register and the remaining 24 bits into the real part of the same WR.  */
@@ -132,16 +129,16 @@ typedef enum
 {
     SPT_CMD_NONE = 0U,          /**< dummy value to avoid empty enum declaration */
     SPT_CMD_MEM_ERR_INJECT_EN,  /**< Enable injection of parity errors in the SPT OPRAM and TRAM.
-                                          Parity bits will be altered on subsequent write accesses to memory.
-                                          Then, parity errors will be generated on memory read-back */
+                                     Parity bits will be altered on subsequent write accesses to memory.
+                                     Then, parity errors will be generated on memory read-back */
     SPT_CMD_MEM_ERR_INJECT_DIS, /**< Disable injection of parity errors in the SPT OPRAM and TRAM. */
     SPT_CMD_TRIGGER_SW_EVENT,   /**< Trigger and event on the SPT software event line (SW_EVTREG register),
-                                          to be used by the SPT WAIT instruction */
+                                     to be used by the SPT WAIT instruction */
 #if(SPT_DSP_ENABLE == STD_ON)
     SPT_CMD_GEN_DSP_CMD_CRC,    /**< Compute an 8-bit CRC of the DSP command, accounting for length and endiannes
-                                          to match with the verification on BBE32 side. The command parameter must be a
-                                          pointer of type Spt_DspCmdType. The result is passed in Spt_DspCmdType::crc field.
-                                          See the \ref dsp_call_conv "DSP Calling Convention" */
+                                     to match with the verification on BBE32 side. The command parameter must be a
+                                     pointer of type Spt_DspCmdType. The result is passed in Spt_DspCmdType::crc field.
+                                     See the \ref dsp_call_conv "DSP Calling Convention" */
     SPT_CMD_BBE32_REBOOT
 #endif
 } Spt_DriverCommandIdType;
@@ -149,10 +146,6 @@ typedef enum
 /*==================================================================================================
 *                                  STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
-/**
- *  @brief      Necessary typedef for uintptr, as AUTOSAR doesn't offer one.
- */
-typedef uintptr_t   uintptr;
 
 /** @brief  Definition of callback function type to be called by the SPT interrupt handlers.
 * @details  This callback is offered to the user for additional processing during the SPT interrupts.
@@ -164,7 +157,7 @@ typedef uintptr_t   uintptr;
 * @return       nothing
 *
 * */
-typedef void (*Spt_IsrCbType)(Std_ReturnType isrStatus, uint32 errInfo);
+typedef void (*Spt_IsrCbType)(rsdkStatus_t isrStatus, uint32 errInfo);
 
 #if(SPT_DSP_ENABLE == STD_ON)
 /**
@@ -185,7 +178,7 @@ typedef struct {
 typedef struct
 {
     Spt_ParamType   paramType;  /**< Indicates the intended usage of paramValue as an immediate value or a memory address*/
-    uintptr         paramValue; /**< Can contain either an immediate integer value or a memory address*/
+    uintptr_t       paramValue; /**< Can contain either an immediate integer value or a memory address*/
 } Spt_DrvParamType;
 
 /**
@@ -202,7 +195,7 @@ typedef struct
                                                        If no callback is required then it can be initialized to NULL. */
     Spt_IsrCbType           evtIsrCb; /**< <b>[in]</b> Callback function to be called from the SPT EVT interrupt handler.
                                                        If no callback is required then it can be initialized to NULL. */
-    uintptr                 kernelCodeAddr; /**< <b>[in]</b> Starting address of the SPT executable code, must be aligned
+    uintptr_t               kernelCodeAddr; /**< <b>[in]</b> Starting address of the SPT executable code, must be aligned
                                                              to an #SPT_CODE_ADDR_ALIGN_BYTES boundary*/
     Spt_DrvParamType        kernelParList[SPT_MAX_N_PAR]; /**< <b>[in]</b> List of parameters to be passed to the SPT kernel.*/
     volatile sint32 *       kernelRetPar; /**< <b>[out]</b> Return parameter from the SPT kernel. The SPT driver creates this
@@ -233,7 +226,7 @@ typedef struct
                                          This functions is called by the driver in the middle of the boot procedure,
                                          because the DSP internal memory (IRAM, DRAM) can only be accessed after releasing
                                          the DSP from reset. This callback is required when dspEn != 0. */
-#endif
+#endif  /* #if(SPT_DSP_ENABLE == STD_ON) */
 } Spt_DriverInitPlatSpecificType;
 
 /**
@@ -257,7 +250,7 @@ typedef struct
     uint8 bytes[SPT_CMD_RESULT_SIZE];
 } Spt_DriverCmdResType;
 
-typedef uintptr Spt_DriverCommandParamType;
+typedef uintptr_t Spt_DriverCommandParamType;
 
 /**
 * @brief        Structure containing the ID of the command to be served and additional parameters

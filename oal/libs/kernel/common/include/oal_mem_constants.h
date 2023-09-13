@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2019, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -40,7 +40,7 @@
 
 /* Size of memory reservations in bytes */
 #ifndef OAL_MAX_REGION_SIZE
-#define OAL_MAX_REGION_SIZE 0x7000000U
+#define OAL_MAX_REGION_SIZE 0x20000000U
 #endif
 
 /* Allowed allocations from a Virtual Address Space */

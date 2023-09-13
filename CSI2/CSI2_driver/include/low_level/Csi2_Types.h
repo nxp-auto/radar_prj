@@ -7,13 +7,6 @@
 #ifndef CSI2_TYPES_H
 #define CSI2_TYPES_H
 
-/**
-*   @file
-*
-*   @internal
-*   @addtogroup CSI2
-*   @{
-*/
 
 #ifdef __cplusplus
 extern "C"{
@@ -25,22 +18,16 @@ extern "C"{
 * 2) needed interfaces from external units
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
-    #include "typedefs.h"
-    #include "rsdk_csi2_driver_api.h"
-    #if defined(linux)
-        #include "Csi2_Driver_Module.h"
-    #endif
-    #include "Csi2_Defs.h"
 #include "Csi2_Cfg.h"
 
-
-
-
+    #include "typedefs.h"
+    #include "rsdk_csi2_driver_api.h"
+    #include "Csi2_Defs.h"
+    #if defined(__KERNEL__)
+        #include "Csi2_Driver_Module.h"
+    #endif
 
     #include "S32R45_MIPICSI2.h"
-
-
-
 
 
 /*==================================================================================================
@@ -58,6 +45,11 @@ extern "C"{
 /*==================================================================================================
 *                                       DEFINES AND MACROS
 ==================================================================================================*/
+/**
+*   @addtogroup csi2_asr_api_const
+*   @{
+*/
+
 /**
  * @brief       Errors definitions.
  * @details     All defined errors for a unit, at all levels of the protocol.
@@ -128,12 +120,14 @@ extern "C"{
 
 /*<!-- Some specific statistics definitions ------------------ -->                                              */
 #define CSI2_OFFSET_AUTOCOMPUTE       0x7fff       /**< Definition for auto computing offset for incoming data  */
-#define CSI2_LINE_STAT_LENGTH          80U         /* the length of statistic data                         */
+#define CSI2_LINE_STAT_LENGTH          80U         /**< the length of statistic data                            */
 
-#define CSI2_5TH_CHANNEL_ON         0x400u         /* bit to enable the fifth channel                          */
-#define CSI2_NORM_DTYPE_MASK        0x3fu          /* the mask for the normal data types to be received        */
-#define CSI2_MAX_VC_MASK            0x3u           /* the mask for max Virtual Channel                         */
-#define CSI2_CBUF0_ENA_MASK         0x100u         /* the mask for first buffer                                */
+#define CSI2_5TH_CHANNEL_ON         0x400u         /**< bit to enable the fifth channel                         */
+#define CSI2_NORM_DTYPE_MASK        0x3fu          /* the mask for the normal data types to be received         */
+#define CSI2_MAX_VC_MASK            0x3u           /* the mask for max Virtual Channel                          */
+#define CSI2_CBUF0_ENA_MASK         0x100u         /* the mask for first buffer                                 */
+
+/** @} */
 
 #if defined(TRACE_ENABLE)
     #define CSI2_TRACE(a,b,c) RsdkTraceLogEvent(a,b,c)
@@ -141,10 +135,19 @@ extern "C"{
     #define CSI2_TRACE(a,b,c)
 #endif
 
+/*  Add necessary definitions to replace SAF85XX_COMMON.h definitions, to avoid some type conflicts */
+
+#define E_OK        RSDK_SUCCESS
+#define E_NOT_OK    RSDK_ERROR
+
 
 /*==================================================================================================
 *                                              ENUMS
 ==================================================================================================*/
+/**
+*   @addtogroup csi2_asr_api_data_type
+*   @{
+*/
 /**
  * @brief       The data types accepted by the MIPI-CSI2 interface.
  * @details     The data types accepted by the MIPI-CSI2 interface.
@@ -179,13 +182,16 @@ typedef enum {
      * similar to the CSI2_VC_BUF_5TH_CH_... mask specified for outputDataMode                                  */
     CSI2_DATA_TYPE_AUX_0_NO_DROP    = 0x40u,  /**< auxiliary, mode 0, no drop, mask                             */
     CSI2_DATA_TYPE_R12_A0_NO_DROP   = 0x6Cu,  /**< RAW12 + auxiliary, mode 0, no drop, type to be used          */
+    CSI2_DATA_TYPE_R16_A0_NO_DROP   = 0x6Eu,  /**< RAW16 + auxiliary, mode 0, no drop, type to be used          */
     CSI2_DATA_TYPE_AUX_0_DR_1OF2    = 0x80u,  /**< auxiliary, mode 0, drop 1 of 2, mask                         */
     CSI2_DATA_TYPE_R12_A0_DR_1OF2   = 0xACu,  /**< RAW12 + auxiliary, mode 0, drop 1 of 2, type to be used      */
-
+    CSI2_DATA_TYPE_R16_A0_DR_1OF2   = 0xAEu,  /**< RAW16 + auxiliary, mode 0, drop 1 of 2, type to be used      */
     CSI2_DATA_TYPE_AUX_0_DR_3OF4    = 0xc0u,  /**< auxiliary, mode 0, drop 3 of 4, mask                         */
     CSI2_DATA_TYPE_R12_A0_DR_3OF4   = 0xECu,  /**< RAW12 + auxiliary, mode 0, drop 3 of 4, type to be used      */
+    CSI2_DATA_TYPE_R16_A0_DR_3OF4   = 0xEEu,  /**< RAW16 + auxiliary, mode 0, drop 3 of 4, type to be used      */
     CSI2_DATA_TYPE_AUX_1_NO_DROP    = 0x100u, /**< auxiliary, mode 1, no drop, mask                             */
-    CSI2_DATA_TYPE_R12_A1_NO_DROP   = 0x12Cu, /**< RAW12 + auxiliary, mode 1, no drop, <b>type to be used       */
+    CSI2_DATA_TYPE_R12_A1_NO_DROP   = 0x12Cu, /**< RAW12 + auxiliary, mode 1, no drop, type to be used          */
+    CSI2_DATA_TYPE_R16_A1_NO_DROP   = 0x12Eu, /**< RAW16 + auxiliary, mode 1, no drop, type to be used          */
 #endif
     CSI2_DATA_TYPE_MAX              = 0x13Fu  /**< stream type maximum, not used                                */
 } Csi2_DataStreamType;
@@ -199,13 +205,9 @@ typedef enum {
 typedef enum
 {
     CSI2_UNIT_0 = 0,           /**< First unit (MIPICSI2_0)                         */
-
     CSI2_UNIT_1,               /**< Second unit (MIPICSI2_1)                        */
-
-
     CSI2_UNIT_2,               /**< Third unit (MIPICSI2_2)                         */
     CSI2_UNIT_3,               /**< Fourth unit (MIPICSI2_3)                        */
-
     CSI2_MAX_UNITS             /**< The units limit, to not use in procedure call   */
 } Csi2_UnitIdType;
 
@@ -234,10 +236,8 @@ typedef enum
 {
     CSI2_LANE_0 = 0,           /**< first lane / one lane                                       */
     CSI2_LANE_1,               /**< second lane / two lanes                                     */
-
     CSI2_LANE_2,               /**< third lane / three lanes                                    */
     CSI2_LANE_3,               /**< fourth lane / four lanes                                    */
-
     CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call */
 } Csi2_LaneIdType;
 
@@ -272,10 +272,6 @@ typedef enum {
     CSI2_CHANNEL_B,
     CSI2_CHANNEL_C,
     CSI2_CHANNEL_D,
-    CSI2_CHANNEL_E,
-    CSI2_CHANNEL_F,
-    CSI2_CHANNEL_G,
-    CSI2_CHANNEL_H,
     CSI2_MAX_CHANNEL
 } Csi2_ChannelIdType;
 
@@ -341,44 +337,6 @@ typedef enum {
     CSI2_DPHY_INIT_MAX = CSI2_DPHY_INIT_SHORT_AND_STOP + 1
                                         /**< Setup max limit, not to be used in application                  */
 } Csi2_DphySetupOptionsType;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -454,25 +412,112 @@ typedef enum {
 #endif
 
 
+/**
+ * @brief       Function API enums for CSI2 driver.
+ * @details     Each API function has a specific ID, to make possible to detect the error calling environment.
+ *
+ */
+typedef enum {
+    CSI2_API_ID_SETUP = 0u,         /** The ID for Csi2_Setup function                                          */
+    CSI2_API_ID_RX_STOP,            /** The ID for Csi2_RxStop function                                         */
+    CSI2_API_ID_RX_START,           /** The ID for Csi2_RxStart function                                        */
+    CSI2_API_ID_POWER_OFF,          /** The ID for Csi2_PowerOff function                                       */
+    CSI2_API_ID_POWER_ON,           /** The ID for Csi2_PowerOn function                                        */
+    CSI2_API_ID_GET_INTERFACE,      /** The ID for Csi2_GetInterfaceStatus function                             */
+    CSI2_API_ID_GET_LANE_STATUS,    /** The ID for Csi2_GetLaneStatus function                                  */
+    CSI2_API_ID_GET_BUFFER_LEN,     /** The ID for Csi2_GetBufferRealLineLen function                           */
+    CSI2_API_ID_GET_FRAMES,         /** The ID for Csi2_GetFramesCounter function                               */
+    CSI2_API_ID_GET_CHANNEL_NUM,    /** The ID for Csi2_GetChannelNum function                                  */
+    CSI2_API_ID_VERSION_INFO_CHECK  /** The ID for Csi2_GetVersionInfo function                                 */
+}Csi2_ApiFunctionIdType;
+
+
+/**
+ * @brief       Detailed errors for AUTOSAR environment.
+ * @details     These errors are in synch with the general RSDK errors defined in the rsdkStatus.h file.
+ *
+ */
+typedef enum {
+    CSI2_E_DRV_WRG_UNIT_ID = 0u,         /**< Wrong unit ID specified */
+    CSI2_E_DRV_NULL_PARAM_PTR,           /**< Wrong parameters pointer (NULL) */
+    CSI2_E_DRV_NULL_VC_PARAM_PTR,        /**< Wrong parameters pointer to VC (NULL) */
+    CSI2_E_DRV_VC_AUX_MISMATCH,          /**< Mismatch between VC and Auxiliary pointers (VC==NULL, Aux!=NULL) */
+    CSI2_E_DRV_NULL_ERR_CB_PTR,          /**< Wrong error callback pointer (NULL) */
+    CSI2_E_DRV_NULL_ISR_CB_PTR,          /**< Wrong error callback pointer for isr register (NULL) */
+    CSI2_E_DRV_INVALID_CHANNEL_NR,       /**< Wrong channel/antenna number */
+    CSI2_E_DRV_INVALID_CALIB_MODE,       /**< Wrong calibration ID */
+    CSI2_E_DRV_INVALID_LANES_NR,         /**< Wrong lanes number */
+    CSI2_E_DRV_INVALID_CLOCK_FREQ,       /**< Clock frequency incorrect (null) */
+    CSI2_E_DRV_INVALID_RX_SWAP,          /**< Invalid Rx lanes swap specification */
+    CSI2_E_DRV_INVALID_DATA_TYPE,        /**< Invalid data type specification or mismatch for auxiliary data*/
+    CSI2_E_DRV_INVALID_EVT_REQ,          /**< Wrong line end request : bufNumLinesTrigger is 0 */
+    CSI2_E_DRV_INVALID_VC_PARAMS,        /**< Invalid data type specification */
+    CSI2_E_DRV_INVALID_DC_PARAMS,        /**< Invalid DC params compensation specification */
+    CSI2_E_DRV_INVALID_INIT_PARAMS,      /**< Invalid params for DPHY initialization */
+    CSI2_E_DRV_INVALID_BUF_RESET,        /**< Invalid request for buffer pointer reset */
+    CSI2_E_DRV_INVALID_ADC_STAT,         /**< Invalid request for data header/footer management. */
+    CSI2_E_DRV_TOO_SMALL_BUFFER,         /**< The buffer provided is too small for the requested data */
+    CSI2_E_DRV_NO_SAMPLE_PER_CHIRP,      /**< Samples per chirp incorrect (null) */
+    CSI2_E_DRV_NO_CHIRPS_PER_FRAME,      /**< Chirps per frame incorrect (null) */
+    CSI2_E_DRV_NO_LINE_LENGTH,           /**< The VC buffer length was not provided */
+    CSI2_E_DRV_BUF_LEN_NOT_ALIGNED,      /**< The VC buffer length is not aligned to 16 bytes boundaries */
+    CSI2_E_DRV_BUF_PTR_NULL,             /**< The VC buffer pointer not provided */
+    CSI2_E_DRV_BUF_PTR_NOT_ALIGNED,      /**< The VC buffer pointer not aligned to 16 bytes boundaries */
+    CSI2_E_DRV_BUF_NUM_LINES_ERR,        /**< The VC buffer must have at least 2 lines */
+    CSI2_E_DRV_ADC_STAT_FOR_EXTERN,      /**< Incorrect request for ADC data header/footer request and
+                                             * external source  */
+    CSI2_E_DRV_ERR_UNIT_0_MUST_BE_FIRST, /**< Error for S32R45 platform : initialize unit_0 before unit_1 */
+    CSI2_E_DRV_ERR_UNIT_1_MUST_BE_FIRST, /**< Error for S32R294 platform : initialize unit_1 before unit_0 */
+    CSI2_E_DRV_ERR_UNIT_2_MUST_BE_FIRST, /**< Error for S32R45 platform : initialize unit_2 before unit_3 */
+    CSI2_E_DRV_ERR_INVALID_INT_NR,       /**< Incorrect IRQ nr used */
+    CSI2_E_DRV_ERR_INVALID_CORE_NR,      /**< Incorrect core nr used */
+    CSI2_E_DRV_ERR_IRQ_HANDLER_REG,      /**< Irq handler registration error */
+
+    CSI2_E_DRV_SW_RESET_ERROR,           /**< Hardware error to reset sequence. */
+    CSI2_E_DRV_CALIBRATION_TIMEOUT,      /**< Autocalibration error. */
+    CSI2_E_DRV_TIMER_ERROR,              /**< Timer error waiting for STOP state on data lanes at initialization   */
+    CSI2_E_DRV_HW_RESPONSE_ERROR,        /**< Incorrect hardware response  */
+    CSI2_E_DRV_NOT_INIT,                 /**< CSI2 driver not initialized */
+
+    CSI2_E_DRV_ERR_INVALID_REQ,          /**< Incorrect request to the driver - Linux usage only */
+    CSI2_E_DRV_ERR_COPY_DATA_ERROR,      /**< The data couldn't be copied between kernel<->user_space - Linux only */
+    CSI2_E_DRV_ERR_EVT_CONN,             /**< Error when trying to connect to kernel events */
+    CSI2_E_DRV_ERR_START_EVT_MGR,        /**< Error starting the events manager */
+
+    CSI2_E_DRV_WRG_STATE,                /**< The interface is in a wrong state and the action can't succeed. */
+    CSI2_E_DRV_POWERED_OFF,              /**< The PHY interface if powered off. */
+    CSI2_E_DRV_RX_STOPPED,               /**< The Rx interface if stopped. */
+
+    CSI2_E_DRV_STATE_LINE_MARK,          /**< The Rx lane in Mark-1 state. */
+    CSI2_E_DRV_STATE_LINE_ULPA,          /**< The Rx lane in Ultra Low Power State. */
+    CSI2_E_DRV_STATE_LINE_STOP,          /**< The Rx lane in Stop state. */
+    CSI2_E_DRV_STATE_LINE_REC,           /**< The Rx lane is receiving data. */
+    CSI2_E_DRV_STATE_LINE_VRX,           /**< The Rx lane is receiving valid data. */
+    CSI2_E_DRV_STATE_LINE_ON,            /**< The Rx lane active, but not currently receiving data. */
+    CSI2_E_DRV_STATE_LINE_OFF,           /**< The Rx lane inactive. */
+
+    CSI2_E_DRV_STATE_ON,                 /**< The driver status is ON. */
+
+    /* errors reported only for AUTOSAR environment     */
+    CSI2_E_PARAM_POINTER_NULL,           /**< The provided pointer parameter is NULL                */
+
+}Csi2_DetailedErrorType;
+
+
+/** @} */
+
 /*==================================================================================================
 *                                  STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
+/* necessary typedef alignment for other environments than AUTOSAR                              */
+typedef rsdkStatus_t Std_ReturnType;
+
 /**
  *  @brief      Necessary CSI2 pointer to memory, as defined in the platform header files
  */
-
 typedef MIPICSI2_Type    GENERIC_CSI2_Type;
 
-
-
-
-
-
-/**
- *  @brief      Necessary typedef for uintptr, as AUTOSAR doesn't offer one.
- */
-typedef uintptr_t   uintptr;
-
+/** @{ */
 
 /**
  * @brief       Structure for short packet received.
@@ -536,9 +581,6 @@ typedef struct {
     uint16      expectedNumSamples;             /**< Expected line length for receiving in terms of samples/pixels/etc.
                                                  * per channel (antenna for radar)                                   */
     uint16      expectedNumLines;               /**< Expected number of lines/chirps per frame                       */
-
-
-
     uint16      bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
                                                  * statistics to be received in buffer, at least 1<br>
                                                  * @note For internal software reasons,
@@ -610,7 +652,7 @@ typedef struct {
                                                  * \b 1 \endif                                                      */
     uint16      bufLineLen;                     /**< The available line length in buffer, per line (16 bytes aligned)
                                                  * must include 80 supplementary bytes for line/chirp statistics    */
-    void        *pBufData;                      /**< Pointer to data buffer (16 bytes aligned), physical address    */
+    void        *bufDataPtr;                    /**< Pointer to data buffer (16 bytes aligned), physical address    */
 } Csi2_MetaDataParamsType;
 
 
@@ -621,16 +663,16 @@ typedef struct {
  *
  */
 typedef struct {
-    uint8               unitId;                     /**< Unit id reporting the error                                 */
-    uint32              errMaskU;                   /**< The cumulated masks for signaled errors at unit level;
+    uint8       unitId;                             /**< Unit id reporting the error                                 */
+    uint32      errMaskU;                           /**< The cumulated masks for signaled errors at unit level;
                                                      * the possible masks are for:
-                                                     * - PHY level errors, i.e. RSDK_CSI2_ERR_PHY_SYNC
-                                                     * - packet errors, i.e. RSDK_CSI2_ERR_PACK_ECC1                 */
-    uint32              errMaskVC[CSI2_MAX_VC];             /**< The cumulated masks for signaled errors at VC level;
+                                                     * - PHY level errors, i.e. #CSI2_ERR_PHY_SYNC
+                                                     * - packet errors, i.e. #CSI2_ERR_PACK_ECC1                     */
+    uint32      errMaskVC[CSI2_MAX_VC];             /**< The cumulated masks for signaled errors at VC level;
                                                      *  the possible masks are for:
-                                                     * - line errors definitions, i.e. RSDK_CSI2_ERR_LINE_LEN
+                                                     * - line errors definitions, i.e. #CSI2_ERR_LINE_LEN
                                                      * - all other miscellaneous                                     */
-    uint8               evtMaskVC[CSI2_MAX_VC];     /**< Events mask for VCs, according to the requested events as
+    uint8       evtMaskVC[CSI2_MAX_VC];             /**< Events mask for VCs, according to the requested events as
                                                      * required at setup - Csi2_VCParamsType->vcEventsReq
                                                      * the possible masks are defined by:
                                                      * - events masks :
@@ -691,11 +733,6 @@ typedef struct {
                                                      * - simple/normal calibration or quick/short calibration
                                                      * - wait for 5us or not wait for STOP states on data lanes
                                                      * use Csi2_DphySetupOptionsType to set this field.              */
-
-
-
-
-
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
     uint8           statManagement;                 /**< How the channel statistics are managed. Only channels having
                                                      * CSI2_OFFSET_AUTOCOMPUTE DC offset specified will be
@@ -717,14 +754,15 @@ typedef struct {
                                                      * configured, even the data is not used.                        */
 #endif
 #if (CSI2_METADATA_DATA_USAGE == STD_ON)
-    Csi2_MetaDataParamsType *pMetaData[CSI2_MAX_VC]; /**< pointers to VC configurations for other data
+    Csi2_MetaDataParamsType *metaDataPtr[CSI2_MAX_VC]; /**< pointers to VC configurations for other data
                                                      * to be received on the other channels, with no
                                                      * statistics support, mainly for MetaData; ignored if NULL.
                                                      * It is not a must to use one of these for normal
                                                      * application, but if used it must be correlated with the
                                                      * Virtual Channel of the appropriate RadarData.                 */
 #endif
-    Csi2_IsrCbType          pCallback[RSDK_CSI2_MAX_IRQ_ID];    /**< the necessary callbacks :
+    Csi2_IsrCbType          pCallback[MIPICSI2_1_INT2_IRQn - MIPICSI2_1_INT0_IRQn + 1u]; 
+                            /**< \if (S32R45_DOCS || S32R294_DOCS) * the necessary callbacks : <br>
                                                  * <table>
                             * <tr><td>errors in receive path</td><td>\ref RSDK_CSI2_RX_ERR_IRQ_ID</td></tr>
                             * <tr><td>errors in protocol & packet level</td><td>\ref RSDK_CSI2_PATH_ERR_IRQ_ID</td></tr>
@@ -737,7 +775,8 @@ typedef struct {
                              * the associated data. So, any other necessary callback will use the first pointer if NULL
                              * specified for that interrupt position.<br> For events : only when a requested event
                              * signal appeared, the \ref RSDK_CSI2_EVENTS_IRQ_ID callback is used, if specified; if not,
-                             * \ref RSDK_CSI2_RX_ERR_IRQ_ID callback will be used.                                  */
+                             * \ref RSDK_CSI2_RX_ERR_IRQ_ID callback will be used.                                  
+                             \endif                                                                                 */
 #if !defined(linux)
     rsdkCoreId_t                irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
     uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
@@ -780,7 +819,7 @@ typedef struct {
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
     Csi2_AutoDCComputeTimeType  statisticsFlag;     /* flag to process or not the channels statistics   */
 #endif
-    rsdkCsi2IsrCb_t             pCallback[RSDK_CSI2_MAX_IRQ_ID];    // the necessary callbacks :
+    Csi2_IsrCbType              pCallback[MIPICSI2_1_INT2_IRQn - MIPICSI2_1_INT0_IRQn + 1u]; // the necessary callbacks:
                                                     // - errors in receive path
                                                     // - errors in datapath level
                                                     // - events

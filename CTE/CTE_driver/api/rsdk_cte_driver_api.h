@@ -61,7 +61,7 @@ typedef enum {
     RSDK_CTE_SLAVE_EXTERNAL,        /**< CTE in Slave mode, table execution triggered from PADs
                                      (check IOMUX excel file for RCS_I and/or RFS_I)                                */
     RSDK_CTE_SLAVE_CSI2,            /**< CTE in Slave mode, table execution triggered by MIPI-CSI2 RFS/RCS signals. */
-    RSDK_CTE_MODE_MAX,              /**< CTE input mode limit, not to be used                                       */
+    RSDK_CTE_MODE_MAX               /**< CTE input mode limit, not to be used                                       */
 } rsdkCteMode_t;
  
  /**
@@ -74,11 +74,9 @@ typedef enum {
 typedef enum {
     RSDK_CTE_CSI2_UNIT_0 = 0u,      /**< MIPI-CSI2 unit 0                                   */
     RSDK_CTE_CSI2_UNIT_1,           /**< MIPI-CSI2 unit 1                                   */
-
     RSDK_CTE_CSI2_UNIT_2,           /**< MIPI-CSI2 unit 2,                                  */
     RSDK_CTE_CSI2_UNIT_3,           /**< MIPI-CSI2 unit 3                                   */
-
-    RSDK_CTE_CSI2_UNIT_MAX,         /**< MIPI-CSI2 unit limit (not used)                    */
+    RSDK_CTE_CSI2_UNIT_MAX          /**< MIPI-CSI2 unit limit (not used)                    */
 } rsdkCteCsi2Unit_t;
 
  /**
@@ -91,7 +89,7 @@ typedef enum {
     RSDK_CTE_CSI2_VC_1,             /**< MIPI-CSI2 virtual channel 1                        */
     RSDK_CTE_CSI2_VC_2,             /**< MIPI-CSI2 virtual channel 2                        */
     RSDK_CTE_CSI2_VC_3,             /**< MIPI-CSI2 virtual channel 3                        */
-    RSDK_CTE_CSI2_VC_MAX,           /**< MIPI-CSI2 virtual channel limit (not used)         */
+    RSDK_CTE_CSI2_VC_MAX            /**< MIPI-CSI2 virtual channel limit (not used)         */
 } rsdkCteCsi2Vc_t;
 
  /**
@@ -117,7 +115,7 @@ typedef enum {
     RSDK_CTE_OUTPUT_SPT_RFS,        /**< CTE SPT RFS event is the output                    */
     RSDK_CTE_OUTPUT_FLEX_0,         /**< CTE Flextimer event 0 is the output                */
     RSDK_CTE_OUTPUT_FLEX_1,         /**< CTE Flextimer event 1 is the output                */
-    RSDK_CTE_OUTPUT_MAX,            /**< CTE output definitions limit (not used)            */
+    RSDK_CTE_OUTPUT_MAX             /**< CTE output definitions limit (not used)            */
 } rsdkCteOutput_t;
 
  /**
@@ -134,7 +132,7 @@ typedef enum {
     RSDK_CTE_OUT_TOGGLE,            /**< Output type is toggle, low/hi/toggle               */
     RSDK_CTE_OUT_CLOCK,             /**< Output type is clock, low/hi/toggle with[out] sync */
     RSDK_CTE_OUT_LOGIC,             /**< Output type is logic, low/high/Hi-Z levels         */
-    RSDK_CTE_OUT_MAX,               /**< Output type limit (not used)                       */
+    RSDK_CTE_OUT_MAX                /**< Output type limit (not used)                       */
 } rsdkCteOutputType_t;
 
  /**
@@ -146,7 +144,7 @@ typedef enum {
     RSDK_CTE_TOGGLE_SET_TO_LOW = 0u,/**< Set the TOGGLE output to low                       */
     RSDK_CTE_TOGGLE_SET_TO_HIGH,    /**< Set the TOGGLE output to high                      */
     RSDK_CTE_TOGGLE_FLIP,           /**< Flip the TOGGLE output (high->low; low->high)      */
-    RSDK_CTE_TOGGLE_DONT_CARE,      /**< The TOGGLE output remains the same                 */
+    RSDK_CTE_TOGGLE_DONT_CARE       /**< The TOGGLE output remains the same                 */
 } rsdkCteToggleOutStates_t;
 
  /**
@@ -158,7 +156,7 @@ typedef enum {
     RSDK_CTE_LOGIC_SET_TO_LOW = 0u, /**< Set the LOGIC output to low                        */
     RSDK_CTE_LOGIC_SET_TO_HIGH,     /**< Set the LOGIC output to high                       */
     RSDK_CTE_LOGIC_SET_TO_HIGH_Z,   /**< Set the LOGIC output to High-Z                     */
-    RSDK_CTE_LOGIC_UNCHANGED,   	/**< Set the LOGIC output to High-Z                     */
+    RSDK_CTE_LOGIC_UNCHANGED    	/**< Set the LOGIC output to High-Z                     */
 } rsdkCteLogicOutStates_t;
 
  /**
@@ -170,7 +168,7 @@ typedef enum {
     RSDK_CTE_CLOCK_SET_TO_LOW = 0u, /**< Keep the CLOCK output to low                       */
     RSDK_CTE_CLOCK_ACTIVE_SYNC,     /**< CLOCK output active and synchronized on rising edge*/
     RSDK_CTE_CLOCK_ACTIVE,          /**< CLOCK output                                       */
-    RSDK_CTE_CLOCK_SET_TO_HIGH,     /**< Keep the CLOCK output at high level                */
+    RSDK_CTE_CLOCK_SET_TO_HIGH      /**< Keep the CLOCK output at high level                */
 } rsdkCteClockOutStates_t;
 
  /**
@@ -181,7 +179,7 @@ typedef enum {
  */
 typedef enum {
     RSDK_CTE_ONE_TABLE = 0u,        /**< Only one table, the same for all chirps                */
-    RSDK_CTE_TWO_TABLES,            /**< Two tables, first for even chirps and second for odds  */
+    RSDK_CTE_TWO_TABLES             /**< Two tables, first for even chirps and second for odds  */
 } rsdkCteTableUsage_t;
 
  /**
@@ -197,7 +195,7 @@ typedef enum {
     RSDK_CTE_IRQ_TT1_END        = 0x08u,    /**< End of TimeTable 1 execution                   */
     RSDK_CTE_IRQ_RCS            = 0x40u,    /**< Raising edge of RCS signal                     */
     RSDK_CTE_IRQ_RFS            = 0x80u,    /**< Raising edge of RFS signal                     */
-    RSDK_CTE_IRQ_TABLE_EXEC_END = 0x200u,   /**< Table execution was finished                   */
+    RSDK_CTE_IRQ_TABLE_EXEC_END = 0x200u    /**< Table execution was finished                   */
 } rsdkCteIrqDefinition_t;
 
 /*==================================================================================================
@@ -249,7 +247,7 @@ typedef struct {
         rsdkCteToggleOutStates_t    newToggleState;     /**< New state for TOGGLE output    */
         rsdkCteLogicOutStates_t     newLogicState;      /**< New state for LOGIC output     */
         rsdkCteClockOutStates_t     newClockState;      /**< New state for CLOCK output     */
-    };
+    }rsdkCteSignalType;
 } rsdkCteAction_t;
 
 /**
@@ -335,7 +333,7 @@ typedef struct {
                                                   tables mode will be used.                                         */
     rsdkCteIrqDefinition_t      cteIrqEvents;   /**< The requested combination of interrupt sequence to be used     */
     rsdkCteIsrCb_t              pCteCallback;   /**< The application callback to be used for the requested events   */
-#ifndef linux
+#if !defined(linux)
     int8_t                      irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
     uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
 #endif
@@ -419,10 +417,10 @@ rsdkStatus_t RsdkCteRfsGenerate(void);
  *          If the CTE is working, it will be stopped and restarted after table changed.
  *          If stopped, it will remains in the same state. It is recommendable to do like this.
  *
- * @param[in]   pTable_         = pointer to the new table(s); first pointer must not be NULL; 
-                                if second is NULL, only one table used, else two tables used
- * @param[in]   pLutChecksum    = pointer to a uint64_t value, which will receive the final LUT checksum;
- *                                  this value can be checked later using RsdkCteGetLutChecksum
+ * @param[in]   pTable0, pTable1    = pointer to the new table(s); first pointer must not be NULL; 
+                                        if second is NULL, only one table used, else two tables used
+ * @param[in]   pLutChecksum        = pointer to a uint64_t value, which will receive the final LUT checksum;
+ *                                      this value can be checked later using RsdkCteGetLutChecksum
  * @return  RSDK_SUCCESS    = initialization succeeded
  * @return  other values    = initialization failed; the rsdk_stat.h contains the values and explanations
  *
@@ -449,4 +447,4 @@ uint64_t RsdkCteGetLutChecksum(void);
 
 
 
-#endif // RSDK_CTE_DRIVER_API_H
+#endif /* RSDK_CTE_DRIVER_API_H     */

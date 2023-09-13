@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -17,8 +17,10 @@ extern "C"{
 * 2) needed interfaces from external units
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
+#include "CDD_Spt.h"
 #include "Spt_Internals_Types.h"
 #include "Spt_Cfg.h"
+#include "rsdk_version.h"
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -62,7 +64,9 @@ extern "C"{
 #endif
 
 #if !defined(SPT_REPORT_ERROR)
-#define SPT_REPORT_ERROR(a, c, d)   a
+#define SPT_REPORT_ERROR(a, b, c)   RSDK_REPORT_ERROR((rsdkStatus_t)a, (uint16)CDD_SPT_MODULE_ID,   \
+                                    (uint8)SPT_INSTANCE_ID, (uint8)b, (uint8)c);                    \
+                                    SPT_HALT_ON_ERROR;
 #endif
 
 /*==================================================================================================
@@ -82,7 +86,7 @@ extern Spt_DrvMemPerType gSptMemPer;
 *                                       FUNCTION PROTOTYPES
 ==================================================================================================*/
 
- static __inline void Spt_SetDrvState(Spt_DrvStateType newState)
+ static inline void Spt_SetDrvState(Spt_DrvStateType newState)
 {
     gSptMemPer.state = newState;
 }
@@ -97,7 +101,9 @@ Std_ReturnType     Spt_ParamCheckRun(Spt_DriverContextType const *const sptConte
 Std_ReturnType     Spt_ParamCheckInit(Spt_DriverInitType const *const pSptInitInfo);
 void               Spt_GetKernelRetVal(volatile sint32 *kernelRetPar);
 
+#if(SPT_DSP_ENABLE == STD_ON)
 uint8              Spt_GenCrc8(const uint8* inData, uint8 numBytes);
+#endif
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,12 @@ all lib module debug release cleanall cleanalltmp module_clean module_cleantmp p
                 echo "Building CTE driver $@ for sa environment" ;                                  \
                 make -f Makefile_sa $@;                                                             \
             else                                                                                    \
-                echo "#### Can not make CTE driver $@ for linux environment and $(PLATFORM) ####" ; \
+                if [ "$(PLATFORM)" = "S32R41" ]; then                                                   \
+                    echo "Building CTE driver $@ for sa environment" ;                                  \
+                    make -f Makefile_sa $@;                                                             \
+                else                                                                                \
+                    echo "#### Can not make CTE driver $@ for linux environment and $(PLATFORM) ####" ; \
+                fi                                                                                  \
             fi                                                                                      \
         fi                                                                                          \
     fi

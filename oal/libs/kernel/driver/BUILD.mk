@@ -1,5 +1,5 @@
 ##
-# Copyright 2017-2021 NXP
+# Copyright 2017-2021, 2023 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -42,11 +42,11 @@ ifeq ($(OS), qnx)
 endif
 
 ifeq ($(OS), ghs)
-    SRCS += os_oal_driver_dispatcher.c
+    SRCS += os_oal_driver_dispatcher.c                                         \
+            os_oal_driver_alloc_memory.c                                       \
 
     KERNEL_SRCS = os_kernel_module.c
-
-    VAS_SRCS = $(SRCS) oal_memory_server.c
+    VAS_SRCS += $(SRCS) oal_memory_server.c
 
     INTEGRATION_FILE = oal_driver.int
     BSP_APPEND = oal_driver.bsp

@@ -10,6 +10,9 @@
 *
 *   @addtogroup CTE
 *   @{
+*
+*   clang-format off
+*
 */
 
 #ifdef __cplusplus
@@ -79,18 +82,8 @@ extern "C"{
         #include "rsdk_cte_driver_module.h"
     #endif
     #include "rsdk_status.h"
-
-
-
-
-
-
     #include "S32R45_CTE.h"
     #include "S32R45_SRC_1.h"
-
-
-
-
 
 
 
@@ -125,8 +118,10 @@ typedef struct LUT{
 
 #if (CTE_DEV_ERROR_DETECT == STD_ON)
 
+    #if (CTE_DEV_HALT_ON_ERROR == STD_ON)
     /* Loop exit signal.                                             */
     static volatile boolean gsCteLoopExit = FALSE;
+    #endif
 
 #endif  /* #if (CTE_DEV_ERROR_DETECT == STD_ON)                    */
 
@@ -139,7 +134,7 @@ typedef struct LUT{
  *                                      GLOBAL VARIABLES
  ==================================================================================================*/
 
-volatile CTE_Type *gspCTE = NULL;                    /* the pointer to the CTE registry            */
+volatile CTE_Type *gspCTEPtr = NULL_PTR;                    /* the pointer to the CTE registry            */
 Cte_DriverStateType gsDriverData = { 0u };              /* the driver necessary data                     */
 
 
@@ -147,10 +142,10 @@ Cte_DriverStateType gsDriverData = { 0u };              /* the driver necessary 
  *                                   LOCAL FUNCTION PROTOTYPES
  ==================================================================================================*/
 #if (CTE_DEV_ERROR_DETECT == STD_ON)
-static Std_ReturnType Cte_TtEventCheck(Cte_TimingEventType *pEvent);
-static Std_ReturnType Cte_TimeTableCheck(Cte_TimeTableDefType *pTable);
-static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *pSignals);
-static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *pCteInitParams);
+static Std_ReturnType Cte_TtEventCheck(Cte_TimingEventType *eventPtr);
+static Std_ReturnType Cte_TimeTableCheck(Cte_TimeTableDefType *tablePtr);
+static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *signalsPtr);
+static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *cteInitParamsPtr);
 #endif
 
 /*==================================================================================================
@@ -164,36 +159,36 @@ static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *pCteInitPar
  * @brief   Procedure to check an event of the timing table.
  * @details Is checked the total number of defined actions, which must be less than the total signals number
  *
- * @param[in]   pEvent            = pointer to the event
+ * @param[in]   eventPtr            = pointer to the event
  * @return      E_OK/RSDK_SUCCESS = initialization succeeded
  *              other values      = initialization failed, use the appropriate tools to detect the issue
  *
  */
-static Std_ReturnType Cte_TtEventCheck(Cte_TimingEventType *pEvent)
+static Std_ReturnType Cte_TtEventCheck(Cte_TimingEventType *eventPtr)
 {
     Std_ReturnType  rez = (Std_ReturnType)E_OK;
-    Cte_ActionType  *action;
+    Cte_ActionType  *actionPtr;
     uint32          n;
 
-    if (pEvent->pEventActions == NULL)
+    if (eventPtr->eventActionsPtr == NULL_PTR)
     {
         /* no actions defined       */
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_ACTIONS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_ACTIONS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        action = pEvent->pEventActions;
+        actionPtr = eventPtr->eventActionsPtr;
         n = 0;
-        while ((uint8) action->outputSignal < (uint8)CTE_OUTPUT_MAX)
+        while ((uint8)actionPtr->outputSignal < (uint8)CTE_OUTPUT_MAX)
         {
-            action++;                               /* pass to the next action definition               */
+            actionPtr++;                               /* pass to the next action definition               */
             n++;                                    /* simple action count                              */
         }
-        if (n > (uint32) CTE_OUTPUT_MAX)
+        if (n > (uint32)CTE_OUTPUT_MAX)
         {
             /* too many actions defined                         */
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_TOO_MANY_ACTIONS, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_TOO_MANY_ACTIONS, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
     }
@@ -206,36 +201,36 @@ static Std_ReturnType Cte_TtEventCheck(Cte_TimingEventType *pEvent)
  * @brief   Procedure to check the timing table.
  * @details The check is only syntactic, not semantic.
  *
- * @param[in]   pTable            = pointer to the time table
+ * @param[in]   tablePtr            = pointer to the time table
  * @return      E_OK/RSDK_SUCCESS = initialization succeeded
  *              other values      = initialization failed, use the appropriate tools to detect the issue
  *
  */
-static Std_ReturnType Cte_TimeTableCheck(Cte_TimeTableDefType *pTable)
+static Std_ReturnType Cte_TimeTableCheck(Cte_TimeTableDefType *tablePtr)
 {
     uint32          i;
     Std_ReturnType  rez = (Std_ReturnType)E_OK;
 
     /* check the table length, single table supposed; if double table used, the length will be checked later        */
-    if (pTable->tableLength > CTE_MAX_LARGE_TIME_TABLE_LEN)
+    if (tablePtr->tableLength > CTE_MAX_LARGE_TIME_TABLE_LEN)
     {
         /* table has more than 64 events specified      */
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_TABLE_TOO_LONG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_TABLE_TOO_LONG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        if (pTable->pEvents == NULL)
+        if (tablePtr->eventsPtr == NULL_PTR)
         {
-            /* the events pointer is NULL       */
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_EVENTS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+            /* the events pointer is NULL_PTR       */
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_EVENTS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
         else
         {
-            for (i = 0; i < pTable->tableLength; i++)
+            for (i = 0; i < tablePtr->tableLength; i++)
             {
-                rez = Cte_TtEventCheck(&pTable->pEvents[i]);    /* check each event definition      */
+                rez = Cte_TtEventCheck(&tablePtr->eventsPtr[i]);    /* check each event definition      */
                 if (rez != (Std_ReturnType)E_OK)
                 {
                     break;                                      /* error detected, so stop the loop */
@@ -252,47 +247,47 @@ static Std_ReturnType Cte_TimeTableCheck(Cte_TimeTableDefType *pTable)
  * @brief   Procedure to check the signals definitions table.
  * @details Are checked the types for SPT and FLEX outputs.
  *
- * @param[in]   pSignals          = pointer to the signals table
+ * @param[in]   signalsPtr          = pointer to the signals table
  * @return      E_OK/RSDK_SUCCESS = initialization succeeded
  *              other values      = initialization failed, use the appropriate tools to detect the issue
  *
  */
-static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *pSignals)
+static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *signalsPtr)
 {
     uint8                       defSPT;
     Cte_SingleOutputDefType     *pwSignals;
     Std_ReturnType              rez = (Std_ReturnType)E_OK;
 
-    pwSignals = pSignals;
+    pwSignals = signalsPtr;
     defSPT = 0xffu;            /* the signals/outputs not defined       */
-    while ((uint8) pwSignals->outputSignal < (uint8)CTE_OUTPUT_MAX)
+    while ((uint8)pwSignals->outputSignal < (uint8)CTE_OUTPUT_MAX)
     {
-        if ((uint8) pwSignals->outputSignal < (uint8)CTE_OUTPUT_CTEP_0)
+        if ((uint8)pwSignals->outputSignal < (uint8)CTE_OUTPUT_CTEP_0)
         {                       /* SPT event type                       */
             if ((pwSignals->signalType != CTE_OUT_LOGIC) && (pwSignals->signalType != CTE_OUT_TOGGLE))
             {
                 /* not accepted type        */
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_WRG_TYPE, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_WRG_TYPE, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
             else
             {
                 if (defSPT == 0xffu)
                 {               /* SPT type not defined yet     */
-                    defSPT = (uint8) pwSignals->signalType;
+                    defSPT = (uint8)pwSignals->signalType;
                 }
                 else
                 {
-                    rez = (defSPT != (uint8) pwSignals->signalType) ? RSDK_CTE_DRV_SIG_OUT_DIF_TYPE : RSDK_SUCCESS;
+                    rez = (uint8)((defSPT != (uint8)pwSignals->signalType) ? RSDK_CTE_DRV_SIG_OUT_DIF_TYPE : RSDK_SUCCESS);
                 }
             }
         }
-        if ((uint8) pwSignals->outputSignal > (uint8) CTE_OUTPUT_SPT_RFS)
+        if ((uint8)pwSignals->outputSignal > (uint8)CTE_OUTPUT_SPT_RFS)
         {                       /* FLEX event type      */
             if (pwSignals->signalType != CTE_OUT_LOGIC)
             {
                 /* not accepted type        */
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_WRG_TYPE, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_WRG_TYPE, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
         }
@@ -301,7 +296,7 @@ static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *pSignals)
             break;
         }
         pwSignals++;
-    }
+    } /* while ((uint8)pwSignals->outputSignal < (uint8)CTE_OUTPUT_MAX)    */
     return rez;
 }
 /*=== Cte_SignalDefsCheck ===========================*/
@@ -312,65 +307,65 @@ static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *pSignals)
  * @details All necessary checks are done, to assure correct initialization flow.
  *          If many error occurs, only one is reported.
  *
- * @param[in]   pCteInitParams    = pointer to the initialization structure
+ * @param[in]   cteInitParamsPtr    = pointer to the initialization structure
  * @return      E_OK/RSDK_SUCCESS = initialization succeeded
  *              other values      = initialization failed, use the appropriate tools to detect the issue
  *
  */
-static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *pCteInitParams)
+static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *cteInitParamsPtr)
 {
     Std_ReturnType rez = (Std_ReturnType)E_OK;
 
     /* check the requested input mode       */
-    if ((uint8) pCteInitParams->cteMode.workingMode >= (uint8) CTE_MODE_MAX)
+    if ((uint8)cteInitParamsPtr->cteMode.workingMode >= (uint8)CTE_MODE_MAX)
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_MODE, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_MODE, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
-    else if (((uint8) pCteInitParams->cteMode.workingMode == (uint8) CTE_SLAVE_CSI2) &&
-            ((uint8) pCteInitParams->cteMode.cteWorkingParam0.cteCsi2Unit >= (uint8) CTE_CSI2_UNIT_MAX))
+    else if (((uint8)cteInitParamsPtr->cteMode.workingMode == (uint8)CTE_SLAVE_CSI2) &&
+            ((uint8)cteInitParamsPtr->cteMode.cteWorkingParam0.cteCsi2Unit >= (uint8)CTE_CSI2_UNIT_MAX))
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_CSI2_UNIT, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_CSI2_UNIT, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        if (((uint8) pCteInitParams->cteMode.workingMode == (uint8) CTE_SLAVE_CSI2) &&
-                ((uint8) pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc >= (uint8) CTE_CSI2_VC_MAX))
+        if (((uint8)cteInitParamsPtr->cteMode.workingMode == (uint8)CTE_SLAVE_CSI2) &&
+                ((uint8)cteInitParamsPtr->cteMode.cteWorkingParam1.cteCsi2Vc >= (uint8)CTE_CSI2_VC_MAX))
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_CSI2_VC, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_CSI2_VC, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
     }
     /* check the specified CTE clock frequency      */
-    if ((rez == (Std_ReturnType)E_OK) && (pCteInitParams->cteClockFrecq == 0u))
+    if ((rez == (Std_ReturnType)E_OK) && (cteInitParamsPtr->cteClockFrecq == 0u))
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_ZERO_FREQ, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_ZERO_FREQ, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
     if (rez == (Std_ReturnType)E_OK)
     {
         /* check the first time table pointer       */
-        if (pCteInitParams->pTimeTable0 == NULL)
+        if (cteInitParamsPtr->timeTable0Ptr == NULL_PTR)
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_TABLE0, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_TABLE0, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
         else
         {
             /* good table pointer, check the table content      */
-            rez = Cte_TimeTableCheck(pCteInitParams->pTimeTable0);
+            rez = Cte_TimeTableCheck(cteInitParamsPtr->timeTable0Ptr);
             if (rez == (Std_ReturnType)E_OK)
             {
                 /* check the output signal definitions      */
-                if (pCteInitParams->pSignalDef0 == NULL)
+                if (cteInitParamsPtr->signalDef0Ptr == NULL_PTR)
                 {
-                    CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_SIG_DEF, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                    rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_SIG_DEF, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                     CTE_HALT_ON_ERROR;
                 }
                 else
                 {
-                    rez = Cte_SignalDefsCheck(pCteInitParams->pSignalDef0);
+                    rez = Cte_SignalDefsCheck(cteInitParamsPtr->signalDef0Ptr);
                 }
             }
         }
@@ -378,41 +373,41 @@ static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *pCteInitPar
     /* check the second time table if specified     */
     if (rez == (Std_ReturnType)E_OK)
     {
-        if (pCteInitParams->pTimeTable1 != NULL)
+        if (cteInitParamsPtr->timeTable1Ptr != NULL_PTR)
         {
             /* good table pointer, the table 0 has a correct length ?       */
-            if ((pCteInitParams->pTimeTable0->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN) ||
-                    (pCteInitParams->pTimeTable1->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN))
+            if ((cteInitParamsPtr->timeTable0Ptr->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN) ||
+                    (cteInitParamsPtr->timeTable1Ptr->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN))
             {
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_TABLE_TOO_LONG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_TABLE_TOO_LONG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
             if (rez == (Std_ReturnType)E_OK)
             {
-                if (pCteInitParams->pSignalDef1 == NULL)
+                if (cteInitParamsPtr->signalDef1Ptr == NULL_PTR)
                 {
-                    CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_SIG_DEF, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                    rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_SIG_DEF, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                     CTE_HALT_ON_ERROR;
                 }
                 else
                 {
                     /* check the table 2 content        */
-                    rez = Cte_TimeTableCheck(pCteInitParams->pTimeTable1);
+                    rez = Cte_TimeTableCheck(cteInitParamsPtr->timeTable1Ptr);
                 }
             }
         }
         else
-        {       /* second table not defined     */
-            if (pCteInitParams->pSignalDef1 != NULL)
+        {   /* second table not defined     */
+            if (cteInitParamsPtr->signalDef1Ptr != NULL_PTR)
             {
                 /* misfit TimeTable/Output signal table     */
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_NULL_PTR_SIG_DEF, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_NULL_PTR_SIG_DEF, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
         }
     }
     /* check the irq logic      */
-    if (((uint32) pCteInitParams->cteIrqEvents != 0u) && (pCteInitParams->pCteCallback == NULL))
+    if (((uint32)cteInitParamsPtr->cteIrqEvents != 0u) && (cteInitParamsPtr->pCteCallback == NULL_PTR))
     {
         rez = RSDK_CTE_DRV_NULL_CALLBACK;
     }
@@ -434,12 +429,12 @@ static Std_ReturnType Cte_InitParamsCheck(const Cte_SetupParamsType *pCteInitPar
  */
 static uint32 Cte_64BitCounting(uint32 initialValue, uint32 mul1, uint32 mul2, uint32 div1, uint32 div2)
 {
-    uint64 val = (uint64) initialValue;
-    val *= (uint64) mul1;
-    val *= (uint64) mul2;
-    val /= (uint64) div1;
-    val /= (uint64) div2;
-    return ((uint32) val);
+    uint64 val = (uint64)initialValue;
+    val *= (uint64)mul1;
+    val *= (uint64)mul2;
+    val /= (uint64)div1;
+    val /= (uint64)div2;
+    return ((uint32)val);
 }
 /*=== Cte_64BitCounting ===========================*/
 
@@ -453,7 +448,7 @@ static uint32 Cte_64BitCounting(uint32 initialValue, uint32 mul1, uint32 mul2, u
  * @pre         The CTE clock frequency must be set before
  *
  */
-static uint8 Cte_ClockDividerGet(Cte_TimeTableDefType *pTimeTable0, Cte_TimeTableDefType *pTimeTable1)
+static uint8 Cte_ClockDividerGet(Cte_TimeTableDefType *timeTable0Ptr, Cte_TimeTableDefType *timeTable1Ptr)
 {
     uint8  i;
     uint8  clockDivider;            /* final clock divider                                  */
@@ -466,16 +461,16 @@ static uint8 Cte_ClockDividerGet(Cte_TimeTableDefType *pTimeTable0, Cte_TimeTabl
     tableTimeMax = 0;
     maxDelay = 0;
     /* check the first table        */
-    for (i = 0; i < pTimeTable0->tableLength; i++)
+    for (i = 0; i < timeTable0Ptr->tableLength; i++)
     {
-        if (tableTimeMax < pTimeTable0->pEvents[i].absTime)
+        if (tableTimeMax < timeTable0Ptr->eventsPtr[i].absTime)
         {
-            if (maxDelay < (pTimeTable0->pEvents[i].absTime - tableTimeMax))
+            if (maxDelay < (timeTable0Ptr->eventsPtr[i].absTime - tableTimeMax))
             {
-                maxDelay = pTimeTable0->pEvents[i].absTime - tableTimeMax;  /* the maximum time difference between
+                maxDelay = timeTable0Ptr->eventsPtr[i].absTime - tableTimeMax;  /* the maximum time difference between
                                                                                two consecutive events               */
             }
-            tableTimeMax = pTimeTable0->pEvents[i].absTime;                 /* keep the maximum referred time       */
+            tableTimeMax = timeTable0Ptr->eventsPtr[i].absTime;                 /* keep the maximum referred time       */
         }
         else
         {
@@ -483,20 +478,20 @@ static uint8 Cte_ClockDividerGet(Cte_TimeTableDefType *pTimeTable0, Cte_TimeTabl
         }
     }
     /* check the second table       */
-    if ((pTimeTable1 != NULL) && (maxDelay != CTE_TOO_BIG_TIME_DELAY))
+    if ((timeTable1Ptr != NULL_PTR) && (maxDelay != CTE_TOO_BIG_TIME_DELAY))
     {
         tableTimeMax1 = 0;
         maxDelay1 = 0;
-        for (i = 0; i < pTimeTable1->tableLength; i++)
+        for (i = 0; i < timeTable1Ptr->tableLength; i++)
         {
-            if (tableTimeMax1 < pTimeTable1->pEvents[i].absTime)
+            if (tableTimeMax1 < timeTable1Ptr->eventsPtr[i].absTime)
             {
-                if (maxDelay1 < (pTimeTable1->pEvents[i].absTime - tableTimeMax1))
+                if (maxDelay1 < (timeTable1Ptr->eventsPtr[i].absTime - tableTimeMax1))
                 {
-                    maxDelay1 = pTimeTable1->pEvents[i].absTime - tableTimeMax1; /* the maximum time difference between
+                    maxDelay1 = timeTable1Ptr->eventsPtr[i].absTime - tableTimeMax1; /* the maximum time difference between
                                                                                     two consecutive events  */
                 }
-                tableTimeMax1 = pTimeTable1->pEvents[i].absTime;                 /* keep the maximum referred time  */
+                tableTimeMax1 = timeTable1Ptr->eventsPtr[i].absTime;                 /* keep the maximum referred time  */
             }
             else
             {
@@ -512,13 +507,13 @@ static uint8 Cte_ClockDividerGet(Cte_TimeTableDefType *pTimeTable0, Cte_TimeTabl
     largeIntCount = Cte_64BitCounting(maxDelay, gsDriverData.cteWorkingFreq, 1u, /* remember, maxDelay is in ns      */
             CTE_1G_FREQUENCY, CTE_MAX_TIME_COUNTER); /* divider is_equal to (maxDelay*CTE_clk_freq)/(1G*MAX_COUNTER) */
     largeIntCount++;
-    if (largeIntCount > (uint32) CTE_CLOCK_DIVIDER_LIMIT)
+    if (largeIntCount > (uint32)CTE_CLOCK_DIVIDER_LIMIT)
     {
         clockDivider = CTE_CLOCK_DIVIDER_LIMIT;         /* divider limit exceeded       */
     }
     else
     {
-        clockDivider = (uint8) largeIntCount;           /* the final divider            */
+        clockDivider = (uint8)largeIntCount;           /* the final divider            */
     }
     return clockDivider;
 }
@@ -535,89 +530,89 @@ static uint8 Cte_ClockDividerGet(Cte_TimeTableDefType *pTimeTable0, Cte_TimeTabl
  * @return      E_OK/RSDK_SUCCESS if successful, error if other
  *
  */
-static Std_ReturnType Cte_SignalMaskSet(Cte_SingleOutputDefType *pSignalDef, Cte_ActionType *action, uint64 *pVal)
+static Std_ReturnType Cte_SignalMaskSet(Cte_SingleOutputDefType *signalDefPtr, Cte_ActionType *actionPtr, uint64 *valPtr)
 {
     Cte_SingleOutputDefType *pwSignalDef;   /* pointer to signal definitions to be used for process     */
     uint8                   shiftValue;     /* the left shift for the final value                       */
     uint64                  reqMask;        /* the mask, "initial" and "final"                          */
     Std_ReturnType          rez = (Std_ReturnType)E_OK;
 
-    pwSignalDef = pSignalDef;
+    pwSignalDef = signalDefPtr;
     while (pwSignalDef->outputSignal < CTE_OUTPUT_MAX)
     {
-        if (pwSignalDef->outputSignal == action->outputSignal)  /* find the required signal into defined table  */
+        if (pwSignalDef->outputSignal == actionPtr->outputSignal)  /* find the required signal into defined table  */
         {
             break;
         }
         pwSignalDef++;                                          /* pass to next definition                      */
     }
-    if (pwSignalDef->outputSignal == action->outputSignal)
+    if (pwSignalDef->outputSignal == actionPtr->outputSignal)
     {
         /* get the mask according to the type/newState      */
-        switch ((uint8) pwSignalDef->signalType)
+        switch ((uint8)pwSignalDef->signalType)
         {
-        case (uint8) CTE_OUT_TOGGLE:
-            switch (action->newToggleState)
+        case (uint8)CTE_OUT_TOGGLE:
+            switch (actionPtr->cteOutputSignalType.newToggleState)
             {
             case CTE_TOGGLE_SET_TO_LOW:
-                reqMask = (uint64) CTE_TOGGLE_MASK_TO_LOW;
+                reqMask = (uint64)CTE_TOGGLE_MASK_TO_LOW;
                 break;
             case CTE_TOGGLE_SET_TO_HIGH:
-                reqMask = (uint64) CTE_TOGGLE_MASK_TO_HIGH;
+                reqMask = (uint64)CTE_TOGGLE_MASK_TO_HIGH;
                 break;
             case CTE_TOGGLE_FLIP:
-                reqMask = (uint64) CTE_TOGGLE_MASK_TOGGLE;
+                reqMask = (uint64)CTE_TOGGLE_MASK_TOGGLE;
                 break;
             case CTE_TOGGLE_DONT_CARE:
-                reqMask = (uint64) CTE_TOGGLE_MASK_UNCHANGED;
+                reqMask = (uint64)CTE_TOGGLE_MASK_UNCHANGED;
                 break;
             default:                                        /* wrong value, not in enum     */
                 reqMask = 0;
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_STATE_WRG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_STATE_WRG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
                 break;
             }
             break;
-        case (uint8) CTE_OUT_CLOCK:
-            switch (action->newClockState)
+        case (uint8)CTE_OUT_CLOCK:
+            switch (actionPtr->cteOutputSignalType.newClockState)
             {
             case CTE_CLOCK_SET_TO_LOW:
-                reqMask = (uint64) CTE_CLOCK_MASK_TO_LOW;
+                reqMask = (uint64)CTE_CLOCK_MASK_TO_LOW;
                 break;
             case CTE_CLOCK_ACTIVE_SYNC:
-                reqMask = (uint64) CTE_CLOCK_MASK_SYNC_RISING;
+                reqMask = (uint64)CTE_CLOCK_MASK_SYNC_RISING;
                 break;
             case CTE_CLOCK_ACTIVE:
-                reqMask = (uint64_t) CTE_CLOCK_MASK_RUNNING;
+                reqMask = (uint64_t)CTE_CLOCK_MASK_RUNNING;
                 break;
             case CTE_CLOCK_SET_TO_HIGH:
-                reqMask = (uint64) CTE_CLOCK_MASK_TO_HIGH;
+                reqMask = (uint64)CTE_CLOCK_MASK_TO_HIGH;
                 break;
             default:                                    /* wrong value, not in enum     */
                 reqMask = 0;
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_STATE_WRG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_STATE_WRG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
                 break;
             }
             break;
-        case (uint8) CTE_OUT_LOGIC:
-            switch (action->newLogicState)
+        case (uint8)CTE_OUT_LOGIC:
+            switch (actionPtr->cteOutputSignalType.newLogicState)
             {
             case CTE_LOGIC_SET_TO_LOW:
-                reqMask = (uint64) CTE_LOGIC_MASK_TO_LOW;
+                reqMask = (uint64)CTE_LOGIC_MASK_TO_LOW;
                 break;
             case CTE_LOGIC_SET_TO_HIGH:
-                reqMask = (uint64) CTE_LOGIC_MASK_TO_HIGH;
+                reqMask = (uint64)CTE_LOGIC_MASK_TO_HIGH;
                 break;
             case CTE_LOGIC_SET_TO_HIGH_Z:
-                reqMask = (uint64) CTE_LOGIC_MASK_TO_HIZ;
+                reqMask = (uint64)CTE_LOGIC_MASK_TO_HIZ;
                 break;
             case CTE_LOGIC_UNCHANGED:               /* nothing to do                    */
-                reqMask = (uint64) CTE_LOGIC_MASK_UNCHANGED;
+                reqMask = (uint64)CTE_LOGIC_MASK_UNCHANGED;
                 break;
             default:                                /* wrong value, not in enum         */
                 reqMask = 0;
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_STATE_WRG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_OUT_STATE_WRG, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
                 break;
             }
@@ -625,28 +620,28 @@ static Std_ReturnType Cte_SignalMaskSet(Cte_SingleOutputDefType *pSignalDef, Cte
         default:                                    /* HiZ is the default in this case  */
             reqMask = 0;                            /* nothing to do                    */
             break;
-        }
+        } /* switch ((uint8)pwSignalDef->signalType)   */
         if (rez == (Std_ReturnType)E_OK)
-        {                       /* only if the result is good       */
-            if ((uint8) pwSignalDef->outputSignal < (uint8) CTE_OUTPUT_CTEP_0)
-            {                   /* SPT events to be processed       */
+        {   /* only if the result is good       */
+            if ((uint8)pwSignalDef->outputSignal < (uint8)CTE_OUTPUT_CTEP_0)
+            {   /* SPT events to be processed       */
                 if (reqMask != 0u)
                 {
                     reqMask = CTE_SPT0_SIG_MASK;    /* SPT events can be    */
                 }
-                shiftValue = (uint8) pwSignalDef->outputSignal;
+                shiftValue = (uint8)pwSignalDef->outputSignal;
             }
             else
-            {                   /* other signals, RFS/RCS/CTEP0...7     */
+            {   /* other signals, RFS/RCS/CTEP0...7     */
                 shiftValue = (uint8)(CTE_OUTPUT_MASK_SHIFT_BASE
-                        + (((uint8) pwSignalDef->outputSignal - (uint8) CTE_OUTPUT_CTEP_0) << 1u));
+                        + (((uint8)pwSignalDef->outputSignal - (uint8)CTE_OUTPUT_CTEP_0) << 1u));
             } /* if((uint8)pwSignalDef->outputSignal < (uint8)CTE_OUTPUT_CTEP_0)    */
-            *pVal |= reqMask << shiftValue;
+            *valPtr |= reqMask << shiftValue;
         }
     }
     else
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_NOT_DEF, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_SIG_NOT_DEF, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     } /* if(pwSignalDef->outputSignal == signal->outputSignal)  */
     return rez;
@@ -664,31 +659,31 @@ static Std_ReturnType Cte_SignalMaskSet(Cte_SingleOutputDefType *pSignalDef, Cte
  * @return      E_OK/RSDK_SUCCESS if successful, error if other
  *
  */
-static Std_ReturnType Cte_MaskValuesGet(Cte_ActionType *pActions, Cte_SingleOutputDefType *pSignalDef, uint64 *pVal)
+static Std_ReturnType Cte_MaskValuesGet(Cte_ActionType *actionsPtr, Cte_SingleOutputDefType *signalDefPtr, uint64 *valPtr)
 {
     Cte_ActionType  *pwActions;
     Std_ReturnType  rez = (Std_ReturnType)E_OK;
 
-    *pVal = 0u;
-    pwActions = pActions;
-    while (((uint8) pwActions->outputSignal < (uint8) CTE_OUTPUT_MAX) && (rez == (Std_ReturnType)E_OK))
+    *valPtr = 0u;
+    pwActions = actionsPtr;
+    while (((uint8)pwActions->outputSignal < (uint8)CTE_OUTPUT_MAX) && (rez == (Std_ReturnType)E_OK))
     {
-        switch ((uint8) pwActions->outputSignal)
+        switch ((uint8)pwActions->outputSignal)
         {
-        case (uint8) CTE_OUTPUT_FLEX_0:
-            if (pwActions->newLogicState != CTE_LOGIC_SET_TO_LOW)
+        case (uint8)CTE_OUTPUT_FLEX_0:
+            if (pwActions->cteOutputSignalType.newLogicState != CTE_LOGIC_SET_TO_LOW)
             {
-                *pVal |= CTE_FLEX_SIG_MASK;
+                *valPtr |= CTE_FLEX_SIG_MASK;
             }
             break;
-        case (uint8) CTE_OUTPUT_FLEX_1:
-            if (pwActions->newLogicState != CTE_LOGIC_SET_TO_LOW)
+        case (uint8)CTE_OUTPUT_FLEX_1:
+            if (pwActions->cteOutputSignalType.newLogicState != CTE_LOGIC_SET_TO_LOW)
             {
-                *pVal |= (CTE_FLEX_SIG_MASK << 1u);
+                *valPtr |= (CTE_FLEX_SIG_MASK << 1u);
             }
             break;
         default:                        /* for all remaining signals, RFS/RCS/SPT0...3/CTEP0...7    */
-            rez = Cte_SignalMaskSet(pSignalDef, pwActions, pVal);
+            rez = Cte_SignalMaskSet(signalDefPtr, pwActions, valPtr);
             break;
         }
         pwActions++;                    /* move to the next action      */
@@ -699,7 +694,7 @@ static Std_ReturnType Cte_MaskValuesGet(Cte_ActionType *pActions, Cte_SingleOutp
 
 /*==================================================================================================*/
 /**
- * @brief   Procedure to set te timing table.
+ * @brief   Procedure to set the timing table.
  * @details One table at a time, depending the start of the table
  *
  * @param[in]   pointers to the required time tables, in the correct order
@@ -707,51 +702,51 @@ static Std_ReturnType Cte_MaskValuesGet(Cte_ActionType *pActions, Cte_SingleOutp
  * @pre         The CTE clock frequency must be set before
  *
  */
-static Std_ReturnType Cte_TimingTableSet(Cte_TimeTableDefType *pTimeTable, Cte_SingleOutputDefType *pSignalDef,
-        volatile void *pLut)
+static Std_ReturnType Cte_TimingTableSet(Cte_TimeTableDefType *timeTablePtr, Cte_SingleOutputDefType *signalDefPtr,
+        volatile void* lutPtr)
 {
     uint64              longIntMask;                /* values for 64 bits computation       */
     uint32              i, j, tmpVal, lastTimeTick, work32U;
-    volatile struct LUT *pwLut, *pLutW;
+    volatile struct LUT *tmpLutPtr, *LutWPtr;
     Std_ReturnType rez = (Std_ReturnType)E_OK;
 
-    if(pTimeTable->pEvents == NULL)
+    if(timeTablePtr->eventsPtr == NULL_PTR)
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_EVENTS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_EVENTS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        pwLut = (volatile struct LUT *)pLut;
-        pLutW = (volatile struct LUT *)pLut;
+        tmpLutPtr = (volatile struct LUT *)lutPtr;
+        LutWPtr = (volatile struct LUT *)lutPtr;
         /* for the first event set all output to low    */
-        pwLut->LSB[0] = 0u;
-        pwLut->MSB[0] = 0u;
+        tmpLutPtr->LSB[0] = 0u;
+        tmpLutPtr->MSB[0] = 0u;
         /* set all consecutive events to "unchanged" (respectively high for clocks and low for SPT events)  */
         for (i = 1; i < CTE_MAX_SMALL_TIME_TABLE_LEN; i++)
         {
-            pwLut->LSB[i] = 0u;           /* SPT events to low                          */
-            pwLut->MSB[i] = 0x6fffffu;    /* FlexTime to 0, all other to "unchanged"    */
+            tmpLutPtr->LSB[i] = 0u;           /* SPT events to low                          */
+            tmpLutPtr->MSB[i] = 0x6fffffu;    /* FlexTime to 0, all other to "unchanged"    */
         }
         /* set the new values       */
         i = 0;
         lastTimeTick = 0;
-        while ((i < pTimeTable->tableLength) && (i < CTE_MAX_SMALL_TIME_TABLE_LEN))
+        while ((i < timeTablePtr->tableLength) && (i < CTE_MAX_SMALL_TIME_TABLE_LEN))
         {
-            if(pTimeTable->pEvents[i].pEventActions == NULL)
+            if(timeTablePtr->eventsPtr[i].eventActionsPtr == NULL_PTR)
             {
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_ACTIONS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_ACTIONS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
             if(rez == (Std_ReturnType)E_OK)
             {
-                rez = Cte_MaskValuesGet(pTimeTable->pEvents[i].pEventActions, pSignalDef, &longIntMask);
+                rez = Cte_MaskValuesGet(timeTablePtr->eventsPtr[i].eventActionsPtr, signalDefPtr, &longIntMask);
             }
             if (rez != (Std_ReturnType)E_OK)
             {
                 break;                              /* error to get the signals mask, stop here */
             }
-            tmpVal = Cte_64BitCounting(pTimeTable->pEvents[i].absTime, gsDriverData.cteWorkingFreq, 1u,
+            tmpVal = Cte_64BitCounting(timeTablePtr->eventsPtr[i].absTime, gsDriverData.cteWorkingFreq, 1u,
                     gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
             work32U = tmpVal - lastTimeTick;
             if (work32U == 0u)
@@ -759,56 +754,56 @@ static Std_ReturnType Cte_TimingTableSet(Cte_TimeTableDefType *pTimeTable, Cte_S
                 work32U = 1;                        /* time table value must not be 0   */
             }
             lastTimeTick = tmpVal;
-            pLutW->LSB[i] = work32U + (uint32) longIntMask;
+            LutWPtr->LSB[i] = work32U + (uint32)longIntMask;
             longIntMask >>= 32u;                    /* get the MSB of the mask          */
-            pLutW->MSB[i] = (uint32) longIntMask;
+            LutWPtr->MSB[i] = (uint32)longIntMask;
             i++;
         }
         if(rez == (Std_ReturnType)E_OK)
         {
-            pwLut++;                                /* go to next LUT, if necessary (more than 32 events)   */
-            if (i < pTimeTable->tableLength)
+            tmpLutPtr++;                                /* go to next LUT, if necessary (more than 32 events)   */
+            if (i < timeTablePtr->tableLength)
             {           /* second table must be used too        */
                 /* erase the CTE time table first       */
                 for (i = 0; i < CTE_MAX_SMALL_TIME_TABLE_LEN; i++)
                 {
-                    pwLut->LSB[i] = 0u;
-                    pwLut->MSB[i] = 0u;
+                    tmpLutPtr->LSB[i] = 0u;
+                    tmpLutPtr->MSB[i] = 0u;
                 }
             }
             j = 0;
-            while (i < pTimeTable->tableLength)
+            while (i < timeTablePtr->tableLength)
             {
-                if(pTimeTable->pEvents[i].pEventActions == NULL)
+                if(timeTablePtr->eventsPtr[i].eventActionsPtr == NULL_PTR)
                 {
-                    CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_ACTIONS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                    rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_ACTIONS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                     CTE_HALT_ON_ERROR;
                 }
                 if(rez == (Std_ReturnType)E_OK)
                 {
-                    rez = Cte_MaskValuesGet(pTimeTable->pEvents[i].pEventActions, pSignalDef, &longIntMask);
+                    rez = Cte_MaskValuesGet(timeTablePtr->eventsPtr[i].eventActionsPtr, signalDefPtr, &longIntMask);
                 }
                 if(rez != (Std_ReturnType)E_OK)
                 {
                     break;                              /* error to get the signals mask, stop here     */
                 }
-                tmpVal = Cte_64BitCounting(pTimeTable->pEvents[i].absTime, gsDriverData.cteWorkingFreq, 1u,
+                tmpVal = Cte_64BitCounting(timeTablePtr->eventsPtr[i].absTime, gsDriverData.cteWorkingFreq, 1u,
                         gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
-                work32U = (uint32_t) tmpVal;
+                work32U = (uint32_t)tmpVal;
                 work32U -= lastTimeTick;
                 if (work32U == 0u)
                 {
                     work32U = 1;                        /* time table value must not be 0               */
                 }
                 lastTimeTick = tmpVal;
-                pwLut->LSB[j] = work32U + (uint32) longIntMask;
+                tmpLutPtr->LSB[j] = work32U + (uint32)longIntMask;
                 longIntMask >>= 32u;                    /* get the MSB of the mask                      */
-                pwLut->MSB[j] = (uint32) longIntMask;
+                tmpLutPtr->MSB[j] = (uint32)longIntMask;
                 i++;
                 j++;
             }
-        }
-    }
+        } /* if(rez == (Std_ReturnType)E_OK)    */
+    } /* if(timeTablePtr->eventsPtr == NULL_PTR)        */
     return rez;
 }
 /*=== CteTimingTableSet ===========================*/
@@ -823,42 +818,38 @@ static Std_ReturnType Cte_TimingTableSet(Cte_TimeTableDefType *pTimeTable, Cte_S
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static void Cte_OutputSetup(Cte_SingleOutputDefType *pSignalDef, uint8 idx)
+static void Cte_OutputSetup(Cte_SingleOutputDefType *signalDefPtr, uint8 idx)
 {
     uint32                  mask;
     Cte_SingleOutputDefType *pwSignalDef;
 
-    pwSignalDef = pSignalDef;
-    gspCTE->SIGTYPE0[idx] = 0u;            /* reset all the types to default after reset (HiZ)      */
-    gspCTE->SIGTYPE1[idx] = 0u;
-    while ((uint8) pwSignalDef->outputSignal < (uint8) CTE_OUTPUT_MAX)
+    pwSignalDef = signalDefPtr;
+    gspCTEPtr->SIGTYPE0[idx] = 0u;            /* reset all the types to default after reset (HiZ)      */
+    gspCTEPtr->SIGTYPE1[idx] = 0u;
+    while ((uint8)pwSignalDef->outputSignal < (uint8)CTE_OUTPUT_MAX)
     {
-        if ((uint8) pwSignalDef->outputSignal < (uint8) CTE_OUTPUT_CTEP_0)
+        if ((uint8)pwSignalDef->outputSignal < (uint8)CTE_OUTPUT_CTEP_0)
         {                   /*  SPT events      */
             if (pwSignalDef->signalType == CTE_OUT_TOGGLE)
             {
-
-
-
-                CTE_SET_REGISTRY32(&gspCTE->SIGTYPE0[idx], CTE_SIGTYPE0_SPT_EVT_MASK, CTE_SIGTYPE0_SPT_EVT(1u));
-
+                CTE_SET_REGISTRY32(&gspCTEPtr->SIGTYPE0[idx], CTE_SIGTYPE0_SPT_EVT_MASK, CTE_SIGTYPE0_SPT_EVT(1u));
             }
         }
         else
         {
-            if ((uint8) pwSignalDef->outputSignal < (uint8) CTE_OUTPUT_SPT_RCS)
+            if ((uint8)pwSignalDef->outputSignal < (uint8)CTE_OUTPUT_SPT_RCS)
             {               /* CTEP events      */
-                mask = ((uint32) pwSignalDef->signalType) <<
-                        (16u + (uint8) pwSignalDef->outputSignal - (uint8) CTE_OUTPUT_CTEP_0);
-                gspCTE->SIGTYPE0[idx] |= mask;
+                mask = ((uint32)pwSignalDef->signalType) <<
+                        (16u + (uint8)pwSignalDef->outputSignal - (uint8)CTE_OUTPUT_CTEP_0);
+                gspCTEPtr->SIGTYPE0[idx] |= mask;
             }
             else
             {               /* RCS/RFS      */
-                if ((uint8) pwSignalDef->outputSignal < (uint8) CTE_OUTPUT_FLEX_0)
+                if ((uint8)pwSignalDef->outputSignal < (uint8)CTE_OUTPUT_FLEX_0)
                 {
-                    mask = ((uint32) pwSignalDef->signalType) <<
-                            (((uint8) pwSignalDef->outputSignal - (uint8) CTE_OUTPUT_SPT_RCS) * 2u);
-                    gspCTE->SIGTYPE1[idx] |= mask;
+                    mask = ((uint32)pwSignalDef->signalType) <<
+                            (((uint8)pwSignalDef->outputSignal - (uint8)CTE_OUTPUT_SPT_RCS) * 2u);
+                    gspCTEPtr->SIGTYPE1[idx] |= mask;
                 }
             }
         }
@@ -879,13 +870,13 @@ static void Cte_OutputSetup(Cte_SingleOutputDefType *pSignalDef, uint8 idx)
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static void Cte_RunModeSet(const Cte_SetupParamsType *pCteInitParams)
+static void Cte_RunModeSet(const Cte_SetupParamsType *cteInitParamsPtr)
 {
     uint32 mask;
 
-    if (pCteInitParams->pTimeTable1 == NULL)
+    if (cteInitParamsPtr->timeTable1Ptr == NULL_PTR)
     {                       /* only one table defined       */
-        if (pCteInitParams->pTimeTable0->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN)
+        if (cteInitParamsPtr->timeTable0Ptr->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN)
         {
             mask = 3u;      /* "toggle", but with only one table, to be correlated with the timing      */
         }
@@ -898,7 +889,7 @@ static void Cte_RunModeSet(const Cte_SetupParamsType *pCteInitParams)
     {
         mask = 3u;          /* toggle with two tables       */
     }
-    CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_OPMOD_SL_MASK, CTE_CNTRL_OPMOD_SL(mask));
+    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_OPMOD_SL_MASK, CTE_CNTRL_OPMOD_SL(mask));
 }
 /*=== Cte_RunModeSet ===========================*/
 
@@ -915,58 +906,42 @@ static void Cte_RunModeSet(const Cte_SetupParamsType *pCteInitParams)
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static void Cte_TableTimeLimitSet(const Cte_SetupParamsType *pCteInitParams)
+static void Cte_TableTimeLimitSet(const Cte_SetupParamsType *cteInitParamsPtr)
 {
     uint32 lutDur0, lutDur1;
 
-    lutDur0 = Cte_64BitCounting(pCteInitParams->pTimeTable0->tableTimeExecLimit, gsDriverData.cteWorkingFreq, 1u,
+    lutDur0 = Cte_64BitCounting(cteInitParamsPtr->timeTable0Ptr->tableTimeExecLimit, gsDriverData.cteWorkingFreq, 1u,
             gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
-
-
-
-
-
-
-
-
-    if (pCteInitParams->pTimeTable1 == NULL)
+    if (cteInitParamsPtr->timeTable1Ptr == NULL_PTR)
     {                       /* only one table defined       */
-        if (pCteInitParams->pTimeTable0->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN)
+        if (cteInitParamsPtr->timeTable0Ptr->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN)
         {
-            gspCTE->LUT_DUR = 0u;               /* the first LUT duration must be 0     */
+            gspCTEPtr->LUT_DUR = 0u;               /* the first LUT duration must be 0     */
             /* use the appropriate value for LUTDUR1: table 0 duration (the normal solution)
                or the maximum table duration if all specified durations are 0       */
             if(lutDur0 != 0u)
             {
-                gspCTE->LUT_DUR1 = lutDur0;
-        }
-        else
-        {
-                gspCTE->LUT_DUR1 = 0xffffffffu;
+                gspCTEPtr->LUT_DUR1 = lutDur0;
+            }
+            else
+            {
+                gspCTEPtr->LUT_DUR1 = 0xffffffffu;
             }
         }
         else
         {
             /* single table, table 0        */
-            gspCTE->LUT_DUR = lutDur0;
+            gspCTEPtr->LUT_DUR = lutDur0;
         }
     }
     else
     {
         /* two tables usage             */
-        lutDur1 = Cte_64BitCounting(pCteInitParams->pTimeTable1->tableTimeExecLimit, gsDriverData.cteWorkingFreq, 1u,
+        lutDur1 = Cte_64BitCounting(cteInitParamsPtr->timeTable1Ptr->tableTimeExecLimit, gsDriverData.cteWorkingFreq, 1u,
                 gsDriverData.cteMainClockDivider, CTE_1G_FREQUENCY);
-
-
-
-
-
-
-
-
         /* toggle with two tables       */
-        gspCTE->LUT_DUR = lutDur0;
-        gspCTE->LUT_DUR1 = lutDur1;
+        gspCTEPtr->LUT_DUR = lutDur0;
+        gspCTEPtr->LUT_DUR1 = lutDur1;
     }
 }
 /*=== Cte_TableTimeLimitSet ===========================*/
@@ -980,31 +955,31 @@ static void Cte_TableTimeLimitSet(const Cte_SetupParamsType *pCteInitParams)
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static Std_ReturnType Cte_PeriodArrayFill(Cte_SingleOutputDefType *pDef, uint32 *pArray, uint32 *first)
+static Std_ReturnType Cte_PeriodArrayFill(Cte_SingleOutputDefType *defPtr, uint32 *arrayPtr, uint32 *firstPtr)
 {
     uint32                  idx;
     Cte_SingleOutputDefType *pwDef;
     Std_ReturnType          rez = (Std_ReturnType)E_OK;
 
-    pwDef = pDef;
-    idx = *first;
-    while ((uint8) pwDef->outputSignal < (uint8) CTE_OUTPUT_MAX)
+    pwDef = defPtr;
+    idx = *firstPtr;
+    while ((uint8)pwDef->outputSignal < (uint8)CTE_OUTPUT_MAX)
     {
         if (pwDef->signalType == CTE_OUT_CLOCK)
         {
             if (pwDef->clockPeriod == 0u)
             {
                 /* the clock period can't be 0      */
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_CLK_PEROD, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_CLK_PEROD, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
                 break;
             }
-            pArray[idx] = pwDef->clockPeriod;
+            arrayPtr[idx] = pwDef->clockPeriod;
             idx++;
         }
         pwDef++;
     }
-    *first = idx;
+    *firstPtr = idx;
     return rez;
 }
 /*=== Cte_PeriodArrayFill ===========================*/
@@ -1019,17 +994,17 @@ static Std_ReturnType Cte_PeriodArrayFill(Cte_SingleOutputDefType *pDef, uint32 
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static Std_ReturnType Cte_FinalPeriodProcess(uint32 reqClocks, uint32 *allReqPeriods)
+static Std_ReturnType Cte_FinalPeriodProcess(uint32 reqClocks, uint32 *allReqPeriodsPtr)
 {
     uint32          i, j, k;
     Std_ReturnType  rez = (Std_ReturnType)E_OK;
 
-    gsDriverData.cteClocksPeriods[0] = allReqPeriods[0];    /* initialize the resulting period array        */
+    gsDriverData.cteClocksPeriods[0] = allReqPeriodsPtr[0];    /* initialize the resulting period array        */
     j = 0u;                                                 /* the working final index                      */
     k = 1;                                                  /* number of clocks inside the limits           */
     for (i = 1; i < reqClocks; i++)                         /* process the rest of the array                */
     {
-        if (allReqPeriods[i] < (2u * allReqPeriods[j]))
+        if (allReqPeriodsPtr[i] < (2u * allReqPeriodsPtr[j]))
         {
             k++;                            /* is possible to have both periods inside 40% error                    */
         }
@@ -1038,18 +1013,18 @@ static Std_ReturnType Cte_FinalPeriodProcess(uint32 reqClocks, uint32 *allReqPer
             if (k > 1u)
             {                               /* more requested clocks were processed before                          */
                 /* 80% coeficient applied       */
-                allReqPeriods[j] = Cte_64BitCounting(allReqPeriods[j], allReqPeriods[i-1u], 8u, 10u, allReqPeriods[j]);
+                allReqPeriodsPtr[j] = Cte_64BitCounting(allReqPeriodsPtr[j], allReqPeriodsPtr[i-1u], 8u, 10u, allReqPeriodsPtr[j]);
                 k = 1u;
             }
-            gsDriverData.cteClocksPeriods[j] = allReqPeriods[j];
+            gsDriverData.cteClocksPeriods[j] = allReqPeriodsPtr[j];
             j++;
             if (j >= CTE_INTERNAL_CLOCKS)
             {
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_TOO_MANY_CLOCKS, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_TOO_MANY_CLOCKS, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
                 break;
             }
-            allReqPeriods[j] = allReqPeriods[i];
+            allReqPeriodsPtr[j] = allReqPeriodsPtr[i];
         }
     }
     /* process the final values     */
@@ -1057,10 +1032,10 @@ static Std_ReturnType Cte_FinalPeriodProcess(uint32 reqClocks, uint32 *allReqPer
     {
         if (k > 1u)
         {                       /* more requested clocks were processed before      */
-            allReqPeriods[j] = Cte_64BitCounting(allReqPeriods[j], allReqPeriods[i - 1u], 8u, 10u, allReqPeriods[j]);
+            allReqPeriodsPtr[j] = Cte_64BitCounting(allReqPeriodsPtr[j], allReqPeriodsPtr[i - 1u], 8u, 10u, allReqPeriodsPtr[j]);
         }
-        gsDriverData.cteClocksPeriods[j] = allReqPeriods[j];
-        gsDriverData.cteUsedClockDividers = (uint8_t) j;
+        gsDriverData.cteClocksPeriods[j] = allReqPeriodsPtr[j];
+        gsDriverData.cteUsedClockDividers = (uint8_t)j;
         gsDriverData.cteUsedClockDividers++;
     }
     return rez;
@@ -1079,46 +1054,55 @@ static Std_ReturnType Cte_FinalPeriodProcess(uint32 reqClocks, uint32 *allReqPer
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static Std_ReturnType Cte_ClockDividersSet(const Cte_SetupParamsType *pCteInitParams)
+static Std_ReturnType Cte_ClockDividersSet(const Cte_SetupParamsType *cteInitParamsPtr)
 {
-    uint32          allReqPeriods[CTE_OUTPUT_MAX];
+    uint32          allReqPeriodsPtr[CTE_OUTPUT_MAX];
     uint32          reqClocks, i, j, k;
     uint32          computingVal;
     uint8           finalDivider;
     Std_ReturnType  rez;
 
     reqClocks = 0u;
-    rez = Cte_PeriodArrayFill(pCteInitParams->pSignalDef0, allReqPeriods, &reqClocks);
-    if ((rez == (Std_ReturnType)E_OK) && (pCteInitParams->pSignalDef1 != NULL))
+    if(cteInitParamsPtr->signalDef0Ptr->outputSignal < CTE_OUTPUT_MAX)
     {
-        rez = Cte_PeriodArrayFill(pCteInitParams->pSignalDef1, allReqPeriods, &reqClocks);
+        rez = Cte_PeriodArrayFill(cteInitParamsPtr->signalDef0Ptr, allReqPeriodsPtr, &reqClocks);
+    }
+    else
+    {
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_CLK_DIVIDER_ERROR, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+    }
+
+    if ((rez == (Std_ReturnType)E_OK) && (cteInitParamsPtr->signalDef1Ptr != NULL_PTR))
+    {
+        rez = Cte_PeriodArrayFill(cteInitParamsPtr->signalDef1Ptr, allReqPeriodsPtr, &reqClocks);
     }
     if ((rez == (Std_ReturnType)E_OK) && (reqClocks != 0u))
-    {           /* if there are clocks defined      */
+    {
+        /* if there are clocks defined      */
         /* sort the clocks      */
         j = 1;
-        while (j != 0u)
+        while ((j != 0u) && (reqClocks >= 2u))
         {
             j = 0u;
             for (i = 1; i < reqClocks; i++)
             {
-                if (allReqPeriods[i - 1u] > allReqPeriods[i])
+                if (allReqPeriodsPtr[i - 1u] > allReqPeriodsPtr[i])
                 {
                     j = 1;
-                    k = allReqPeriods[i - 1u];
-                    allReqPeriods[i - 1u] = allReqPeriods[i];
-                    allReqPeriods[i] = k;
+                    k = allReqPeriodsPtr[i - 1u];
+                    allReqPeriodsPtr[i - 1u] = allReqPeriodsPtr[i];
+                    allReqPeriodsPtr[i] = k;
                 }
             }
         }
         /* remove identical clocks      */
         k = 1u;
-        while (k != 0u)
+        while ((k != 0u) && (reqClocks >= 2u))
         {
             k = 0u;
             for (i = 1; i < reqClocks; i++)
             {
-                if (allReqPeriods[i] == allReqPeriods[i - 1u])
+                if (allReqPeriodsPtr[i] == allReqPeriodsPtr[i - 1u])
                 {
                     k = 1u;
                     break;
@@ -1128,23 +1112,24 @@ static Std_ReturnType Cte_ClockDividersSet(const Cte_SetupParamsType *pCteInitPa
             {
                 for (j = i + 1u; j < reqClocks; j++)
                 {
-                    allReqPeriods[j - 1u] = allReqPeriods[j];
+                    allReqPeriodsPtr[j - 1u] = allReqPeriodsPtr[j];
                 }
                 reqClocks--;
             }
         }
+
         /* process further only if more than 4, compress to have    */
         if (reqClocks > CTE_INTERNAL_CLOCKS)
         {
-            rez = Cte_FinalPeriodProcess(reqClocks, allReqPeriods);
+            rez = Cte_FinalPeriodProcess(reqClocks, allReqPeriodsPtr);
         }
         else
         {
             for (i = 0; i < reqClocks; i++)
             {
-                gsDriverData.cteClocksPeriods[i] = allReqPeriods[i];
+                gsDriverData.cteClocksPeriods[i] = allReqPeriodsPtr[i];
             }
-            gsDriverData.cteUsedClockDividers = (uint8) reqClocks;
+            gsDriverData.cteUsedClockDividers = (uint8)reqClocks;
         }
         if (rez == (Std_ReturnType)E_OK)
         {
@@ -1152,13 +1137,13 @@ static Std_ReturnType Cte_ClockDividersSet(const Cte_SetupParamsType *pCteInitPa
             {
                 computingVal = Cte_64BitCounting(gsDriverData.cteClocksPeriods[i], gsDriverData.cteWorkingFreq, 1u,
                         CTE_1G_FREQUENCY, 1u);
-                if (computingVal > (uint32) CTE_MAX_REQ_CLK_DIVIDER)
+                if (computingVal > (uint32)CTE_MAX_REQ_CLK_DIVIDER)
                 {
-                    CTE_REPORT_ERROR(RSDK_CTE_DRV_CLK_DIVIDER_ERROR, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+                    rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_CLK_DIVIDER_ERROR, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
                     CTE_HALT_ON_ERROR;
                     break;
                 }
-                finalDivider = (uint8) computingVal;
+                finalDivider = (uint8)computingVal;
                 j = 0u;
                 k = 1u;
                 computingVal = 1u;
@@ -1172,21 +1157,21 @@ static Std_ReturnType Cte_ClockDividersSet(const Cte_SetupParamsType *pCteInitPa
                 switch (i)
                 {
                 case 0u:                    /* first clock      */
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CLKDIV_1_MASK, CTE_CNTRL1_CLKDIV_1(j));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CLKDIV_1_MASK, CTE_CNTRL1_CLKDIV_1(j));
                     break;
                 case 1u:                    /* second clock     */
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CLKDIV_2_MASK, CTE_CNTRL1_CLKDIV_2(j));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CLKDIV_2_MASK, CTE_CNTRL1_CLKDIV_2(j));
                     break;
                 case 2u:                    /* third clock      */
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CLKDIV_3_MASK, CTE_CNTRL1_CLKDIV_3(j));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CLKDIV_3_MASK, CTE_CNTRL1_CLKDIV_3(j));
                     break;
                 default:                    /* fourth clock     */
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CLKDIV_4_MASK, CTE_CNTRL1_CLKDIV_4(j));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CLKDIV_4_MASK, CTE_CNTRL1_CLKDIV_4(j));
                     break;
                 }
             }
         }
-    }
+    } /* if ((rez == (Std_ReturnType)E_OK) && (reqClocks != 0u))    */
     return rez;
 }
 /*=== Cte_ClockDividersSet ===========================*/
@@ -1203,18 +1188,18 @@ static Std_ReturnType Cte_ClockDividersSet(const Cte_SetupParamsType *pCteInitPa
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-static void Cte_OutputClockSelect(const Cte_SetupParamsType *pCteInitParams)
+static void Cte_OutputClockSelect(const Cte_SetupParamsType *cteInitParamsPtr)
 {
-    Cte_SingleOutputDefType *pDef;
+    Cte_SingleOutputDefType *defPtr;
     uint32                  i;
     uint32                  tstPeriodLow, tstPeriodHigh;
 
-    pDef = pCteInitParams->pSignalDef0;
-    while ((uint8) pDef->outputSignal < (uint8) CTE_OUTPUT_MAX)
+    defPtr = cteInitParamsPtr->signalDef0Ptr;
+    while ((uint8)defPtr->outputSignal < (uint8)CTE_OUTPUT_MAX)
     {
-        if (pDef->signalType == CTE_OUT_CLOCK)
+        if (defPtr->signalType == CTE_OUT_CLOCK)
         {
-            tstPeriodLow = pDef->clockPeriod;
+            tstPeriodLow = defPtr->clockPeriod;
             tstPeriodHigh = tstPeriodLow + (tstPeriodLow / 2u);
             tstPeriodLow -= tstPeriodLow / 2u;
             for (i = 0; i < gsDriverData.cteUsedClockDividers; i++)
@@ -1225,10 +1210,10 @@ static void Cte_OutputClockSelect(const Cte_SetupParamsType *pCteInitParams)
                     break;
                 }
             }
-            i <<= ((uint8) pDef->outputSignal - (uint8) CTE_OUTPUT_CTEP_0) * 2u;
-            gspCTE->CLKSEL |= i;
+            i <<= ((uint8)defPtr->outputSignal - (uint8)CTE_OUTPUT_CTEP_0) * 2u;
+            gspCTEPtr->CLKSEL |= i;
         }
-        pDef++;
+        defPtr++;
     }
 }
 /*=== Cte_OutputClockSelect ===========================*/
@@ -1244,221 +1229,196 @@ static void Cte_OutputClockSelect(const Cte_SetupParamsType *pCteInitParams)
  *          After initialization the CTE is not started, a specific Cte_Start call must be used for this.
  *          The operation can be done at any moment; if the CTE is working, it will be stopped.
  *
- * @param[in]   pCteInitParams    = pointer to the initialization structure
- * @param[in]   pLutChecksum      = pointer to a uint64 value, which will receive the final LUT checksum;
+ * @param[in]   cteInitParamsPtr    = pointer to the initialization structure
+ * @param[in]   lutChecksumPtr      = pointer to a uint64 value, which will receive the final LUT checksum;
  *                                  this value can be checked later using Cte_GetLutChecksum
  * @return      E_OK/RSDK_SUCCESS = initialization succeeded
  *              other values      = initialization failed, use the appropriate tools to detect the issue
  *
  */
-Std_ReturnType Cte_Setup(const Cte_SetupParamsType *pCteInitParams, uint64 *pLutChecksum)
+Std_ReturnType Cte_Setup(const Cte_SetupParamsType *cteInitParamsPtr, uint64 *lutChecksumPtr)
 {
     Std_ReturnType  rez;
     uint8           cteClockDivider;            /* the clock divider        */
     uint32          len;
-
     #if defined(linux)
         uint32          mask;
     #else
         volatile SRC_1_Type * pSrc_1;
     #endif
 
-
-
-
     /* set the driver status to NOT_INITIALIZED     */
-    gsDriverData.cteDriverStatus = (uint8_t) CTE_DRIVER_STATE_NOT_INIT;
+    gsDriverData.cteDriverStatus = (uint8_t)CTE_DRIVER_STATE_NOT_INIT;
     /* check the initialization parameters          */
-    if ((pCteInitParams == NULL) || (pLutChecksum == NULL))
+    if ((cteInitParamsPtr == NULL_PTR) || (lutChecksumPtr == NULL_PTR))
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_PARAMS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_PARAMS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        rez = Cte_InitParamsCheck(pCteInitParams);
+        rez = Cte_InitParamsCheck(cteInitParamsPtr);
     }
-    if (gspCTE == NULL)
+    if (gspCTEPtr == NULL_PTR)
     {
 #ifndef linux
-        gspCTE = IP_CTE;
+        gspCTEPtr = IP_CTE;
 #else
-        if(gpRsdkCteDevice != NULL)
+        if(gpRsdkCteDevice != NULL_PTR)
         {
-            gspCTE = (volatile CTE_Type*)gpRsdkCteDevice->pMemMapVirtAddr;
+            gspCTEPtr = (volatile CTE_Type*)gpRsdkCteDevice->pMemMapVirtAddr;
         }
 #endif
-        if (gspCTE == NULL)
+        if (gspCTEPtr == NULL_PTR)
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
     }
     if (rez == (Std_ReturnType)E_OK)
     {
         /* initialize the necessary data        */
-        gsDriverData.cteWorkingFreq = pCteInitParams->cteClockFrecq; /* the working frequency for further computing */
-        cteClockDivider = Cte_ClockDividerGet(pCteInitParams->pTimeTable0, pCteInitParams->pTimeTable1);
+        gsDriverData.cteWorkingFreq = cteInitParamsPtr->cteClockFrecq; /* the working frequency for further computing */
+        cteClockDivider = Cte_ClockDividerGet(cteInitParamsPtr->timeTable0Ptr, cteInitParamsPtr->timeTable1Ptr);
         if (cteClockDivider >= CTE_CLOCK_DIVIDER_LIMIT)
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_CLK_DIVIDER_ERROR, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_CLK_DIVIDER_ERROR, CTE_E_PARAM_VALUE, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
         else
         {
             /* reset the CTE        */
-            /* set the bit to reset CTE     */
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_CTE_RST_MASK, CTE_CNTRL_CTE_RST(1u));
+            /* set the bit to reset CTE.
+             * Initialization of CTE after reset
+             *
+             */
+            CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_CTE_RST_MASK, CTE_CNTRL_CTE_RST(1u));
             gsDriverData.cteMainClockDivider = cteClockDivider; /* keep the divider; simple delay to get the reset  */
             /* reset the bit to be able to use the registry     */
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_CTE_RST_MASK, CTE_CNTRL_CTE_RST(0u));
+            CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_CTE_RST_MASK, CTE_CNTRL_CTE_RST(0u));
             /* compute the LUT checksum, including the MSBit    */
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL1_CHKSM_MD_MASK, CTE_CNTRL1_CHKSM_MD(1u));
+            CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL1_CHKSM_MD_MASK, CTE_CNTRL1_CHKSM_MD(1u));
 
             /* CTE specific initialization              */
             /* 1. Configure time instances and corresponding signal states in the timing table register LUT_LSB_0.  */
             /* 2. Configure remaining signal states in the timing table register LUT_MSB_0.                         */
-            rez = Cte_TimingTableSet(pCteInitParams->pTimeTable0, pCteInitParams->pSignalDef0,
-                    (volatile void *)gspCTE->LUT);
+            rez = Cte_TimingTableSet(cteInitParamsPtr->timeTable0Ptr, cteInitParamsPtr->signalDef0Ptr,
+                    (volatile void *)gspCTEPtr->LUT);
             /* 3. Configure time instances and corresponding signal states in the timing table register LUT_LSB_1.  */
             /* 4. Configure remaining signal states in the timing table register LUT_MSB_1.                         */
-            if ((rez == (Std_ReturnType)E_OK) && (pCteInitParams->pTimeTable1 != NULL))
+            if ((rez == (Std_ReturnType)E_OK) && (cteInitParamsPtr->timeTable1Ptr != NULL_PTR))
             {
-                rez = Cte_TimingTableSet(pCteInitParams->pTimeTable1, pCteInitParams->pSignalDef1,
-                        (volatile void *)&gspCTE->LUT[1]);
+                rez = Cte_TimingTableSet(cteInitParamsPtr->timeTable1Ptr, cteInitParamsPtr->signalDef1Ptr,
+                        (volatile void *)&gspCTEPtr->LUT[1]);
             }
-            *pLutChecksum = Cte_GetLutChecksum();
+            *lutChecksumPtr = Cte_GetLutChecksum();
             /* 5. Configure signal types in signal type registers CTE_SIGTYPE0/1.                                   */
             if (rez == (Std_ReturnType)E_OK)
             {
-                Cte_OutputSetup(pCteInitParams->pSignalDef0, 0);
-                if (pCteInitParams->pSignalDef1 != NULL)
+                Cte_OutputSetup(cteInitParamsPtr->signalDef0Ptr, 0);
+                if (cteInitParamsPtr->signalDef1Ptr != NULL_PTR)
                 {
-                    Cte_OutputSetup(pCteInitParams->pSignalDef1, 1);
+                    Cte_OutputSetup(cteInitParamsPtr->signalDef1Ptr, 1);
                 }
-                if(pCteInitParams->pTimeTable0->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN)
+                if(cteInitParamsPtr->timeTable0Ptr->tableLength > CTE_MAX_SMALL_TIME_TABLE_LEN)
                 {
-                    Cte_OutputSetup(pCteInitParams->pSignalDef0, 1);
+                    Cte_OutputSetup(cteInitParamsPtr->signalDef0Ptr, 1);
                 }
             }
             if (rez == (Std_ReturnType)E_OK)
             {
                 /* 6. Configure MA_SL_ST bit in control register CTE_CNTRL.                                         */
-                if (pCteInitParams->cteMode.workingMode == CTE_MASTER)
+                if (cteInitParamsPtr->cteMode.workingMode == CTE_MASTER)
                 {               /* Master mode used     */
                     /* normally the bit must be already 0 after reset       */
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_MA_SL_ST_MASK, CTE_CNTRL_MA_SL_ST(0u));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_MA_SL_ST_MASK, CTE_CNTRL_MA_SL_ST(0u));
                 }
                 else
                 {
                     /* set bit for Slave mode       */
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_MA_SL_ST_MASK, CTE_CNTRL_MA_SL_ST(0u));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_MA_SL_ST_MASK, CTE_CNTRL_MA_SL_ST(0u));
                     /* set the appropriate registry values for the Slave mode       */
-
 #ifdef linux
-                    mask = (uint32)pCteInitParams->cteMode.workingMode - (uint32_t)RSDK_CTE_SLAVE_EXTERNAL;
-                    mask += (uint32)pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc << 1u;
-                    mask += (uint32)pCteInitParams->cteMode.cteWorkingParam0.cteCsi2Unit << 3u;
+                    mask = (uint32)cteInitParamsPtr->cteMode.workingMode - (uint32_t)RSDK_CTE_SLAVE_EXTERNAL;
+                    mask += (uint32)cteInitParamsPtr->cteMode.cteWorkingParam1.cteCsi2Vc << 1u;
+                    mask += (uint32)cteInitParamsPtr->cteMode.cteWorkingParam0.cteCsi2Unit << 3u;
                     ((volatile SRC_1_Type*)gpRsdkCteDevice->pSrc_1)->CTE_CTRL_REG = mask;
 #else
                     pSrc_1 = IP_SRC_1;
                     CTE_SET_REGISTRY32(&pSrc_1->CTE_CTRL_REG, SRC_1_CTE_CTRL_REG_IN_CTE_MASK,
                             SRC_1_CTE_CTRL_REG_IN_CTE(
-                                    (uint32)pCteInitParams->cteMode.workingMode - (uint32)RSDK_CTE_SLAVE_EXTERNAL));
+                                    (uint32)cteInitParamsPtr->cteMode.workingMode - (uint32)RSDK_CTE_SLAVE_EXTERNAL));
                     CTE_SET_REGISTRY32(&pSrc_1->CTE_CTRL_REG, SRC_1_CTE_CTRL_REG_MIPICSI2_ID_MASK,
-                          SRC_1_CTE_CTRL_REG_MIPICSI2_ID((uint32)pCteInitParams->cteMode.cteWorkingParam0.cteCsi2Unit));
+                          SRC_1_CTE_CTRL_REG_MIPICSI2_ID((uint32)cteInitParamsPtr->cteMode.cteWorkingParam0.cteCsi2Unit));
                     CTE_SET_REGISTRY32(&pSrc_1->CTE_CTRL_REG, SRC_1_CTE_CTRL_REG_VC_ID_MASK,
-                            SRC_1_CTE_CTRL_REG_VC_ID((uint32_t)pCteInitParams->cteMode.cteWorkingParam1.cteCsi2Vc));
-#endif // #ifdef linux
+                            SRC_1_CTE_CTRL_REG_VC_ID((uint32_t)cteInitParamsPtr->cteMode.cteWorkingParam1.cteCsi2Vc));
+#endif /* #ifdef linux  */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_RFS_DLY_MASK,
-                            CTE_CNTRL_RFS_DLY((uint32) pCteInitParams->cteMode.cteWorkingParam0.cteInternalRfsDelay));
-                    CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_RCS_DLY_MASK,
-                            CTE_CNTRL_RCS_DLY((uint32) pCteInitParams->cteMode.cteWorkingParam1.cteInternalRcsDelay));
-                }
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_RFS_DLY_MASK,
+                            CTE_CNTRL_RFS_DLY((uint32)cteInitParamsPtr->cteMode.cteWorkingParam0.cteInternalRfsDelay));
+                    CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_RCS_DLY_MASK,
+                            CTE_CNTRL_RCS_DLY((uint32)cteInitParamsPtr->cteMode.cteWorkingParam1.cteInternalRcsDelay));
+                } /* if (cteInitParamsPtr->cteMode.workingMode == CTE_MASTER) */
                 /* 7. Configure REP_CNT value in control register CTE_CNTRL.                                        */
-                CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_REP_CNT_MASK,
-                        CTE_CNTRL_REP_CNT((uint32) pCteInitParams->repeatCount));
+                CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_REP_CNT_MASK,
+                        CTE_CNTRL_REP_CNT((uint32)cteInitParamsPtr->repeatCount));
                 /* 8. Configure OPMOD_SL bits in register CTE_CNTRL to define continuous run mode or toggle mode.   */
-                Cte_RunModeSet(pCteInitParams);
+                Cte_RunModeSet(cteInitParamsPtr);
                 /* 9. Configure the duration counter for TT0 and TT1 execution in registers CTE_LUT_DUR and
                  * CTE_LUT_DUR1 respectively.       */
-                Cte_TableTimeLimitSet(pCteInitParams);
+                Cte_TableTimeLimitSet(cteInitParamsPtr);
                 /* 10. Configure timemode bit in CTE_CNTRL1 for absolute/relative mode of timing table execution.   */
                 /* only relative timing used        */
-                CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_TIMEMODE_MASK, CTE_CNTRL1_TIMEMODE(0u));
+                CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_TIMEMODE_MASK, CTE_CNTRL1_TIMEMODE(0u));
                 /* 11. Configure CTECK_DV in CTE_CNTRL1 to define the CTE data path clock.                          */
-                CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CTECK_DV_MASK,
+                CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CTECK_DV_MASK,
                         CTE_CNTRL1_CTECK_DV(gsDriverData.cteMainClockDivider));
                 /* 12. Configure CLKDIV_1-CLKDIV_4 in CTE_CNTRL1 to define clocks for external signals.             */
-                rez = Cte_ClockDividersSet(pCteInitParams);
-            }
+                rez = Cte_ClockDividersSet(cteInitParamsPtr);
+            } /* if (rez == (Std_ReturnType)E_OK)   */
             /* 13. Configure CLK_SEL0-CLK_SEL9 in clock select register CTE_CLKSEL to select the clock divider
              * for the external signals.            */
             if (rez == (Std_ReturnType)E_OK)
             {
-                Cte_OutputClockSelect(pCteInitParams);
+                Cte_OutputClockSelect(cteInitParamsPtr);
             }
             /* Other necessary setup : IRQ      */
             if (rez == (Std_ReturnType)E_OK)
             {
-                rez = Cte_IrqInit(pCteInitParams);
-                gsDriverData.cteReqEvents = (uint32) pCteInitParams->cteIrqEvents;
-                gsDriverData.pCteCallback = pCteInitParams->pCteCallback;
+                rez = Cte_IrqInit(cteInitParamsPtr);
+                gsDriverData.cteReqEvents = (uint32)cteInitParamsPtr->cteIrqEvents;
+                gsDriverData.pCteCallback = cteInitParamsPtr->pCteCallback;
             }
             /* 14. Enable CTE by setting CTE_EN bit in CTE_CNTRL1.                                                  */
             /* this step will be done in a separate procedure       */
-        }
-    }
+        } /* if (cteClockDivider >= CTE_CLOCK_DIVIDER_LIMIT)    */
+    } /* if (rez == (Std_ReturnType)E_OK)   */
     if (rez == (Std_ReturnType)E_OK)
     {
         /* copy the outputs setup           */
         len = 0u;
-        while (pCteInitParams->pSignalDef0[len].outputSignal < CTE_OUTPUT_MAX)
+        while (cteInitParamsPtr->signalDef0Ptr[len].outputSignal < CTE_OUTPUT_MAX)
         {
-            gsDriverData.pSignalDef0[len] = pCteInitParams->pSignalDef0[len];
+            gsDriverData.signalDef0Ptr[len] = cteInitParamsPtr->signalDef0Ptr[len];
             len++;
         }
-        gsDriverData.pSignalDef0[len].outputSignal = CTE_OUTPUT_MAX;
-        if (pCteInitParams->pSignalDef1 != NULL)
+        gsDriverData.signalDef0Ptr[len].outputSignal = CTE_OUTPUT_MAX;
+        if (cteInitParamsPtr->signalDef1Ptr != NULL_PTR)
         {
             len = 0u;
-            while (pCteInitParams->pSignalDef1[len].outputSignal < CTE_OUTPUT_MAX)
+            while (cteInitParamsPtr->signalDef1Ptr[len].outputSignal < CTE_OUTPUT_MAX)
             {
-                gsDriverData.pSignalDef1[len] = pCteInitParams->pSignalDef1[len];
+                gsDriverData.signalDef1Ptr[len] = cteInitParamsPtr->signalDef1Ptr[len];
                 len++;
             }
-            gsDriverData.pSignalDef1[len].outputSignal = CTE_OUTPUT_MAX;
+            gsDriverData.signalDef1Ptr[len].outputSignal = CTE_OUTPUT_MAX;
         }
         else
         {
-            gsDriverData.pSignalDef1[0].outputSignal = CTE_OUTPUT_MAX;      /* signal an empty table        */
+            gsDriverData.signalDef1Ptr[0].outputSignal = CTE_OUTPUT_MAX;      /* signal an empty table        */
         }
         /* set the driver status to NOT_INITIALIZED         */
-        gsDriverData.cteDriverStatus = (uint8) CTE_DRIVER_STATE_INITIALIZED;
+        gsDriverData.cteDriverStatus = (uint8)CTE_DRIVER_STATE_INITIALIZED;
     }
     return rez;
 }
@@ -1481,31 +1441,31 @@ Std_ReturnType Cte_Start(void)
 {
     Std_ReturnType rez;
 
-    switch ((uint8) gsDriverData.cteDriverStatus)
+    switch ((uint8)gsDriverData.cteDriverStatus)
     {
-    case (uint8) CTE_DRIVER_STATE_NOT_INIT:
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+    case (uint8)CTE_DRIVER_STATE_NOT_INIT:
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
         CTE_HALT_ON_ERROR;
         break;
-    case (uint8) CTE_DRIVER_STATE_RUNNING:
-        if (CTE_GET_REGISTRY32(&gspCTE->DBG_REG, CTE_DBG_REG_FSM_ST_MASK, CTE_DBG_REG_FSM_ST_SHIFT) == 0u)
+    case (uint8)CTE_DRIVER_STATE_RUNNING:
+        if (CTE_GET_REGISTRY32(&gspCTEPtr->DBG_REG, CTE_DBG_REG_FSM_ST_MASK, CTE_DBG_REG_FSM_ST_SHIFT) == 0u)
         {                   /* the table execution finished         */
             /* set enable bit in according to the operational mode      */
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(0u));
-            gsDriverData.cteDriverStatus = (uint8) CTE_DRIVER_STATE_RUNNING;    /* start CTE execution          */
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(1u));
+            CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(0u));
+            gsDriverData.cteDriverStatus = (uint8)CTE_DRIVER_STATE_RUNNING;    /* start CTE execution          */
+            CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(1u));
             rez = (Std_ReturnType)E_OK;
         }
         else
         {
             /* CTE is really running, so it must be stopped first       */
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
             CTE_HALT_ON_ERROR;
         }
         break;
     default:
-        gsDriverData.cteDriverStatus = (uint8) CTE_DRIVER_STATE_RUNNING;    /* start CTE execution          */
-        CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(1u));
+        gsDriverData.cteDriverStatus = (uint8)CTE_DRIVER_STATE_RUNNING;    /* start CTE execution          */
+        CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(1u));
         rez = (Std_ReturnType)E_OK;
         break;
     }
@@ -1527,20 +1487,20 @@ Std_ReturnType Cte_Stop(void)
 {
     Std_ReturnType rez;
 
-    switch ((uint8) gsDriverData.cteDriverStatus)
+    switch ((uint8)gsDriverData.cteDriverStatus)
     {
-    case (uint8) CTE_DRIVER_STATE_NOT_INIT:
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+    case (uint8)CTE_DRIVER_STATE_NOT_INIT:
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
         CTE_HALT_ON_ERROR;
         break;
-    case (uint8) CTE_DRIVER_STATE_INITIALIZED:
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+    case (uint8)CTE_DRIVER_STATE_INITIALIZED:
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
         CTE_HALT_ON_ERROR;
         break;
     default:
         /* set enable bit in according to the operational mode      */
-        CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(0u));
-        gsDriverData.cteDriverStatus = (uint8) CTE_DRIVER_STATE_INITIALIZED;    /* stop CTE execution       */
+        CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN(0u));
+        gsDriverData.cteDriverStatus = (uint8)CTE_DRIVER_STATE_INITIALIZED;    /* stop CTE execution       */
         rez = (Std_ReturnType)E_OK;
         break;
     }
@@ -1561,10 +1521,10 @@ Std_ReturnType Cte_Restart(void)
 {
     Std_ReturnType rez;
 
-    switch ((uint8) gsDriverData.cteDriverStatus)
+    switch ((uint8)gsDriverData.cteDriverStatus)
     {
-    case (uint8) CTE_DRIVER_STATE_NOT_INIT:             /* not initialized, nothing to do       */
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+    case (uint8)CTE_DRIVER_STATE_NOT_INIT:             /* not initialized, nothing to do       */
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
         CTE_HALT_ON_ERROR;
         break;
     default:
@@ -1593,32 +1553,32 @@ Std_ReturnType Cte_RfsGenerate(void)
 {
     Std_ReturnType rez = (Std_ReturnType)E_OK;
 
-    if (gsDriverData.cteDriverStatus == (uint8) CTE_DRIVER_STATE_NOT_INIT)
+    if (gsDriverData.cteDriverStatus == (uint8)CTE_DRIVER_STATE_NOT_INIT)
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        if (gsDriverData.cteDriverStatus == (uint8) CTE_DRIVER_STATE_INITIALIZED)
+        if (gsDriverData.cteDriverStatus == (uint8)CTE_DRIVER_STATE_INITIALIZED)
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
             CTE_HALT_ON_ERROR;
         }
     }
     if (rez == (Std_ReturnType)E_OK)
     {
-        if (CTE_GET_REGISTRY32(&gspCTE->DBG_REG, CTE_DBG_REG_FSM_ST_MASK, CTE_DBG_REG_FSM_ST_SHIFT) == 0u)
+        if (CTE_GET_REGISTRY32(&gspCTEPtr->DBG_REG, CTE_DBG_REG_FSM_ST_MASK, CTE_DBG_REG_FSM_ST_SHIFT) == 0u)
         {                           /* CTE in HALT      */
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
             CTE_HALT_ON_ERROR;
-            gsDriverData.cteDriverStatus = (uint8) CTE_DRIVER_STATE_INITIALIZED;
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN (0u));
+            gsDriverData.cteDriverStatus = (uint8)CTE_DRIVER_STATE_INITIALIZED;
+            CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CTE_EN_MASK, CTE_CNTRL1_CTE_EN (0u));
         }
         else
         {
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_RFS_PGEN_MASK, CTE_CNTRL_RFS_PGEN(1u));
-            CTE_SET_REGISTRY32(&gspCTE->CNTRL, CTE_CNTRL_RFS_PGEN_MASK, CTE_CNTRL_RFS_PGEN(0u));
+                CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_RFS_PGEN_MASK, CTE_CNTRL_RFS_PGEN(1u));
+                CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_RFS_PGEN_MASK, CTE_CNTRL_RFS_PGEN(0u));
         }
     }
     return rez;
@@ -1632,56 +1592,56 @@ Std_ReturnType Cte_RfsGenerate(void)
  *          If the CTE is working, it will be stopped and restarted after table changed.
  *          If stopped, it will remains in the same state. It is recommendable to do like this.
  *
- * @param[in]   pTable_           = pointer to the new table(s); first pointer must not be NULL;
-                                    if second is NULL, only one table used, else two tables used
- * @param[in]   pLutChecksum      = pointer to a uint64 value, which will receive the final LUT checksum;
- *                                  this value can be checked later using Cte_GetLutChecksum
- * @param[out]  E_OK/RSDK_SUCCESS = initialization succeeded
- *              other values      = initialization failed, use the appropriate tools to detect the issue
+ * @param[in]   table0Ptr,table1Ptr     = pointer to the new table(s); first pointer must not be NULL_PTR;
+                                          if second is NULL_PTR, only one table used, else two tables used
+ * @param[in]   lutChecksumPtr          = pointer to a uint64 value, which will receive the final LUT checksum;
+ *                                        this value can be checked later using Cte_GetLutChecksum
+ * @param[out]  E_OK/RSDK_SUCCESS       = initialization succeeded
+ *              other values            = initialization failed, use the appropriate tools to detect the issue
  *
  */
-Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *pTable0, Cte_TimeTableDefType *pTable1,
-        uint64 *pLutChecksum)
+Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *table0Ptr, Cte_TimeTableDefType *table1Ptr,
+        uint64 *lutChecksumPtr)
 {
     Std_ReturnType rez = (Std_ReturnType)E_OK;
 
-    if (gsDriverData.cteDriverStatus == (uint8) CTE_DRIVER_STATE_NOT_INIT)
+    if (gsDriverData.cteDriverStatus == (uint8)CTE_DRIVER_STATE_NOT_INIT)
     {
-        CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+        rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
         CTE_HALT_ON_ERROR;
     }
     else
     {
-        if (gsDriverData.cteDriverStatus == (uint8) CTE_DRIVER_STATE_RUNNING)
+        if (gsDriverData.cteDriverStatus == (uint8)CTE_DRIVER_STATE_RUNNING)
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_RUNNING, CTE_E_WRONG_STATE, CTE_SETUP_MODULE_INIT);
             CTE_HALT_ON_ERROR;
         }
         else
         {
-            if(pLutChecksum == NULL)
+            if(lutChecksumPtr == NULL_PTR)
             {
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_PARAMS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_PARAMS, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
         }
     }
     if (rez == (Std_ReturnType)E_OK)
     {               /* ok till here, check the pointer compatibility        */
-        if (pTable0 == NULL)
+        if (table0Ptr == NULL_PTR)
         {
-            CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_TABLE0, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+            rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NULL_PTR_TABLE0, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
             CTE_HALT_ON_ERROR;
         }
         else
         {
-            if (((pTable1 == NULL)              /* table1 was provided at init but is not required now          */
-                    && ((uint8) gsDriverData.pSignalDef1[0].outputSignal < (uint8) CTE_OUTPUT_MAX))
+            if (((table1Ptr == NULL_PTR)              /* table1 was provided at init but is not required now          */
+                    && ((uint8)gsDriverData.signalDef1Ptr[0].outputSignal < (uint8)CTE_OUTPUT_MAX))
                     ||
-                    ((pTable1 != NULL)          /* table1 was not provided at init and is required now          */
-                            && ((uint8) gsDriverData.pSignalDef1[0].outputSignal >= (uint8) CTE_OUTPUT_MAX)))
+                    ((table1Ptr != NULL_PTR)          /* table1 was not provided at init and is required now          */
+                            && ((uint8)gsDriverData.signalDef1Ptr[0].outputSignal >= (uint8)CTE_OUTPUT_MAX)))
             {
-                CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_PTR_TABLE1, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
+                rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_WRG_PTR_TABLE1, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
                 CTE_HALT_ON_ERROR;
             }
         }
@@ -1689,15 +1649,15 @@ Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *pTable0, Cte_TimeTableDefT
     if (rez == (Std_ReturnType)E_OK)
     {
         /* reset the LUT checksum       */
-        CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CKSM_RST_MASK, CTE_CNTRL1_CKSM_RST(1u));
+        CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CKSM_RST_MASK, CTE_CNTRL1_CKSM_RST(1u));
         /* enable the checksum computation      */
-        CTE_SET_REGISTRY32(&gspCTE->CNTRL1, CTE_CNTRL1_CKSM_RST_MASK, CTE_CNTRL1_CKSM_RST(0u));
-        rez = Cte_TimingTableSet(pTable0, gsDriverData.pSignalDef0, (volatile void *)gspCTE->LUT);
-        if ((rez == (Std_ReturnType)E_OK) && (pTable1 != NULL))
+        CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL1, CTE_CNTRL1_CKSM_RST_MASK, CTE_CNTRL1_CKSM_RST(0u));
+        rez = Cte_TimingTableSet(table0Ptr, gsDriverData.signalDef0Ptr, (volatile void *)gspCTEPtr->LUT);
+        if ((rez == (Std_ReturnType)E_OK) && (table1Ptr != NULL_PTR))
         {
-            rez = Cte_TimingTableSet(pTable1, gsDriverData.pSignalDef1, (volatile void *)&gspCTE->LUT[1]);
+            rez = Cte_TimingTableSet(table1Ptr, gsDriverData.signalDef1Ptr, (volatile void *)&gspCTEPtr->LUT[1]);
         }
-        *pLutChecksum = Cte_GetLutChecksum();
+        *lutChecksumPtr = Cte_GetLutChecksum();
     }
     return rez;
 }
@@ -1715,10 +1675,10 @@ Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *pTable0, Cte_TimeTableDefT
  */
 uint64 Cte_GetLutChecksum(void)
 {
-    uint64 checkSum = (uint64)gspCTE->CKSM_MSB;
+    uint64 checkSum = (uint64)gspCTEPtr->CKSM_MSB;
 
     checkSum <<= 32u;
-    checkSum += (uint64_t)gspCTE->CKSM_LSB;
+    checkSum += (uint64_t)gspCTEPtr->CKSM_LSB;
     return checkSum;
 }
 /*=== Cte_GetLutChecksum ===========================*/

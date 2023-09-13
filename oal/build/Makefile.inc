@@ -1,5 +1,5 @@
 ##
-# Copyright 2017-2018 NXP
+# Copyright 2017-2018, 2022 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -40,4 +40,3 @@ ARCH ?= arm64
 else
 -include $(DEV_ROOT_DIR)/build/$(ODIR)/Makefile.inc
 endif
-

@@ -1,5 +1,5 @@
 /*
-* Copyright 20222023 NXP
+* Copyright 2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -18,6 +18,7 @@ extern "C" {
 #include "Spt_Hw_Defs.h"
 #include "Spt_Internals.h"
 #include "Spt_Cfg.h"
+#include "rsdk_version.h"
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -201,7 +202,8 @@ Std_ReturnType Spt_CheckRst(volatile SPT_Type *pSptRegs)
      * this function) */
     while (timeout > 0u)
     {
-        if (SPT_HW_READ_BITS(pSptRegs->CS_STATUS3, SPT_CS_STATUS3_PROC_STATE_MASK, SPT_CS_STATUS3_PROC_STATE_SHIFT) != SPT_SEQUENCER_STATE_RST)
+        if (SPT_HW_READ_BITS(pSptRegs->CS_STATUS3, SPT_CS_STATUS3_PROC_STATE_MASK, SPT_CS_STATUS3_PROC_STATE_SHIFT) !=
+            SPT_SEQUENCER_STATE_RST)
         {
             retStatus = (Std_ReturnType)E_OK;
             break;
@@ -228,7 +230,8 @@ Std_ReturnType Spt_CheckUnexpectedStop(volatile SPT_Type *const pSptRegs, Spt_Dr
 
     /* Check for unexpected SPT_IRQ_ECS STOP interrupt:
      * the STOP interrupt can only be issued when the 'current instruction' in the command sequencer
-     * is a 'STOP' and the Driver state is either 'BUSY' (running a kernel) or 'FAULT' (in case of a non-command SPT error) */
+     * is a 'STOP' and the Driver state is either 'BUSY' (running a kernel)
+     * or 'FAULT' (in case of a non-command SPT error) */
     if (!((drvState == SPT_STATE_HW_BUSY) || (drvState == SPT_STATE_FAULT)) &&
         (sptCurrentInstrOpcode == SPT_STOP_OPCODE))
     {

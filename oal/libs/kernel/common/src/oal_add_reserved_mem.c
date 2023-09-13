@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2020, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -37,7 +37,7 @@ int32_t OAL_AddReservedMemoryRegion(char8_t *apName, uintptr_t aPhysAddr,
 	}
 
 	(void)memcpy(lResMem.mName, apName,
-	             strnlen(apName, sizeof(lResMem.mName)));
+	             OAL_strnlen(apName, sizeof(lResMem.mName)));
 	lRet = OAL_AddMemoryPool(&lResMem, &lpMemChunk);
 	if ((lRet != 0) || (lpMemChunk == NULL)) {
 		OAL_LOG_ERROR("Failed to add '%s' to memory pools\n",

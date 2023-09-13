@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 NXP
+ * Copyright 2016-2018 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -36,9 +36,9 @@ extern "C" {
 enum rsdkLaxUapiFunctions{
     RSDK_LAX_UAPI_DMA_LAX0,
     RSDK_LAX_UAPI_DMA_LAX1,
-	RSDK_LAX_UAPI_REGISTER_EVENTS,
-	RSDK_LAX_UAPI_DEREGISTER_EVENTS,
-	RSDK_LAX_UAPI_TRIGGER_EVENT,
+    RSDK_LAX_UAPI_REGISTER_EVENTS,
+    RSDK_LAX_UAPI_DEREGISTER_EVENTS,
+    RSDK_LAX_UAPI_TRIGGER_EVENT,
 };
 
 enum laxDmaReqType

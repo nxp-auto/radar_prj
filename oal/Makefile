@@ -99,6 +99,7 @@ clean_sa: clean
 clean_zephyr: clean
 install_linux: compile $(SUBDIRS)
 install_qnx: compile $(SUBDIRS)
+install_ghs: compile $(SUBDIRS)
 install_sa: compile $(SUBDIRS)
 install_zephyr: compile $(SUBDIRS)
 

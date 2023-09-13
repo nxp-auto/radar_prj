@@ -20,7 +20,13 @@ extern "C" {
 #include <linux/types.h>
 #else
 #include <stdint.h>
+#include <stddef.h>
 #endif
+
+#ifndef NULL_PTR
+#define NULL_PTR    NULL
+#endif
+
 /* Short names for volatiles used by header files, based on ISO C standard */
 typedef volatile int8_t  vint8_t;
 typedef volatile uint8_t vuint8_t;
@@ -39,7 +45,6 @@ typedef float  float32_t;
 typedef double float64_t;
 
 
-#if !defined(RSDK_AUTOSAR)
 #if !defined(__ZEPHYR__)
 typedef uint8_t     boolean;
 #endif
@@ -61,7 +66,6 @@ typedef int8_t      sint8;
 typedef int16_t     sint16;
 typedef int32_t     sint32;
 typedef int64_t     sint64;
-#endif
 
 #elif defined(__MWERKS__) /* Metrowerk CodeWarrior */
 #include <stdint.h>
@@ -101,16 +105,14 @@ typedef int16_t  sint16;
 typedef uint16_t uint16;
 
 typedef int32_t  int32;
+typedef int32_t  sint32;
 typedef uint32_t uint32;
 
 typedef int64_t  int64;
 typedef int64_t  sint64;
 typedef uint64_t uint64;
 
-
-#if !defined(boolean)
-#define  boolean bool
-#endif
+typedef uint8_t  boolean;
 
 /* Standard typedefs used by header files, based on ISO C standard */
 typedef volatile int8_t  vint8_t;
@@ -170,11 +172,11 @@ typedef double float64_t;
 #endif
 
 #ifndef TRUE
-#define TRUE 1
+#define TRUE 1u
 #endif
 
 #ifndef FALSE
-#define FALSE 0
+#define FALSE 0u
 #endif
 
 #ifndef STD_ON

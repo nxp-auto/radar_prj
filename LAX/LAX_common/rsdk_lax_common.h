@@ -539,10 +539,10 @@ typedef struct
 
 typedef struct
 {
-	rsdkLaxCmdPtr_t    nextCmdPtr;    /**< @brief  This is set to 0 when a new LAX command is sent out. 
-	                                        The next command overlaps it with its own thisCmdPtr field */
-	rsdkLaxCmdHeader_t cmdHeader;     /**< @brief  LAX command header. */
-	uint32_t cmdFuncInfo;	          /**< @brief  LAX command id as registered via the registration API in. */
+    rsdkLaxCmdPtr_t    nextCmdPtr;    /**< @brief  This is set to 0 when a new LAX command is sent out. 
+                                            The next command overlaps it with its own thisCmdPtr field */
+    rsdkLaxCmdHeader_t cmdHeader;     /**< @brief  LAX command header. */
+    uint32_t cmdFuncInfo;              /**< @brief  LAX command id as registered via the registration API in. */
 }rsdkLaxCmdPre_t;
 
 /**
@@ -551,9 +551,9 @@ typedef struct
 */
 typedef struct  
 {
-	rsdkLaxCmdPre_t common; 			 
-	uint32_t cmdBufInfo[(2U * RSDK_LAX_MAX_FUNC_ARGS)]; 
-	rsdkLaxCmdPtr_t thisCmdPtr;  //this area is used only if RSDK_LAX_MAX_FUNC_ARGS	 
+    rsdkLaxCmdPre_t common;              
+    uint32_t cmdBufInfo[(2U * RSDK_LAX_MAX_FUNC_ARGS)]; 
+    rsdkLaxCmdPtr_t thisCmdPtr;  //this area is used only if RSDK_LAX_MAX_FUNC_ARGS     
 }rsdkLaxCmdLayout_t;
 
 /*==================================================================================================

@@ -8,17 +8,11 @@
 #define CDD_CTE_H
 
 
-/**
-*   @file
-*   @implements CDD_CDD_Cte.h_Artifact
-*
-*   @addtogroup CTE_ASR
-*   @{
-*/
 
 #ifdef __cplusplus
 extern "C"{
 #endif
+
 
 /*
 * @page misra_violations MISRA-C:2012 violations
@@ -28,6 +22,10 @@ extern "C"{
 * <MA>_MemMap.h is included after each section define in order to set the current memory section as defined by AUTOSAR.
 */
 
+/**
+*   @addtogroup cte_asr_api_const
+*   @{
+*/
 
 /*==================================================================================================
 *                                          INCLUDE FILES
@@ -38,6 +36,7 @@ extern "C"{
 #include "Cte_Cfg.h"
 #include "Cte_Types.h"
 #include "Cte_Irq.h"
+#include "rsdk_version.h"
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -89,6 +88,7 @@ extern "C"{
     * */
     #define CTE_E_HW_ERROR                     ((uint8)0x06U)
 
+/** @} */
 
 /* update a MIPI-CTE 32 bits registry                              */
 #define CTE_SET_REGISTRY32(registryPtr, alignedMask, alignedValue) \
@@ -111,24 +111,28 @@ extern "C"{
 *                                  GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
 
-
 /*==================================================================================================
 *                                       FUNCTION PROTOTYPES
 ==================================================================================================*/
+
+/**
+*   @addtogroup cte_asr_api_func
+*   @{
+*/
 
 /**
  * @brief   Initialization procedure for CTE driver
  * @details After initialization the CTE is not started, a specific Cte_Start call must be used for this.
  *          The operation can be done at any moment; if the CTE is working, it will be stopped.
  *
- * @param[in]   pCteInitParams    = pointer to the initialization structure
- * @param[in]   pLutChecksum      = pointer to a uint64 value, which will receive the final LUT checksum;
+ * @param[in]   cteInitParamsPtr    = pointer to the initialization structure
+ * @param[in]   lutChecksumPtr      = pointer to a uint64 value, which will receive the final LUT checksum;
  *                                  this value can be checked later using Cte_GetLutChecksum
  * @return      E_OK/RSDK_SUCCESS = initialization succeeded
  * @return      other values      = initialization failed, use the appropriate tools to detect the issue
  *
  */
-Std_ReturnType Cte_Setup(const Cte_SetupParamsType *pCteInitParams, uint64 *pLutChecksum);
+Std_ReturnType Cte_Setup(const Cte_SetupParamsType *cteInitParamsPtr, uint64 *lutChecksumPtr);
 
 /**
  * @brief   Start procedure for CTE
@@ -182,16 +186,16 @@ Std_ReturnType Cte_RfsGenerate(void);
  *          If the CTE is working, it will be stopped and restarted after table changed.
  *          If stopped, it will remains in the same state. It is recommendable to do like this.
  *
- * @param[in]   pTable_         = pointer to the new table(s); first pointer must not be NULL; 
-                                if second is NULL, only one table used, else two tables used
- * @param[in]   pLutChecksum    = pointer to a uint64 value, which will receive the final LUT checksum;
- *                                  this value can be checked later using Cte_GetLutChecksum
- * @return  E_OK/RSDK_SUCCESS   = initialization succeeded
- * @return  other values        = initialization failed, use the appropriate tools to detect the issue
+ * @param[in]   table0Ptr, table1Ptr    = pointer to the new table(s); first pointer must not be NULL;
+                                          if second is NULL, only one table used, else two tables used
+ * @param[in]   lutChecksumPtr          = pointer to a uint64 value, which will receive the final LUT checksum;
+ *                                        this value can be checked later using Cte_GetLutChecksum
+ * @return  E_OK/RSDK_SUCCESS           = initialization succeeded
+ * @return  other values                = initialization failed, use the appropriate tools to detect the issue
  *
  */
-Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *pTable0, Cte_TimeTableDefType *pTable1,
-        uint64 *pLutChecksum);
+Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *table0Ptr, Cte_TimeTableDefType *table1Ptr,
+        uint64 *lutChecksumPtr);
 
 /**
  * @brief   Get the checksum of the timing LUT.
@@ -203,11 +207,11 @@ Std_ReturnType Cte_UpdateTables(Cte_TimeTableDefType *pTable0, Cte_TimeTableDefT
  */
 uint64 Cte_GetLutChecksum(void);
 
+/** @} */
+
 
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */
 
 #endif /* CDD_CTE_H */

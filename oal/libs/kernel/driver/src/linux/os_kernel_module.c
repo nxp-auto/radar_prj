@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 NXP
+ * Copyright 2017-2019, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -19,10 +19,10 @@
 #ifndef OAL_LOG_SUPPRESS_DEBUG
 #define OAL_LOG_SUPPRESS_DEBUG
 #endif
+#include <oal_log.h>
 #include <oal_comm_kernel.h>
 #include <oal_driver_dispatcher.h>
 #include <oal_kernel_memory_allocator.h>
-#include <oal_log.h>
 #include <oal_page_manager.h>
 #include <oal_timespec.h>
 #include <os_oal_comm_kernel.h>
@@ -109,7 +109,6 @@ static int32_t getReservedRegion(struct platform_device *apDev,
 {
 	int32_t lRet = 0;
 	struct device_node *lpMemNode;
-	void __iomem *lpVirtAddr;
 	uint64_t lRes[2];
 
 	lpMemNode = of_parse_phandle(apDev->dev.of_node, "memory-region", 0);
@@ -128,23 +127,11 @@ static int32_t getReservedRegion(struct platform_device *apDev,
 	*apLen   = lRes[1];
 
 	if ((*apStart == 0U) || (*apLen == 0U)) {
-		OAL_LOG_ERROR("Invalid region: 0x%" PRIxPTR " - 0x%"
-			      PRIx64 "\n", *apStart, *apLen);
+		OAL_LOG_ERROR("Invalid region: 0x%" PRIxPTR " - 0x%" PRIx64
+		              "\n",
+		              *apStart, *apLen);
 		lRet = -EINVAL;
 		goto release_node;
-	}
-
-	if (aInit != 0U) {
-		lpVirtAddr = of_iomap(lpMemNode, 0);
-		if (lpVirtAddr == NULL) {
-			lRet = -ENOMEM;
-			OAL_LOG_ERROR("OAL memory init failed!\n");
-			goto release_node;
-		}
-
-		memset_io(lpVirtAddr, 0x0, *apLen);
-		iounmap(lpVirtAddr);
-		OAL_LOG_DEBUG("  Initialized to 0x0ULL\n");
 	}
 
 release_node:
@@ -160,12 +147,12 @@ static int32_t OAL_OS_ProbeDriver(struct platform_device *apDev)
 
 	struct OAL_MemoryAllocatorRegion lResMem;
 	struct OALMemoryChunk *lpMemChunk = NULL;
-	uint64_t lSize = 0ULL;
+	uint64_t lSize                    = 0ULL;
 
 	(void)strncpy(lResMem.mName, apDev->name,
 	              OAL_ARRAY_SIZE(lResMem.mName) - 1U);
 	/* String termination */
-	lResMem.mName[OAL_ARRAY_SIZE(lResMem.mName) -1U] = '\0';
+	lResMem.mName[OAL_ARRAY_SIZE(lResMem.mName) - 1U] = '\0';
 
 	/* Get init */
 	if (of_get_property(apDev->dev.of_node, "init", NULL) == NULL) {
@@ -258,7 +245,7 @@ static struct platform_driver gsOALDriver = {
     .driver = {.name           = "OS Abstraction Layer",
                .owner          = THIS_MODULE,
                .of_match_table = gcsOALDtIds},
-    .probe = OAL_OS_ProbeDriver,
+    .probe  = OAL_OS_ProbeDriver,
 };
 
 int32_t OAL_InitializeDriver(void)
@@ -266,7 +253,8 @@ int32_t OAL_InitializeDriver(void)
 	int32_t lRet = 0;
 	struct file_operations lFops;
 	static struct file_operations lsOalFopsNc = {
-	    .owner = THIS_MODULE, .mmap = oal_mem_mmap_noncached,
+	    .owner = THIS_MODULE,
+	    .mmap  = oal_mem_mmap_noncached,
 	};
 
 	gsOALService = OAL_RPCRegister(OAL_CACHED_DEV, OAL_DriverDispatcher);
@@ -335,4 +323,3 @@ void OAL_ReleaseDriver(void)
 
 	platform_driver_unregister(&gsOALDriver);
 }
-

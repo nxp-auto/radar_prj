@@ -1,12 +1,11 @@
 /*
- * Copyright 2018-2020 NXP
+ * Copyright 2018-2020, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <sa/oal_standalone_stubs.h>
+#include <oal_utils.h>
 #include <oal_irq_utils.h>
 #include <oal_timer.h>
-#include <oal_utils.h>
 #include <arch_oal_timer.h>
 #include <arch_oal_timespec.h>
 

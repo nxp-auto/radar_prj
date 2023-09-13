@@ -1,12 +1,12 @@
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2019, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+#include <oal_utils.h>
 #include <sa/oal_standalone_stubs.h>
 #include <oal_irq_utils.h>
 #include <oal_timer.h>
-#include <oal_utils.h>
 #include <arch_oal_timer.h>
 #include <arch_oal_timespec.h>
 #include <arm64_core_regs.h>
@@ -44,7 +44,7 @@ void OAL_SA_ARCH_EnableAndUnmaskTimer(void)
 }
 
 void OAL_SA_ARCH_UpdateHWTimerTimeout(uint64_t aDeltaTicks,
-                                  uint64_t *apAbsTimeTicks)
+                                      uint64_t *apAbsTimeTicks)
 {
 	if (apAbsTimeTicks == NULL) {
 		OAL_LOG_ERROR("Invalid argument\n");

@@ -10,11 +10,14 @@
 /*==================================================================================================
 *                                        INCLUDE FILES
 ==================================================================================================*/
-#include <linux/cdev.h>
-#include <linux/interrupt.h>
-#include "oal_comm_kernel.h"
-#include "oal_waitqueue.h"
+#ifdef __KERNEL__
+    #include <linux/cdev.h>
+    #include <linux/interrupt.h>
+#endif
 #include "Csi2_Linux_Def.h"
+#include "rsdk_csi2_driver_api.h"
+#include "os_oal_waitqueue.h"
+#include "oal_comm_kernel.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,7 +30,6 @@ extern "C" {
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
-
 typedef struct
 {
     int32_t devId;
@@ -57,6 +59,7 @@ typedef struct
     rsdkCsi2KernelErr_t irqErrorPipe[RSDK_CSI2_ERROR_QUEUE_LEN];
 
 } rsdkCsi2Device_t;
+
 
 /*==================================================================================================
 *                                GLOBAL VARIABLE DECLARATIONS

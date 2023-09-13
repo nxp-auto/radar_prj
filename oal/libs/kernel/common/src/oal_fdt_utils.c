@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2019, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -108,8 +108,9 @@ static int32_t getDtbHeader(const uint32_t *acpDtb, struct DtbHeader *apDtbH)
 
 	/* check end node and end tokens in structure block */
 	/* OAL_FDT_END token must be the last token in the structure block */
-	lcpStructEnd = acpDtb + ((apDtbH->mOffStruct + apDtbH->mSizeStruct) /
-	                         ((uint32_t)sizeof(uint32_t))) -
+	lcpStructEnd = acpDtb +
+	               ((apDtbH->mOffStruct + apDtbH->mSizeStruct) /
+	                ((uint32_t)sizeof(uint32_t))) -
 	               1U;
 	lcpStructEndNode = acpDtb +
 	                   ((apDtbH->mOffStruct + apDtbH->mSizeStruct) /
@@ -331,14 +332,14 @@ int32_t OAL_GetProp(const uint32_t *acpDtb, uint32_t aNodeOff,
 		if (OAL_GetBigEndian32(lcpNodeOffset[lI]) == OAL_FDT_PROP) {
 			getDtbPropOff(lcpNodeOffset + lI, &lApDtbP, lcpStrsOff);
 
-			if (strnlen(acpPropName, MAX_PROP_NAME_LEN) ==
+			if (OAL_strnlen(acpPropName, MAX_PROP_NAME_LEN) ==
 			    MAX_PROP_NAME_LEN) {
 				OAL_LOG_WARNING(
 				    "Property name length is at"
 				    "MAX_PROP_NAME_LEN limit \n");
 			}
 
-			lStrsLen = strnlen(acpPropName, MAX_PROP_NAME_LEN);
+			lStrsLen = OAL_strnlen(acpPropName, MAX_PROP_NAME_LEN);
 
 			if (strncmp(acpPropName, COMPATIBLE_PROP, lStrsLen) ==
 			    0) {

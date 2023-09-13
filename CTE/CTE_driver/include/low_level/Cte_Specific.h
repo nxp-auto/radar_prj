@@ -4,6 +4,7 @@
 * SPDX-License-Identifier: BSD-3-Clause
 */
 
+/* clang-format off  */
 #ifndef CTE_SPECIFIC_H
 #define CTE_SPECIFIC_H
 
@@ -18,17 +19,7 @@
     #include "typedefs.h"
     #endif
 
-
-
-
     #include "S32R45_CTE.h"
-
-
-
-
-
-
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,17 +40,7 @@ extern "C" {
 #define CTE_MAX_SMALL_TIME_TABLE_LEN    32u     /* maximum length for double time table usage (single table)        */
 
 
-
-
-
     #define CTE_IRQ_NUMBER      263u                /* hardware interrupt number                                        */
-
-
-
-
-
-
-
 
 
 /*==================================================================================================
@@ -77,9 +58,6 @@ extern "C" {
 #define CTE_INTERNAL_CLOCKS         4u                          /* CTE has 4 internal clock dividers                */
 #define CTE_MAX_REQ_CLK_DIVIDER     192u                        /* Max clock divider                                */
 #define CTE_MAX_CLK_DIVIDERS        8u                          // the number of possible dividers for clocks       */
-
-/* macro definition for error reporting        */
-    #define CTE_REPORT_ERROR(a,c,d)  rez = (a)
 
 
 /*==================================================================================================
@@ -129,15 +107,15 @@ typedef struct {
     uint32                  cteReqEvents;           /* the CTE events requested by application to be signaled       */
     Cte_IsrCbType           pCteCallback;           /* the application callback to be used for the requested events */
     uint32                  cteClocksPeriods[CTE_INTERNAL_CLOCKS];  /* resulting clock period                       */
-    Cte_SingleOutputDefType pSignalDef0[CTE_OUTPUT_MAX + 1u];       /* copy of the existing signals definitions     */
-    Cte_SingleOutputDefType pSignalDef1[CTE_OUTPUT_MAX + 1u];
+    Cte_SingleOutputDefType signalDef0Ptr[CTE_OUTPUT_MAX + 1u];       /* copy of the existing signals definitions     */
+    Cte_SingleOutputDefType signalDef1Ptr[CTE_OUTPUT_MAX + 1u];
 } Cte_DriverStateType;
 
 /*==================================================================================================
  *                                GLOBAL VARIABLE DECLARATIONS
  ==================================================================================================*/
 extern Cte_DriverStateType gsDriverData;            /* the driver necessary data                */
-extern volatile CTE_Type *gspCTE;                   /* the pointer to the CTE registry          */
+extern volatile CTE_Type *gspCTEPtr;                   /* the pointer to the CTE registry          */
 
 
 /*==================================================================================================

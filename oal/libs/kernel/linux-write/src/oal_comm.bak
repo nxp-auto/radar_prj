@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, 2021 NXP
+ * Copyright 2017-2019 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -14,9 +14,9 @@
 #include <linux/device.h>
 #include <linux/fs.h>
 
-#include <oal_log.h>
 #include <oal_comm.h>
 #include <oal_comm_kernel.h>
+#include <oal_log.h>
 #include <oal_mem_constants.h>
 #include <oal_static_pool.h>
 #include <os_oal_comm_kernel.h>

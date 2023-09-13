@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -19,6 +19,7 @@ extern "C" {
 ==================================================================================================*/
 #include "Spt_Internals_Types.h"
 #include "Spt_Cfg.h"
+#include "rsdk_version.h"
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION

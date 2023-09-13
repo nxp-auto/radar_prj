@@ -9,11 +9,9 @@
 
 
 /**
-*   @file
-*   @implements Csi2.h_Artifact
 *
-*   @addtogroup CSI2_ASR
-*   @{
+*   @implements CDD_Csi2.h_Artifact
+*
 */
 
 #ifdef __cplusplus
@@ -38,6 +36,11 @@ extern "C"{
 #include "Csi2_Cfg.h"
 #include "Csi2_Types.h"
 #include "Csi2_Irq.h"
+#include "rsdk_version.h"
+
+/** @addtogroup csi2_asr_api_const
+ *  @{
+ */
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -55,40 +58,8 @@ extern "C"{
 /*==================================================================================================
 *                                       DEFINES AND MACROS
 ==================================================================================================*/
-/*
-* @brief Development error codes (passed to DET).
-*/
 
-    /**
-    * @brief API request called with an invalid parameter (Nullpointer).
-    * */
-    #define CSI2_E_PARAM_POINTER                ((uint8)0x01U)
-
-    /**
-    * @brief API request called with invalid parameter (invalid value).
-    * */
-    #define CSI2_E_PARAM_VALUE                  ((uint8)0x02U)
-
-    /**
-    * @brief API request called with invalid parameter (out of range).
-    * */
-    #define CSI2_E_PARAM_HANDLE                 ((uint8)0x03U)
-
-    /**
-    * @brief Setup of Csi2 Driver failed.
-    * */
-    #define CSI2_E_SETUP_FAILED                 ((uint8)0x04U)
-
-    /**
-    * @brief Incorrect driver status.
-    * */
-    #define CSI2_E_WRONG_STATE                  ((uint8)0x05U)
-
-    /**
-    * @brief Hardware error.
-    * */
-    #define CSI2_E_HW_ERROR                     ((uint8)0x06U)
-
+/** @} */
 
 /* update a MIPI-CSI2 32 bits registry                              */
 #define CSI2_SET_REGISTRY32(registryPtr, alignedMask, alignedValue) \
@@ -111,7 +82,7 @@ extern "C"{
 *                                  GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
     extern Csi2_DriverParamsType gCsi2Settings[CSI2_MAX_UNITS];
-    extern volatile GENERIC_CSI2_Type *gpMipiCsi2Regs[CSI2_MAX_UNITS];
+    extern volatile GENERIC_CSI2_Type *gMipiCsi2RegsPtr[CSI2_MAX_UNITS];
     extern volatile uint32 gsCsi2FramesCounter[CSI2_MAX_UNITS][CSI2_MAX_VC];
 
 
@@ -119,6 +90,10 @@ extern "C"{
 *                                       FUNCTION PROTOTYPES
 ==================================================================================================*/
 
+/**
+ * @addtogroup csi2_asr_api_func
+ * @{
+ */
 
 /**
  * @brief       This function prepare the CSI2 interface to receive data
@@ -299,11 +274,11 @@ uint32 Csi2_GetFramesCounter(const Csi2_UnitIdType unitId, const Csi2_VirtChnlId
  */
 uint8 Csi2_GetChannelNum(const Csi2_VCDriverStateType *pVCState);
 
+/** @} */
+
 
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */
 
 #endif /* CSI2_H */

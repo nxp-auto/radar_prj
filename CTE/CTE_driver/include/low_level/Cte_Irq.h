@@ -65,6 +65,8 @@ extern "C"{
 ==================================================================================================*/
   #if defined(linux)
     extern void Cte_IrqHandler(void);
+  #elif defined (__ZEPHYR__)
+    void Cte_IrqHandler(const void *pParams);
   #endif
 
 
@@ -83,7 +85,7 @@ extern "C"{
  * @return      E_OK/RSDK_SUCCESS = success; other = error
  *
  */
-Std_ReturnType Cte_IrqInit(const Cte_SetupParamsType *pCteInitParams);
+Std_ReturnType Cte_IrqInit(const Cte_SetupParamsType *cteInitParamsPtr);
 
 
 #ifdef __cplusplus

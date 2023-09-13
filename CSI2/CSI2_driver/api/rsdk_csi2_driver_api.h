@@ -11,10 +11,10 @@
  *                                        INCLUDE FILES
  ==================================================================================================*/
 #ifdef __KERNEL__
-#include <linux/types.h>
+    #include <linux/types.h>
 #else
-#include "typedefs.h"
-#include "rsdk_glue_irq_register_api.h"
+    #include "typedefs.h"
+    #include "rsdk_glue_irq_register_api.h"
 #endif
 
 #include "rsdk_status.h"
@@ -115,11 +115,6 @@ extern "C" {
 #define RSDK_CSI2_EVT_FRAME_END         (1UL << 1u) /**< Frame end event (FE)                                       */
 #define RSDK_CSI2_EVT_SHORT_PACKET      (1UL << 2u) /**< Generic short packet received (GNSP)                       */
 #define RSDK_CSI2_EVT_LINE_END          (1UL << 3u) /**< Line end event (LINEDONE)                                  */
-
-
-
-
-
 #define RSDK_CSI2_EVT_BIT_NOT_TOGGLE    (1UL << 5u) /**< Bit not toggled on a channel,
                                                      * reported in rsdkCsi2Report_t::notToggledBits.                */
 
@@ -281,10 +276,8 @@ typedef enum
 {
     RSDK_CSI2_UNIT_0 = 0,           /**< First unit (MIPICSI2_0)                                                    */
     RSDK_CSI2_UNIT_1,               /**< Second unit (MIPICSI2_1)                                                   */
-
         RSDK_CSI2_UNIT_2,           /**< Third unit (MIPICSI2_2)                                                    */
         RSDK_CSI2_UNIT_3,           /**< Fourth unit (MIPICSI2_3)                                                   */
-
     RSDK_CSI2_MAX_UNITS             /**< The units limit, to not use in procedure call                              */
 }rsdkCsi2UnitId_t;
 
@@ -313,10 +306,8 @@ typedef enum
 {
     RSDK_CSI2_LANE_0 = 0,           /**< first lane / one lane                                                      */
     RSDK_CSI2_LANE_1,               /**< second lane / two lanes                                                    */
-
     RSDK_CSI2_LANE_2,               /**< third lane / three lanes                                                   */
     RSDK_CSI2_LANE_3,               /**< fourth lane / four lanes                                                   */
-
     RSDK_CSI2_MAX_LANE              /**< lanes (maximum) per CSI2 unit, to not use in procedure call                */
 }rsdkCsi2LaneEnum_t;
 
@@ -334,10 +325,6 @@ typedef enum {
     RSDK_CSI2_CHANNEL_B,
     RSDK_CSI2_CHANNEL_C,
     RSDK_CSI2_CHANNEL_D,
-    RSDK_CSI2_CHANNEL_E,
-    RSDK_CSI2_CHANNEL_F,
-    RSDK_CSI2_CHANNEL_G,
-    RSDK_CSI2_CHANNEL_H,
     RSDK_CSI2_MAX_CHANNEL
 }rsdkCsi2Channel_t;
 
@@ -376,45 +363,6 @@ typedef enum {
     RSDK_CSI2_DPHY_INIT_MAX = RSDK_CSI2_DPHY_INIT_SHORT_AND_STOP + 1
                                         /**< Init max limit, not to be used in application                          */
 }rsdkCsi2DphyInitOptions_t;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -496,10 +444,6 @@ typedef struct {
     uint16_t    expectedNumSamples;             /**< Expected line length for receiving in terms of samples/pixels/etc.
                                                  * per channel (antenna for radar)                                   */
     uint16_t    expectedNumLines;               /**< Expected number of lines/chirps per frame                       */
-
-
-
-
     uint16_t    bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
                                                  * statistics to be received in buffer, at least 1<br>
                                                  * \if (S32R45_DOCS || S32R294_DOCS) @note For internal software
@@ -650,12 +594,6 @@ typedef struct {
                                                  * the application :
                                                  * - simple/normal calibration or quick/short calibration
                                                  * - wait for 5us or not wait for STOP states on data lanes         */
-
-
-
-
-
-
     uint8_t     statManagement;                 /**< How the channel statistics are managed. Only channels having
                                                  * \ref RSDK_CSI2_OFFSET_AUTOCOMPUTE DC offset specified will be
                                                  * managed. Use one of RSDK_CSI2_STAT_... definitions. The value is
@@ -682,7 +620,6 @@ typedef struct {
                                                             * It is not a must to use one of these for normal
                                                             * application, but if used it must be correlated with the
                                                             * Virtual Channel of the appropriate RadarData.         */
-#if !defined(RSDK_AUTOSAR)
     rsdkCsi2IsrCb_t         pCallback[RSDK_CSI2_MAX_IRQ_ID];    /**< the necessary callbacks :
                                                  * <table>
                             * <tr><td>errors in receive path</td><td>\ref RSDK_CSI2_RX_ERR_IRQ_ID</td></tr>
@@ -700,7 +637,6 @@ typedef struct {
 #if !defined(linux)
     rsdkCoreId_t                irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
     uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
-#endif
 #endif
 }rsdkCsi2InitParams_t;
 
@@ -747,7 +683,6 @@ typedef struct {
  * @retval RSDK_CSI2_DRV_INVALID_CLOCK_FREQ - Clock frequency incorrect (null)
  * @retval RSDK_CSI2_DRV_NO_SAMPLE_PER_CHIRP - Samples per chirp incorrect (null)
  * @retval RSDK_CSI2_DRV_NO_CHIRPS_PER_FRAME - Chirps per frame incorrect (null)
- * @retval RSDK_RFE_NULL_IRQ_REGISTER_CB - Incorrect parameters to record CSI2 - IRQ, isrRegisterCb is NULL
  * @retval RSDK_CSI2_DRV_NULL_ERR_CB_PTR - Incorrect parameter - error callback is NULL
  * @retval RSDK_CSI2_DRV_ERR_INVALID_INT_NR - Incorrect IRQ nr used
  * @retval RSDK_CSI2_DRV_ERR_INVALID_CORE_NR - Incorrect core nr used
@@ -932,7 +867,6 @@ uint32_t    RsdkCsi2GetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType
         const uint32_t samplesPerChirp, const uint8_t autoStatistics);
 
 
-
 /**
  * @brief       Procedure to change the callback for a specific interrupt
  * @details     The procedure set for the specified unit and interrupt ID a new callback pointer
@@ -940,7 +874,7 @@ uint32_t    RsdkCsi2GetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType
  *
  * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 ,
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
- * @param[in] irqId     - interrupt ID &isin; [ \ref RSDK_ , \ref RSDK_CSI2_MAX_VC )
+ * @param[in] irqId     - interrupt ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC )
  * @param[in] pCallback - pointer to the new callback
  *
  * @return      RSDK_SUCCESS - if driver status is correct and all in-parameters are correct
@@ -948,50 +882,6 @@ uint32_t    RsdkCsi2GetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType
  */
 rsdkStatus_t    RsdkCsi2SetCallback(const rsdkCsi2UnitId_t unitId, const rsdkCsi2IrqId_t irqId,
         rsdkCsi2IsrCb_t pCallback);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #ifdef __cplusplus

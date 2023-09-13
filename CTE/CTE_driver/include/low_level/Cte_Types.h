@@ -7,13 +7,6 @@
 #ifndef CTE_TYPES_H
 #define CTE_TYPES_H
 
-/**
-*   @file
-*
-*   @internal
-*   @addtogroup CTE
-*   @{
-*/
 
 #ifdef __cplusplus
 extern "C"{
@@ -25,21 +18,14 @@ extern "C"{
 * 2) needed interfaces from external units
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
+//   clang-format off
     #include "typedefs.h"
     #include "rsdk_cte_driver_api.h"
     #ifndef linux
         #include "rsdk_glue_irq_register_api.h"
     #endif
 #include "Cte_Cfg.h"
-
-
-
-
-
     #include "S32R45_CTE.h"
-
-
-
 
 
 /*==================================================================================================
@@ -65,16 +51,25 @@ extern "C"{
 
 #define CTE_DEFAULT_INPUT_CLOCK         80000000u      /**< The default input clock for CTE                     */
 
+
 #if defined(TRACE_ENABLE)
         #define CTE_TRACE(a,b,c) RsdkTraceLogEvent(a,b,c)
 #else
     #define CTE_TRACE(a,b,c)
 #endif
 
+#define E_OK        RSDK_SUCCESS
+#define E_NOT_OK    RSDK_ERROR
+#define NULL_PTR    0U
 
 /*==================================================================================================
 *                                              ENUMS
 ==================================================================================================*/
+/**
+*   @addtogroup cte_asr_api_data_type
+*   @{
+*/
+
  /**
  * @brief   CTE input mode
  * @details Defines the two possible CTE working modes : using internal CSI2 signals (Master mode) 
@@ -87,9 +82,10 @@ typedef enum {
     CTE_SLAVE_EXTERNAL,        /**< CTE in Slave mode, table execution triggered from PADs
                                      (check IOMUX excel file for RCS_I and/or RFS_I)                                */
     CTE_SLAVE_CSI2,            /**< CTE in Slave mode, table execution triggered by MIPI-CSI2 RFS/RCS signals. */
-    CTE_MODE_MAX,              /**< CTE input mode limit, not to be used                                       */
+    CTE_MODE_MAX               /**< CTE input mode limit, not to be used                                       */
 } Cte_ModeType;
- 
+
+
  /**
  * @brief   MIPI-CSI2 units enumeration as CTE input source
  * @details Used only in CTE_INPUT_CSI2/Master mode.
@@ -100,11 +96,9 @@ typedef enum {
 typedef enum {
     CTE_CSI2_UNIT_0 = 0u,      /**< MIPI-CSI2 unit 0                                   */
     CTE_CSI2_UNIT_1,           /**< MIPI-CSI2 unit 1                                   */
-
     CTE_CSI2_UNIT_2,           /**< MIPI-CSI2 unit 2,                                  */
     CTE_CSI2_UNIT_3,           /**< MIPI-CSI2 unit 3                                   */
-
-    CTE_CSI2_UNIT_MAX,         /**< MIPI-CSI2 unit limit (not used)                    */
+    CTE_CSI2_UNIT_MAX          /**< MIPI-CSI2 unit limit (not used)                    */
 } Cte_Csi2UnitType;
 
  /**
@@ -117,7 +111,7 @@ typedef enum {
     CTE_CSI2_VC_1,             /**< MIPI-CSI2 virtual channel 1                        */
     CTE_CSI2_VC_2,             /**< MIPI-CSI2 virtual channel 2                        */
     CTE_CSI2_VC_3,             /**< MIPI-CSI2 virtual channel 3                        */
-    CTE_CSI2_VC_MAX,           /**< MIPI-CSI2 virtual channel limit (not used)         */
+    CTE_CSI2_VC_MAX            /**< MIPI-CSI2 virtual channel limit (not used)         */
 } Cte_Csi2VcType;
 
  /**
@@ -143,7 +137,7 @@ typedef enum {
     CTE_OUTPUT_SPT_RFS,        /**< CTE SPT RFS event is the output                    */
     CTE_OUTPUT_FLEX_0,         /**< CTE Flextimer event 0 is the output                */
     CTE_OUTPUT_FLEX_1,         /**< CTE Flextimer event 1 is the output                */
-    CTE_OUTPUT_MAX,            /**< CTE output definitions limit (not used)            */
+    CTE_OUTPUT_MAX             /**< CTE output definitions limit (not used)            */
 } Cte_OutputType;
 
  /**
@@ -160,7 +154,7 @@ typedef enum {
     CTE_OUT_TOGGLE,            /**< Output type is toggle, low/hi/toggle               */
     CTE_OUT_CLOCK,             /**< Output type is clock, low/hi/toggle with[out] sync */
     CTE_OUT_LOGIC,             /**< Output type is logic, low/high/Hi-Z levels         */
-    CTE_OUT_MAX,               /**< Output type limit (not used)                       */
+    CTE_OUT_MAX                /**< Output type limit (not used)                       */
 } Cte_OutputTypeType;
 
  /**
@@ -172,7 +166,7 @@ typedef enum {
     CTE_TOGGLE_SET_TO_LOW = 0u,/**< Set the TOGGLE output to low                       */
     CTE_TOGGLE_SET_TO_HIGH,    /**< Set the TOGGLE output to high                      */
     CTE_TOGGLE_FLIP,           /**< Flip the TOGGLE output (high->low; low->high)      */
-    CTE_TOGGLE_DONT_CARE,      /**< The TOGGLE output remains the same                 */
+    CTE_TOGGLE_DONT_CARE       /**< The TOGGLE output remains the same                 */
 } Cte_ToggleOutStatesType;
 
  /**
@@ -184,7 +178,7 @@ typedef enum {
     CTE_LOGIC_SET_TO_LOW = 0u, /**< Set the LOGIC output to low                        */
     CTE_LOGIC_SET_TO_HIGH,     /**< Set the LOGIC output to high                       */
     CTE_LOGIC_SET_TO_HIGH_Z,   /**< Set the LOGIC output to High-Z                     */
-    CTE_LOGIC_UNCHANGED,   	   /**< Set the LOGIC output to High-Z                     */
+    CTE_LOGIC_UNCHANGED        /**< Set the LOGIC output to High-Z                     */
 } Cte_LogicOutStatesType;
 
  /**
@@ -196,7 +190,7 @@ typedef enum {
     CTE_CLOCK_SET_TO_LOW = 0u, /**< Keep the CLOCK output to low                       */
     CTE_CLOCK_ACTIVE_SYNC,     /**< CLOCK output active and synchronized on rising edge*/
     CTE_CLOCK_ACTIVE,          /**< CLOCK output                                       */
-    CTE_CLOCK_SET_TO_HIGH,     /**< Keep the CLOCK output at high level                */
+    CTE_CLOCK_SET_TO_HIGH      /**< Keep the CLOCK output at high level                */
 } Cte_ClockOutStatesType;
 
  /**
@@ -207,7 +201,7 @@ typedef enum {
  */
 typedef enum {
     CTE_ONE_TABLE = 0u,        /**< Only one table, the same for all chirps                */
-    CTE_TWO_TABLES,            /**< Two tables, first for even chirps and second for odds  */
+    CTE_TWO_TABLES             /**< Two tables, first for even chirps and second for odds  */
 } Cte_TableUsageType;
 
  /**
@@ -223,14 +217,42 @@ typedef enum {
     CTE_IRQ_TT1_END        = 0x08u,    /**< End of TimeTable 1 execution                   */
     CTE_IRQ_RCS            = 0x40u,    /**< Raising edge of RCS signal                     */
     CTE_IRQ_RFS            = 0x80u,    /**< Raising edge of RFS signal                     */
-    CTE_IRQ_TABLE_EXEC_END = 0x200u,   /**< Table execution was finished                   */
+    CTE_IRQ_TABLE_EXEC_END = 0x200u    /**< Table execution was finished                   */
 } Cte_IrqDefinitionType;
-
 
 
 /*==================================================================================================
 *                                  STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
+/* necessary typedef alignment for other environments than AUTOSAR                              */
+typedef rsdkStatus_t Std_ReturnType;
+
+/**
+ * @brief   Union type for Mode definitions, first set of parameters
+ * @details First parameter is for internal CSI2 signals, the second is for external signal
+ *
+ */
+typedef union {
+    Cte_Csi2UnitType    cteCsi2Unit;           /**< MIPI-CSI2 unit to be used for input trigger. Value used
+                                               only for CTE_SLAVE_CSI2 mode.                      */
+    uint8               cteInternalRfsDelay;   /**< Internal RFS delay, from detecting to usage,
+                                                in CTE_clock ticks, values in [0...15] interval only.
+                                                Used/checked only for CTE_SLAVE_EXTERNAL mode.     */
+}Cte_WorkingParam0;
+
+/**
+ * @brief   Union type for Mode definitions, second set of parameters
+ * @details First parameter is for internal CSI2 signals, the second is for external signal
+ *
+ */
+typedef union {
+    Cte_Csi2VcType      cteCsi2Vc;             /**< MIPI-CSI2 Virtual Channel to be used for input trigger.
+                                                Value used only for CTE_SLAVE_CSI2 mode.           */
+    uint8               cteInternalRcsDelay;   /**< Internal RCS delay, from detecting to usage, in CTE_clock ticks,
+                                                values in [0...15] interval only.
+                                                Used/checked only for CTE_SLAVE_EXTERNAL source.   */
+}Cte_WorkingParam1;
+
 /**
  * @brief   Structure for CTE input source.
  * @details CTE_clock refers to CTE input clock, before any internal divisor, i.e. MC_CGM_0(PER_CLK) for S32R45 
@@ -238,20 +260,8 @@ typedef enum {
  */
 typedef struct {
     Cte_ModeType            workingMode;           /**< The source of input trigger signal                     */
-    union {
-        Cte_Csi2UnitType    cteCsi2Unit;           /**< MIPI-CSI2 unit to be used for input trigger. Value used
-                                                   only for CTE_SLAVE_CSI2 mode.                      */
-        uint8               cteInternalRfsDelay;   /**< Internal RFS delay, from detecting to usage,
-                                                    in CTE_clock ticks, values in [0...15] interval only.
-                                                    Used/checked only for CTE_SLAVE_EXTERNAL mode.     */
-    }cteWorkingParam0;
-    union {
-        Cte_Csi2VcType      cteCsi2Vc;             /**< MIPI-CSI2 Virtual Channel to be used for input trigger.
-                                                    Value used only for CTE_SLAVE_CSI2 mode.           */
-        uint8               cteInternalRcsDelay;   /**< Internal RCS delay, from detecting to usage, in CTE_clock ticks,
-                                                    values in [0...15] interval only.
-                                                    Used/checked only for CTE_SLAVE_EXTERNAL source.   */
-    }cteWorkingParam1;
+    Cte_WorkingParam0       cteWorkingParam0;
+    Cte_WorkingParam1       cteWorkingParam1;
 } Cte_ModeDefinitionType;
 
 /**
@@ -265,6 +275,13 @@ typedef struct {
     uint32              clockPeriod;            /**< The clock period, in ns, used only for CLOCK type  */
 } Cte_SingleOutputDefType;
 
+
+typedef union {
+    Cte_ToggleOutStatesType    newToggleState;     /**< New state for TOGGLE output    */
+    Cte_LogicOutStatesType     newLogicState;      /**< New state for LOGIC output     */
+    Cte_ClockOutStatesType     newClockState;      /**< New state for CLOCK output     */
+}Cte_OutputSignalType;
+
 /**
  * @brief   Structure for single CTE output event action.
  * @details The new state will be interpreted according to the defined type of the output signal.
@@ -273,11 +290,7 @@ typedef struct {
  */
 typedef struct {
     Cte_OutputType     outputSignal;       /**< The specific output signal which must change the state             */
-    union {
-        Cte_ToggleOutStatesType    newToggleState;     /**< New state for TOGGLE output    */
-        Cte_LogicOutStatesType     newLogicState;      /**< New state for LOGIC output     */
-        Cte_ClockOutStatesType     newClockState;      /**< New state for CLOCK output     */
-    };
+    Cte_OutputSignalType cteOutputSignalType;
 } Cte_ActionType;
 
 /**
@@ -290,7 +303,7 @@ typedef struct {
  */
 typedef struct {
     uint32          absTime;            /**< The absolute time of the event, in ns, relative to trigger command */
-    Cte_ActionType  *pEventActions;     /**< Pointer to the actions to be done at the specified time. The actions 
+    Cte_ActionType  *eventActionsPtr;     /**< Pointer to the actions to be done at the specified time. The actions
                                             list must be :  
                                             - not empty
                                             - not more than one action for one output
@@ -311,7 +324,7 @@ typedef struct {
                                                     returned.                                               */
     uint32              tableTimeExecLimit;     /**< The limited time for table processing, in ns. 0 means no 
                                                     table end on time limit.                                */
-    Cte_TimingEventType *pEvents;               /**< Pointer to the events list, which must have the tableLength 
+    Cte_TimingEventType *eventsPtr;               /**< Pointer to the events list, which must have the tableLength
                                                     corrected defined events, or an error will be reported. 
                                                     A NULL value for pEventActions before the tableLength limit 
                                                     will be used as a pEvents limit and the TableLength will be 
@@ -332,6 +345,7 @@ typedef struct {
  * */
 typedef void (*Cte_IsrCbType)(uint32 cteIrqReport);
 
+
 /**
  * @brief   The structure for CTE setup.
  * @details All necessary parameters to initialize the CTE hardware.
@@ -344,26 +358,28 @@ typedef struct {
     uint16                  repeatCount;    /**< The number of times the table execution will be repeated until
                                                     going to HALT state. 0 (zero) means "forever". If two alternative
                                                     tables used, each table execution will decrease the counter.    */
-    Cte_SingleOutputDefType *pSignalDef0;   /**< Pointer to the output signals working mode definitions. Undefined
+    Cte_SingleOutputDefType *signalDef0Ptr;   /**< Pointer to the output signals working mode definitions. Undefined
                                                   outputs will be set as HiZ.
                                                   All used SPT events used must be defined, using the same output type.
                                                   All used FLEX line used must be defined, using the same output type.
                                                   The table end is signaled using a not defined output 
                                                   (please use CTE_OUTPUT_MAX).
                                                   This table contains the definitions used for Table0 execution.    */
-    Cte_SingleOutputDefType *pSignalDef1;   /**< Pointer to the output signals working mode definitions.
+    Cte_SingleOutputDefType *signalDef1Ptr;   /**< Pointer to the output signals working mode definitions.
                                                   Similar to pSignalDef0, but this table contains the definitions
                                                   to be used for Table1 execution.        */
-    Cte_TimeTableDefType    *pTimeTable0;   /**< Pointer for the first table to be used. Must be not NULL.      */
-    Cte_TimeTableDefType    *pTimeTable1;   /**< Pointer for the second table to be used. If NULL, two alternative 
+    Cte_TimeTableDefType    *timeTable0Ptr;   /**< Pointer for the first table to be used. Must be not NULL.      */
+    Cte_TimeTableDefType    *timeTable1Ptr;   /**< Pointer for the second table to be used. If NULL, two alternative
                                                   tables mode will be used.                                         */
     Cte_IrqDefinitionType   cteIrqEvents;   /**< The requested combination of interrupt sequence to be used     */
     Cte_IsrCbType           pCteCallback;   /**< The application callback to be used for the requested events   */
-#ifndef linux
+#if !defined(linux)
     int8                    irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
     uint8                   irqPriority;    /**< Priority for the interrupt request execution                   */
 #endif
 } Cte_SetupParamsType;
+
+/** @} */
 
 
 /*==================================================================================================
@@ -375,12 +391,9 @@ typedef struct {
 ==================================================================================================*/
 
 
-
-
 #ifdef __cplusplus
 }
 #endif
 
-/** @} */
 
 #endif /* CTE_TYPES_H */

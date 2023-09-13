@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 ##############################################################################
 #
-# Copyright 2018 NXP
+# Copyright 2018, 2022 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -23,4 +23,4 @@ ARGPARSER.add_argument("file", help="File to resolve", type=str, nargs='+')
 
 ARGS = ARGPARSER.parse_args()
 
-print (" ".join([relpath(file_path, ARGS.relative_to) for file_path in ARGS.file]))
+print(" ".join([relpath(file_path, ARGS.relative_to) for file_path in ARGS.file]))

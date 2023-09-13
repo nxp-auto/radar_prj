@@ -11,7 +11,8 @@
 *   @file
 *   @implements Csi2_Irq.h_Artifact
 *
-*   @addtogroup CSI2_ASR
+*   @internal
+*   @addtogroup csi2_asr_api
 *   @{
 */
 
@@ -64,7 +65,6 @@ extern "C"{
 *                                  GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
 
-
 /*==================================================================================================
 *                                       FUNCTION PROTOTYPES
 ==================================================================================================*/
@@ -78,8 +78,8 @@ extern "C"{
  *
  */
 rsdkStatus_t
-Csi2_SetupUIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2_Type *pRegs,
-        const Csi2_SetupParamsType *pInitParams);
+Csi2_SetupUIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2_Type *regsPtr,
+                          const Csi2_SetupParamsType *initParamsPtr);
 
 /*
  * @brief       Interrupt handlers prototypes

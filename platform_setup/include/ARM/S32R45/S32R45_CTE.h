@@ -10,7 +10,8 @@
 **         Peripheral Access Layer for S32R45_A53
 **
 **     Copyright 1997-2016 Freescale Semiconductor, Inc.
-**     Copyright 2016-2022 NXP
+**     Copyright 2016-2023 NXP
+**     SPDX-License-Identifier: BSD-3-Clause
 **
 **     NXP Confidential. This software is owned or controlled by NXP and may only be
 **     used strictly in accordance with the applicable license terms. By expressly

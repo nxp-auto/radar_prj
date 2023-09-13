@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019, 2021 NXP
+ * Copyright 2017-2019, 2021, 2023 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -30,7 +30,7 @@ struct OAL_RPCService {
 struct OAL_ReferDispatcher {
 	uint8_t mUsedDispatch;
 	char8_t mName[OAL_SERVER_MAX_NAME];
-	struct OAL_RPCService *mSaveMem;
+	struct OAL_RPCService *mpSaveMem;
 };
 
 static int32_t oal_rpc_exec(struct sk_buff *apSkb2, struct genl_info *apInfo);
@@ -154,24 +154,24 @@ static int32_t oal_rpc_pre_exec(const struct genl_ops *acpOps,
 	uint32_t lFunc;
 	uint8_t lI;
 	uint8_t *lpData;
-	const char8_t *lName;
+	const char8_t *lcpName;
 
 	OAL_UNUSED_ARG(apSkb);
 	if ((acpOps != NULL) && (apInfo != NULL)) {
 		lpNa = apInfo->attrs[OAL_RPC_CALL];
 
 		if (lpNa != NULL) {
-			lFunc  = nla_get_u32(lpNa);
-			lpData = (uint8_t *)nla_data(lpNa);
-			lName  = (char *)(lpData + sizeof(lFunc));
+			lFunc   = nla_get_u32(lpNa);
+			lpData  = (uint8_t *)nla_data(lpNa);
+			lcpName = (char *)(lpData + sizeof(lFunc));
 
 			for (lI = 0; lI < OAL_MAX_SERVICES_PER_DRIVER; lI++) {
 				if (gsDispatch[lI].mUsedDispatch !=
 				        (uint8_t)0 &&
-				    (strncmp(gsDispatch[lI].mName, lName,
+				    (strncmp(gsDispatch[lI].mName, lcpName,
 				             (strlen(gsDispatch[lI].mName) +
 				              1U))) == 0) {
-					lpServ = gsDispatch[lI].mSaveMem;
+					lpServ = gsDispatch[lI].mpSaveMem;
 					break;
 				}
 			}
@@ -248,7 +248,7 @@ OAL_RPCService_t OAL_RPCRegister(const char8_t *acpName, OAL_dispatch_t aDisp)
 	for (lI = 0; lI < OAL_MAX_SERVICES_PER_DRIVER; lI++) {
 		if (gsDispatch[lI].mUsedDispatch == (uint8_t)0) {
 			gsDispatch[lI].mUsedDispatch = 1;
-			gsDispatch[lI].mSaveMem      = lpServ;
+			gsDispatch[lI].mpSaveMem     = lpServ;
 			(void)strncpy(gsDispatch[lI].mName, acpName, lLen);
 			break;
 		}

@@ -1,5 +1,5 @@
 ##
-# Copyright 2018,2020 NXP
+# Copyright 2018,2020, 2022 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##
@@ -26,3 +26,5 @@ endif
 	$(if $(wildcard $(OAL_SA_LIB)), $(call install_artifact,$(realpath $(ARTIFACTS_SOURCE)/$(OAL_SA_LIB))))
 	$(if $(wildcard $(MODULE_APP)), $(call install_artifact,$(realpath $(ARTIFACTS_SOURCE)/$(MODULE_APP))))
 	$(if $(wildcard $(MODULE_APP_BIN)), $(call install_artifact,$(realpath $(ARTIFACTS_SOURCE)/$(MODULE_APP_BIN))))
+	$(if $(wildcard $(GHS_STATIC_LIB)), $(call install_artifact,$(realpath $(GHS_STATIC_LIB))))
+	$(if $(wildcard $(MONOLITH)), $(call install_artifact,$(realpath $(MONOLITH))))

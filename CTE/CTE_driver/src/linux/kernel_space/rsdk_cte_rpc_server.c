@@ -135,69 +135,69 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
     // signal definitions
     if(pParams->lenSigDef0 == 0u)
     {
-        llInitParams.pSignalDef0 = NULL;
+        llInitParams.signalDef0Ptr = NULL;
     }
     else
     {
-        llInitParams.pSignalDef0    = (Cte_SingleOutputDefType*)pBuf;
+        llInitParams.signalDef0Ptr    = (Cte_SingleOutputDefType*)pBuf;
         for(i = 0; i < pParams->lenSigDef0; i++)
         {
-            llInitParams.pSignalDef0[i] = *(Cte_SingleOutputDefType*)&pParams->signalDef0[i];
+            llInitParams.signalDef0Ptr[i] = *(Cte_SingleOutputDefType*)&pParams->signalDef0[i];
         }
-        llInitParams.pSignalDef0[i].outputSignal = RSDK_CTE_OUTPUT_MAX;
+        llInitParams.signalDef0Ptr[i].outputSignal = RSDK_CTE_OUTPUT_MAX;
         i++;
         pBuf += i * sizeof(Cte_SingleOutputDefType);
     }
     if(pParams->lenSigDef1 == 0u)
     {
-        llInitParams.pSignalDef1 = NULL;
+        llInitParams.signalDef1Ptr = NULL;
     }
     else
     {
-        llInitParams.pSignalDef1    = (Cte_SingleOutputDefType*)(void*)pBuf;
+        llInitParams.signalDef1Ptr    = (Cte_SingleOutputDefType*)(void*)pBuf;
         for(i = 0; i < pParams->lenSigDef1; i++)
         {
-            llInitParams.pSignalDef1[i] = *(Cte_SingleOutputDefType*)&pParams->signalDef1[i];
+            llInitParams.signalDef1Ptr[i] = *(Cte_SingleOutputDefType*)&pParams->signalDef1[i];
         }
-        llInitParams.pSignalDef1[i].outputSignal = RSDK_CTE_OUTPUT_MAX;
+        llInitParams.signalDef1Ptr[i].outputSignal = RSDK_CTE_OUTPUT_MAX;
         i++;
         pBuf += i * sizeof(rsdkCteSingleOutputDef_t);
     }
     // timing tables
     if(pParams->tableLen0 == 0u)
     {
-        llInitParams.pTimeTable0 = NULL;
+        llInitParams.timeTable0Ptr = NULL;
     }
     else
     {
-        llInitParams.pTimeTable0                        = (Cte_TimeTableDefType*)pBuf;
-        llInitParams.pTimeTable0->tableLength           = pParams->tableLen0;
-        llInitParams.pTimeTable0->tableTimeExecLimit    = pParams->timeLimT0;
+        llInitParams.timeTable0Ptr                        = (Cte_TimeTableDefType*)pBuf;
+        llInitParams.timeTable0Ptr->tableLength           = pParams->tableLen0;
+        llInitParams.timeTable0Ptr->tableTimeExecLimit    = pParams->timeLimT0;
         pBuf += sizeof(rsdkCteTimeTableDef_t);
-        llInitParams.pTimeTable0->pEvents = (Cte_TimingEventType*)(void*)pBuf;
+        llInitParams.timeTable0Ptr->eventsPtr = (Cte_TimingEventType*)(void*)pBuf;
         pBuf += pParams->tableLen0 * sizeof(Cte_TimingEventType);
         for(i = 0; (i < pParams->tableLen0) && (i < CTE_MAX_SMALL_TIME_TABLE_LEN); i++)
         {
-            llInitParams.pTimeTable0->pEvents[i].absTime = pParams->timeTable0[i].evTime;
-            llInitParams.pTimeTable0->pEvents[i].pEventActions = (Cte_ActionType*)pBuf;
+            llInitParams.timeTable0Ptr->eventsPtr[i].absTime = pParams->timeTable0[i].evTime;
+            llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr = (Cte_ActionType*)pBuf;
             for(j = 0; j < pParams->timeTable0[i].actionsNumber; j++)
             {
-                llInitParams.pTimeTable0->pEvents[i].pEventActions[j] = *(Cte_ActionType*)&pParams->timeTable0[i].actions[j];
+                llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j] = *(Cte_ActionType*)&pParams->timeTable0[i].actions[j];
             }
-            llInitParams.pTimeTable0->pEvents[i].pEventActions[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
+            llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
             j++;
             pBuf += j * sizeof(rsdkCteAction_t);
         }
         for(; i < pParams->tableLen0; i++)
         {
             k = i - CTE_MAX_SMALL_TIME_TABLE_LEN;
-            llInitParams.pTimeTable0->pEvents[i].absTime = pParams->timeTable1[k].evTime;
-            llInitParams.pTimeTable0->pEvents[i].pEventActions = (Cte_ActionType*)(void*)pBuf;
+            llInitParams.timeTable0Ptr->eventsPtr[i].absTime = pParams->timeTable1[k].evTime;
+            llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr = (Cte_ActionType*)(void*)pBuf;
             for(j = 0; j < pParams->timeTable1[k].actionsNumber; j++)
             {
-                llInitParams.pTimeTable0->pEvents[i].pEventActions[j] = *(Cte_ActionType*)&pParams->timeTable1[k].actions[j];
+                llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j] = *(Cte_ActionType*)&pParams->timeTable1[k].actions[j];
             }
-            llInitParams.pTimeTable0->pEvents[i].pEventActions[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
+            llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
             j++;
             pBuf += j * sizeof(rsdkCteAction_t);
         }
@@ -205,25 +205,25 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
     // timing tables
     if(pParams->tableLen1 == 0u)
     {
-        llInitParams.pTimeTable1 = NULL;
+        llInitParams.timeTable1Ptr = NULL;
 }
     else
     {
-        llInitParams.pTimeTable1                        = (Cte_TimeTableDefType*)pBuf;
-        llInitParams.pTimeTable1->tableLength           = pParams->tableLen1;
-        llInitParams.pTimeTable1->tableTimeExecLimit    = pParams->timeLimT1;
+        llInitParams.timeTable1Ptr                        = (Cte_TimeTableDefType*)pBuf;
+        llInitParams.timeTable1Ptr->tableLength           = pParams->tableLen1;
+        llInitParams.timeTable1Ptr->tableTimeExecLimit    = pParams->timeLimT1;
         pBuf += sizeof(rsdkCteTimeTableDef_t);
-        llInitParams.pTimeTable1->pEvents = (Cte_TimingEventType*)pBuf;
+        llInitParams.timeTable1Ptr->eventsPtr = (Cte_TimingEventType*)pBuf;
         pBuf += pParams->tableLen1 * sizeof(Cte_TimingEventType);
         for(i = 0; i < pParams->tableLen1; i++)
         {
-            llInitParams.pTimeTable1->pEvents[i].absTime = pParams->timeTable1[i].evTime;
-            llInitParams.pTimeTable1->pEvents[i].pEventActions = (Cte_ActionType*)pBuf;
+            llInitParams.timeTable1Ptr->eventsPtr[i].absTime = pParams->timeTable1[i].evTime;
+            llInitParams.timeTable1Ptr->eventsPtr[i].eventActionsPtr = (Cte_ActionType*)pBuf;
             for(j = 0; j < pParams->timeTable1[i].actionsNumber; j++)
             {
-                llInitParams.pTimeTable1->pEvents[i].pEventActions[j] = *(Cte_ActionType*)&pParams->timeTable1[i].actions[j];
+                llInitParams.timeTable1Ptr->eventsPtr[i].eventActionsPtr[j] = *(Cte_ActionType*)&pParams->timeTable1[i].actions[j];
             }
-            llInitParams.pTimeTable1->pEvents[i].pEventActions[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
+            llInitParams.timeTable1Ptr->eventsPtr[i].eventActionsPtr[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
             j++;
             pBuf += j * sizeof(Cte_ActionType);
         }

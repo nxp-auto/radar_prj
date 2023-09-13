@@ -17,21 +17,13 @@ Umbrella header which in turn includes all OAL support for RSDK modules
 ==================================================================================================*/
 #include "rsdk_osenv.h"
 
-
-#if !defined(__ZEPHYR__)
+#if (!RSDK_OSENV_SA)
 #include "oal_memmap.h"
-#endif
 #include "oal_comm.h"
 #include "rsdk_status.h"
-
-
-
-
-
-#if defined(__ZEPHYR__)
-#include <sys/atomic.h>
-#include "oal_semaphore.h"
-#include "oal_once.h"
+#else
+#include <stdint.h>
+#include <stddef.h>
 #endif
 
 #ifdef __cplusplus
@@ -43,9 +35,9 @@ extern "C" {
 ==================================================================================================*/
 #define UNUSED_ARG(ARG) (void)(ARG)
 
-
-
-
+#if (RSDK_OSENV_SA)
+#define OAL_SPT_PRINT(fmt, ...)
+#else
 #ifdef OAL_PRINT_ENABLE
 #define OAL_SPT_PRINT(fmt, ...) \
     printf(fmt, ##__VA_ARGS__); \
@@ -56,7 +48,7 @@ extern "C" {
 
 #define SPT_OAL_COMM_CHANNEL1_NAME "SptIrqCap"  //max 10 characters?
 #define SPT_OAL_COMM_CHANNEL2_NAME "SptNonBlk"
-
+#endif
 
 #ifdef HW_MOCK
 extern uint32_t hw_read(uint32_t reg);
@@ -68,15 +60,10 @@ extern uint32_t fake_reg;
 #define HW_READ(reg) (reg)
 #endif  //HW_MOCK
 
-#if defined(__ZEPHYR__)
-#define SPT_DATA_Q_SIZE         (64U)
-#endif
-
-
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
-
+#if (!RSDK_OSENV_SA)
 typedef enum
 {
     SPT_OAL_RPC_WAIT_FOR_IRQ = 1,
@@ -101,31 +88,16 @@ typedef struct
     uint32_t               errInfo;
 } evtSharedData_t;
 
-#if defined(__ZEPHYR__)
-typedef struct
-{
-    struct OAL_Sema         queueSem;
-
-    evtSharedData_t         queueEvtData[SPT_DATA_Q_SIZE];  //queue that assures evtData transfer from multiple interrupts
-    uint8_t                 queueIdxRd;                     //queue tail
-    uint8_t                 queueIdxWr;                     //queue head
-
-    struct OAL_OnceControl  queueOnceInitCtrl;  //queue must be init only once
-} rsdkSptIrqDataQueue_t;
-#endif
-
+#endif // !RSDK_OSENV_SA
 
 /*==================================================================================================
 *                                GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
-#if defined(__ZEPHYR__)
-extern rsdkSptIrqDataQueue_t gSptIrqDataQueue;
-#endif
 
 /*==================================================================================================
 *                                    FUNCTION PROTOTYPES
 ==================================================================================================*/
-#if ((RSDK_OSENV_SA) || defined(__ZEPHYR__))
+#if (RSDK_OSENV_SA)
 //RSDK custom implementation of OAL services, as a workaround until deciding to use the OAL "sa" support
 
 static inline uintptr_t OAL_MapUserSpace(uint64_t offset, size_t size)

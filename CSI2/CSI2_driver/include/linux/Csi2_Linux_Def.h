@@ -55,7 +55,6 @@ typedef struct
     rsdkCsi2Report_t    errReport;
 } rsdkCsi2KernelErr_t;
 
-// 
 
 /*==================================================================================================
 *                                    FUNCTION PROTOTYPES
