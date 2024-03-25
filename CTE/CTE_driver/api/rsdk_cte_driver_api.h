@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2023 NXP
+* Copyright 2019-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -17,9 +17,9 @@
 #endif
 #include "rsdk_status.h"
 
-#ifndef linux
-#include "rsdk_glue_irq_register_api.h"
-#endif
+
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -333,10 +333,6 @@ typedef struct {
                                                   tables mode will be used.                                         */
     rsdkCteIrqDefinition_t      cteIrqEvents;   /**< The requested combination of interrupt sequence to be used     */
     rsdkCteIsrCb_t              pCteCallback;   /**< The application callback to be used for the requested events   */
-#if !defined(linux)
-    int8_t                      irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
-    uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
-#endif
 } rsdkCteInitParams_t;
 
 /*==================================================================================================

@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -24,11 +24,11 @@ extern "C"{
 ==================================================================================================*/
 #include "CDD_Csi2.h"
 #include "rsdk_version.h"
-#if defined(linux)
+
     #include <linux/string.h>
-#else
-    #include "string.h"
-#endif
+
+
+
 
 
 /*==================================================================================================
@@ -377,12 +377,8 @@ static void Csi2_ProcessChannelStatistics(Csi2_VCDriverStateType *pVCState, uint
 #endif
 
     /* determine the exact position for the received statistics                                                     */
-#ifdef linux
-    pMapMem = pVCState->pVirtData;
-#else
-    pMapMem = (const uint8 *)pVCState->vcParamsPtr->bufDataPtr;
-#endif
 
+    pMapMem = pVCState->pVirtData;
     numChannel = (uint32)Csi2_GetChannelNum(
         (Csi2_VCDriverStateType *)pVCState);               /* get the real number of channels               */
     /* the real pointer to the statistics, according the current line                                               */

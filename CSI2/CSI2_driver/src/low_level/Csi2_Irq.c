@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -58,14 +58,17 @@ extern "C"{
 #include "Csi2_Types.h"
 #include "CDD_Csi2.h"
 #include "Csi2_Irq.h"
-#if   !defined(linux)
-    #include "Csi2_Defs.h"
-#endif
-#if defined(linux)
+
+
+
+
+
+
+
     #include <linux/string.h>
-#else
-    #include "string.h"
-#endif
+
+
+
 
 /*==================================================================================================
 *                                 SOURCE FILE VERSION INFORMATION
@@ -99,121 +102,12 @@ extern "C"{
 *                                    LOCAL FUNCTION PROTOTYPES
 ==================================================================================================*/
 
-#if !defined(RSDK_AUTOSAR) && !defined(linux)
-    // Individual irq unit handlers for Rx errors
-    static void Csi2_IrqHandlerRxErr0(
-    #if defined(__ZEPHYR__)
-            const void * paramsPtr
-    #else
-            void
-    #endif
-    );
-    static void Csi2_IrqHandlerRxErr1(
-        #if defined(__ZEPHYR__)
-            const void * paramsPtr
-        #else
-            void
-        #endif
 
-    );
-        static void Csi2_IrqHandlerRxErr2(
-            #if defined(__ZEPHYR__)
-                const void * paramsPtr
-            #else
-                void
-            #endif
-
-        );
-        static void Csi2_IrqHandlerRxErr3(
-            #if defined(__ZEPHYR__)
-                const void * paramsPtr
-            #else
-                void
-            #endif
-
-        );
-    // Individual irq unit handlers for Path errors
-    static void Csi2_IrqHandlerPathErr0(
-    #if defined(__ZEPHYR__)
-            const void * paramsPtr
-    #else
-            void
-    #endif
-    );
-    static void Csi2_IrqHandlerPathErr1(
-        #if defined(__ZEPHYR__)
-            const void * paramsPtr
-        #else
-            void
-        #endif
-    );
-        static void Csi2_IrqHandlerPathErr2(
-            #if defined(__ZEPHYR__)
-                const void * paramsPtr
-            #else
-                void
-            #endif
-        );
-        static void Csi2_IrqHandlerPathErr3(
-            #if defined(__ZEPHYR__)
-                const void * paramsPtr
-            #else
-                void
-            #endif
-        );
-    // Individual irq unit handlers for Events (Rx)
-    static void Csi2_IrqHandlerEvents0(
-    #if defined(__ZEPHYR__)
-            const void * paramsPtr
-    #else
-            void
-    #endif
-    );
-    static void Csi2_IrqHandlerEvents1(
-        #if defined(__ZEPHYR__)
-            const void * paramsPtr
-        #else
-            void
-        #endif
-    );
-        static void Csi2_IrqHandlerEvents2(
-            #if defined(__ZEPHYR__)
-                const void * paramsPtr
-            #else
-                void
-            #endif
-        );
-        static void Csi2_IrqHandlerEvents3(
-            #if defined(__ZEPHYR__)
-                const void * paramsPtr
-            #else
-                void
-            #endif
-        );
-#endif  /* #if !defined(linux)        */
 
 /*==================================================================================================
 *                                         LOCAL VARIABLES
 ==================================================================================================*/
 // irq handlers matrix
-    #if !defined(linux)
-
-    static  rsdkIrqHandler_t    sgIrqHandlers[RSDK_CSI2_MAX_UNITS][RSDK_CSI2_MAX_IRQ_ID]
-            = {
-            {// unit 1 handlers
-             Csi2_IrqHandlerRxErr0, Csi2_IrqHandlerPathErr0, Csi2_IrqHandlerEvents0},
-            {// unit 2 handlers
-             Csi2_IrqHandlerRxErr1, Csi2_IrqHandlerPathErr1, Csi2_IrqHandlerEvents1},
-            {// unit 3 handlers
-             Csi2_IrqHandlerRxErr2, Csi2_IrqHandlerPathErr2, Csi2_IrqHandlerEvents2},
-            {// unit 4 handlers
-             Csi2_IrqHandlerRxErr3, Csi2_IrqHandlerPathErr3, Csi2_IrqHandlerEvents3}
-    };
-
-    static uint32_t gsCsi2IrqUnitRemap[RSDK_CSI2_MAX_UNITS] = {
-        (uint32_t)RSDK_CSI2_UNIT_1, (uint32_t)RSDK_CSI2_UNIT_0, (uint32_t)RSDK_CSI2_UNIT_3, (uint32_t)RSDK_CSI2_UNIT_2
-    };
-    #endif  /* #if !defined(linux) */
 
 
 /*==================================================================================================
@@ -458,253 +352,6 @@ static void Csi2_InitEventIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2
 /*==================================================================================================
 *                                         GLOBAL FUNCTIONS
 ==================================================================================================*/
-#if !defined(linux)
-/*================================================================================================*/
-/*
- * @brief       Interrupt handler for unit 0/ PHY error irq.
- *
- */
-static
-void Csi2_IrqHandlerRxErr0(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerRxErr(CSI2_UNIT_0);
-}
-/* Csi2_IrqHandlerRxErr0 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Interrupt handler for unit 1/ PHY error irq.
- *
- */
-    static
-    void Csi2_IrqHandlerRxErr1(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-    {
-#if defined(__ZEPHYR__)
-        (void)paramsPtr;
-#endif
-        Csi2_IrqHandlerRxErr(CSI2_UNIT_1);
-    }
-/* Csi2_IrqHandlerRxErr1 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Interrupt handler for unit 2/ PHY error irq.
- *
- */
-static void Csi2_IrqHandlerRxErr2(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerRxErr(CSI2_UNIT_2);
-}
-/* Csi2_IrqHandlerRxErr2 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Interrupt handler for unit 3/ PHY error irq.
- *
- */
-static void Csi2_IrqHandlerRxErr3(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerRxErr(CSI2_UNIT_3);
-}
-/* Csi2_IrqHandlerRxErr3 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 0/ errors in protocol & packet level irq.
- *
- */
-static
-void Csi2_IrqHandlerPathErr0(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerPathErr(CSI2_UNIT_0);
-}
-/* Csi2_IrqHandlerPathErr0 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 1/ errors in protocol & packet level irq.
- *
- */
-    static
-    void Csi2_IrqHandlerPathErr1(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-    {
-#if defined(__ZEPHYR__)
-        (void)paramsPtr;
-#endif
-        Csi2_IrqHandlerPathErr(CSI2_UNIT_1);
-    }
-/* Csi2_IrqHandlerPathErr1 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 2/ errors in protocol & packet level irq.
- *
- */
-static void Csi2_IrqHandlerPathErr2(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerPathErr(CSI2_UNIT_2);
-}
-/* Csi2_IrqHandlerPathErr2 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 3/ errors in protocol & packet level irq.
- *
- */
-static void Csi2_IrqHandlerPathErr3(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerPathErr(CSI2_UNIT_3);
-}
-/* Csi2_IrqHandlerPathErr3 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 0/ events irq.
- *
- */
-static
-void Csi2_IrqHandlerEvents0(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerEvents(CSI2_UNIT_0);
-}
-/* Csi2_IrqHandlerEvents0 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 1/ events irq.
- *
- */
-    static
-    void Csi2_IrqHandlerEvents1(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-    {
-#if defined(__ZEPHYR__)
-        (void)paramsPtr;
-#endif
-        Csi2_IrqHandlerEvents(CSI2_UNIT_1);
-    }
-/* Csi2_IrqHandlerEvents1 *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 2/ events irq.
- *
- */
-static void Csi2_IrqHandlerEvents2(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerEvents(CSI2_UNIT_2);
-}
-/* Csi2_IrqHandlerEvents *************************/
-
-/*================================================================================================*/
-/*
- * @brief       Irq handler for unit 3/ events irq.
- *
- */
-static void Csi2_IrqHandlerEvents3(
-#if defined(__ZEPHYR__)
-        const void * paramsPtr
-#else
-        void
-#endif
-        )
-{
-#if defined(__ZEPHYR__)
-    (void)paramsPtr;
-#endif
-    Csi2_IrqHandlerEvents(CSI2_UNIT_3);
-}
-/* Csi2_IrqHandlerEvents3 *************************/
-#endif /* !defined(linux)    */
 
 /*================================================================================================*/
 /*
@@ -723,33 +370,6 @@ Csi2_SetupUIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2_Type *regsPtr,
     rsdkStatus_t                rez = RSDK_SUCCESS;
 
     pDriverStateCallbacks = (Csi2_IsrCbType*)gCsi2Settings[(uint8)iUnit].pCallback;
-#if !defined(linux)
-    if (RsdkGlueIrqHandlerRegister(sgIrqHandlers[iUnit][RSDK_CSI2_EVENTS_IRQ_ID],
-                                   (uint32_t)CSI2_IRQ_EVENT_BASE_ID_GIC +
-                                       ((uint32_t)CSI2_IRQ_MAP_GAP * gsCsi2IrqUnitRemap[iUnit]),
-                                       initParamsPtr->irqExecCore, initParamsPtr->irqPriority) != IRQ_REGISTER_SUCCESS)
-    {
-        rez = RSDK_CSI2_DRV_ERR_IRQ_HANDLER_REG;
-    }
-
-    if ((rez == RSDK_SUCCESS) && (RsdkGlueIrqHandlerRegister(sgIrqHandlers[(uint8)iUnit][RSDK_CSI2_RX_ERR_IRQ_ID],
-                                   (uint32_t)CSI2_IRQ_RX_BASE_ID_GIC +
-                                       ((uint32_t)CSI2_IRQ_MAP_GAP * gsCsi2IrqUnitRemap[(uint8)iUnit]),
-                                       initParamsPtr->irqExecCore, initParamsPtr->irqPriority) != IRQ_REGISTER_SUCCESS))
-    {
-        rez = RSDK_CSI2_DRV_ERR_IRQ_HANDLER_REG;
-    }
-    if ((rez == RSDK_SUCCESS) && (RsdkGlueIrqHandlerRegister(sgIrqHandlers[(uint8)iUnit][RSDK_CSI2_PATH_ERR_IRQ_ID],
-                                   (uint32_t)CSI2_IRQ_PATH_BASE_ID_GIC +
-                                       ((uint32_t)CSI2_IRQ_MAP_GAP * gsCsi2IrqUnitRemap[(uint8)iUnit]),
-                                       initParamsPtr->irqExecCore, initParamsPtr->irqPriority) != IRQ_REGISTER_SUCCESS))
-    {
-        rez = RSDK_CSI2_DRV_ERR_IRQ_HANDLER_REG;
-    }
-
-    if(rez == RSDK_SUCCESS)
-    {
-#endif
 
         /* save the callbacks                                                                                       */
         *pDriverStateCallbacks = initParamsPtr->pCallback[RSDK_CSI2_RX_ERR_IRQ_ID];
@@ -762,9 +382,9 @@ Csi2_SetupUIrq(const Csi2_UnitIdType iUnit, volatile GENERIC_CSI2_Type *regsPtr,
         Csi2_InitPathIrq(regsPtr);
         Csi2_InitRxIrq(regsPtr, initParamsPtr);
 
-#if !defined(linux)
-    }
-#endif
+
+
+
     return rez;
 }
 /* Csi2InitUIrq *************************/

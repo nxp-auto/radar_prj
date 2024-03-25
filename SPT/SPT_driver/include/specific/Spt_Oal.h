@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 NXP
+ * Copyright 2016-2024 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -17,14 +17,10 @@ Umbrella header which in turn includes all OAL support for RSDK modules
 ==================================================================================================*/
 #include "rsdk_osenv.h"
 
-#if (!RSDK_OSENV_SA)
+
 #include "oal_memmap.h"
 #include "oal_comm.h"
 #include "rsdk_status.h"
-#else
-#include <stdint.h>
-#include <stddef.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,9 +31,6 @@ extern "C" {
 ==================================================================================================*/
 #define UNUSED_ARG(ARG) (void)(ARG)
 
-#if (RSDK_OSENV_SA)
-#define OAL_SPT_PRINT(fmt, ...)
-#else
 #ifdef OAL_PRINT_ENABLE
 #define OAL_SPT_PRINT(fmt, ...) \
     printf(fmt, ##__VA_ARGS__); \
@@ -48,7 +41,6 @@ extern "C" {
 
 #define SPT_OAL_COMM_CHANNEL1_NAME "SptIrqCap"  //max 10 characters?
 #define SPT_OAL_COMM_CHANNEL2_NAME "SptNonBlk"
-#endif
 
 #ifdef HW_MOCK
 extern uint32_t hw_read(uint32_t reg);
@@ -63,7 +55,7 @@ extern uint32_t fake_reg;
 /*==================================================================================================
 *                                STRUCTURES AND OTHER TYPEDEFS
 ==================================================================================================*/
-#if (!RSDK_OSENV_SA)
+
 typedef enum
 {
     SPT_OAL_RPC_WAIT_FOR_IRQ = 1,
@@ -88,7 +80,6 @@ typedef struct
     uint32_t               errInfo;
 } evtSharedData_t;
 
-#endif // !RSDK_OSENV_SA
 
 /*==================================================================================================
 *                                GLOBAL VARIABLE DECLARATIONS
@@ -97,24 +88,6 @@ typedef struct
 /*==================================================================================================
 *                                    FUNCTION PROTOTYPES
 ==================================================================================================*/
-#if (RSDK_OSENV_SA)
-//RSDK custom implementation of OAL services, as a workaround until deciding to use the OAL "sa" support
-
-static inline uintptr_t OAL_MapUserSpace(uint64_t offset, size_t size)
-{
-    UNUSED_ARG(offset);
-    UNUSED_ARG(size);
-    return (uintptr_t)offset;
-}
-
-static inline int32_t OAL_UnmapUserSpace(uintptr_t addr, size_t size)
-{
-    UNUSED_ARG(addr);
-    UNUSED_ARG(size);
-    return 0;
-}
-
-#endif
 
 #ifdef __cplusplus
 }

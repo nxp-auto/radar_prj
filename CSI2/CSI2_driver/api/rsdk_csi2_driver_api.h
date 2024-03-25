@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2023 NXP
+* Copyright 2019-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -338,8 +338,9 @@ typedef enum {
 typedef enum {
     RSDK_CSI2_STAT_NO = 0u,             /**< Statistics not managed                                                 */
     RSDK_CSI2_STAT_EVERY_LINE = 1u,     /**< Statistics management after every line received                        */
-    RSDK_CSI2_STAT_AT_FE,               /**< Statistics management at Frame End. \if (S32R45_DOCS || S32R294_DOCS)
-                                         * All statistics in the receiving buffer (according to \ref bufNumLines for
+    RSDK_CSI2_STAT_AT_FE,               /**< Statistics management at Frame End. \if (S32R45_DOCS)
+                                         * All statistics in the receiving buffer (according to 
+                                         * \ref rsdkCsi2VCParams_t::bufNumLines for
                                          * the Virtual Channel) will be processed \endif                            */
     RSDK_CSI2_STAT_LAST_LINE,           /**< Statistics management only for the last line received                  */
     RSDK_CSI2_STAT_MAX                  /**< Statistics max limit, to not be used in application                    */
@@ -502,7 +503,7 @@ typedef struct {
     uint16_t    expectedNumLines;               /**< Expected number of lines/chirps per frame                      */
     uint16_t    bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
                                                  * statistics to be received in buffer, at least 1<br>
-                                                 * \if (S32R45_DOCS || S32R294_DOCS) @note For internal software
+                                                 * \if (S32R45_DOCS) @note For internal software
                                                  * reasons, (\ref expectedNumLines % \ref bufNumLines ) must not be
                                                  * \b 1 \endif                                                      */
     uint16_t    bufLineLen;                     /**< The available line length in buffer, per line (16 bytes aligned)
@@ -521,12 +522,12 @@ typedef struct {
     uint8_t     unitId;                     /**< Unit number reporting the error,
                                                      * similar to \ref rsdkCsi2UnitId_t                             */
     uint32_t    errMaskU;                           /**< The cumulated masks for signaled errors at unit level;<br>
-                                                     * \if (S32R45_DOCS || S32R294_DOCS) the possible masks are for:
+                                                     * \if (S32R45_DOCS) the possible masks are for:
                                                      * - PHY level errors, i.e. \ref RSDK_CSI2_ERR_PHY_SYNC
                                                      * - packet errors, i.e. \ref RSDK_CSI2_ERR_PACK_ECC1
                                                      * \endif                                                       */
     uint32_t    errMaskVC[RSDK_CSI2_MAX_VC];        /**< The cumulated masks for signaled errors at RadarData level;<br>
-                                                     * \if (S32R45_DOCS || S32R294_DOCS)  the possible masks are for:
+                                                     * \if (S32R45_DOCS)  the possible masks are for:
                                                      * - line errors definitions, i.e. \ref RSDK_CSI2_ERR_LINE_LEN
                                                      * - all other miscelaneous
                                                      * \endif                                                       */
@@ -535,7 +536,7 @@ typedef struct {
                                                      * the possible masks are defined by:
                                                      * - events masks :
                                                      *  \ref RSDK_CSI2_EVT_FRAME_START \ref RSDK_CSI2_EVT_FRAME_END
-                                                     *  \if (S32R45_DOCS || S32R294_DOCS)
+                                                     *  \if (S32R45_DOCS)
                                                      *  \ref RSDK_CSI2_EVT_LINE_END
                                                      *  \ref RSDK_CSI2_EVT_SKEW_CALIB
                                                      *  \ref RSDK_CSI2_EVT_SHORT_PACKET
@@ -557,7 +558,7 @@ typedef struct {
                                                      * RSDK_CSI2_ERR_LINE_LEN or \ref RSDK_CSI2_ERR_LINE_CNT bits
                                                      * are set                                                      */
     rsdkCsi2ShortPacket_t shortPackets[RSDK_CSI2_MAX_VC];   /**< Specific data for short packet received
-                                                     * \if (S32R45_DOCS || S32R294_DOCS)
+                                                     * \if (S32R45_DOCS)
                                                      * , if \ref RSDK_CSI2_EVT_SHORT_PACKET bit is set.  \endif     */
 } rsdkCsi2Report_t;
 
@@ -583,8 +584,8 @@ typedef void (*rsdkCsi2IsrCb_t)(rsdkCsi2Report_t *pReportingStruct);
  */
 typedef struct {
     uint8_t     numLanesRx;                     /**< Number of lanes used to receive data; use \ref rsdkCsi2LaneEnum_t
-                                                 *  to configure this. \if SAF85XX_DOCS For SAF85XX only two lanes 
-                                                 * are available to use. \endif */
+                                                 *  to configure this. \if SAF85XX_DOCS || SAF86XX_DOCS 
+                                                 * For SAF85XX/SAF86XX only two lanes are available to use. \endif */
     uint8_t     lanesMapRx[RSDK_CSI2_MAX_LANE]; /**< Lanes mapping :
                                                  *  - first byte - the physical lane to be used as lane 1,
                                                  *  - second byte - the physical lane to be used as lane 2,
@@ -601,8 +602,8 @@ typedef struct {
                                                  * specified as \ref RSDK_CSI2_OFFSET_AUTOCOMPUTE .                 */
     uint32_t    rxClkFreq;                      /**< Receiving (Rx) frequency (between \ref RSDK_CSI2_MIN_RX_FREQ
                                                  * and \ref RSDK_CSI2_MAX_RX_FREQ), in Mbps.                        
-                                                 * \if SAF85XX_DOCS For SAF85XX, this parameter define the data source :
-                                                 * if 0, the source is RFE/ADC, 
+                                                 * \if SAF85XX_DOCS || SAF86XX_DOCS For SAF85XX/SAF86XX, this parameter 
+                                                 * define the data source : if 0, the source is RFE/ADC, 
                                                  * if not 0, the source is external MIPICSI2-DPHY-Rx \endif         */
     rsdkCsi2VCParams_t      *pVCconfig[RSDK_CSI2_MAX_VC];   /**< pointers to VC configurations; ignored if NULL.
                                                             * At least VC 0 must be configured. */
@@ -625,8 +626,8 @@ typedef struct {
                             * <tr><td>errors in receive path</td><td>\ref RSDK_CSI2_RX_ERR_IRQ_ID</td></tr>
                             * <tr><td>errors in protocol & packet level</td><td>\ref RSDK_CSI2_PATH_ERR_IRQ_ID</td></tr>
                             * <tr><td>events</td><td>\ref RSDK_CSI2_EVENTS_IRQ_ID</td></tr>
-                            * \if (S32R45_DOCS || S32R294_DOCS) <tr><td>turnaround and tx errors/events</td><td>
-                            * \ref RSDK_CSI2_TX_ERR_IRQ_ID (for \b S32R45/S32R294 only) </td></tr> \endif
+                            * \if (S32R45_DOCS) <tr><td>turnaround and tx errors/events</td><td>
+                            * \ref RSDK_CSI2_TX_ERR_IRQ_ID (for \b S32R45 only) </td></tr> \endif
                             * </table>
                              * At least first callback pointer (\ref RSDK_CSI2_RX_ERR_IRQ_ID) must be not NULL.
                              * When an error is signaled, the appropriate callback is used to signal the occurrence and
@@ -634,10 +635,11 @@ typedef struct {
                              * specified for that interrupt position.<br> For events : only when a requested event
                              * signal appeared, the \ref RSDK_CSI2_EVENTS_IRQ_ID callback is used, if specified; if not,
                              * \ref RSDK_CSI2_RX_ERR_IRQ_ID callback will be used.                                  */
-#if !defined(linux)
-    rsdkCoreId_t                irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
-    uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
-#endif
+
+
+
+
+
 }rsdkCsi2InitParams_t;
 
 
@@ -668,10 +670,10 @@ typedef struct {
  *              If the result is not \ref RSDK_SUCCESS, the interface status is \b NOT_INITIALIZED,
  *              no matter the status at call time.
  *
- * @note        For SAF85, using this function, the PacketProcessor (PPE) is initailized in any context.
+ * @note        For SAF85/SAF86, using this function, the PacketProcessor (PPE) is initailized in any context.
  *              For external path, MIPICSI2 interface will be initialized too.
  *
- * @param[in] unitId            - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) 
+ * @param[in] unitId            - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) 
                                                             \ref RSDK_CSI2_UNIT_1 , \endif \ref RSDK_CSI2_MAX_UNITS )
  * @param[in] pCsi2InitParam    - pointer to the CSI2 Driver initialization structure
  *
@@ -703,7 +705,7 @@ rsdkStatus_t RsdkCsi2Init(const rsdkCsi2UnitId_t unitId, const rsdkCsi2InitParam
  * @details        The receive module of the CSI2 interface is stopped.
  *                 The receive will stop only after the end of the currently received packet.
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) 
                                                             \ref RSDK_CSI2_UNIT_1 , \endif \ref RSDK_CSI2_MAX_UNITS )
  *
  * @return \ref rsdkStatus_t - success or error status information.
@@ -725,7 +727,7 @@ rsdkStatus_t RsdkCsi2RxStop(const rsdkCsi2UnitId_t unitId);
  *                 This action must be done if a CSI2_RxStop was done before,
  *                 and the reception must be done at the same parameters.
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) 
                                                             \ref RSDK_CSI2_UNIT_1 , \endif \ref RSDK_CSI2_MAX_UNITS )
  *
  * @return \ref rsdkStatus_t - success or error status information.
@@ -744,7 +746,7 @@ rsdkStatus_t RsdkCsi2RxStart(const rsdkCsi2UnitId_t unitId);
  * @brief          The function power off the CSI2 module.
  * @details        The interface is powered off.
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) \ref RSDK_CSI2_UNIT_1 , 
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
  *
  * @return \ref rsdkStatus_t - success or error status information.
@@ -767,7 +769,7 @@ rsdkStatus_t RsdkCsi2PowerOff(const rsdkCsi2UnitId_t unitId);
  *                 if a successful initialization was done before.
  *                 After this call, the last initialization parameters will be used to reinitialize the interface.
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) \ref RSDK_CSI2_UNIT_1 , 
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
  *
  * @return \ref rsdkStatus_t - success or error status information.
@@ -793,7 +795,7 @@ rsdkStatus_t RsdkCsi2PowerOn(const rsdkCsi2UnitId_t unitId);
  * @retval   RSDK_CSI2_DRV_LINE_RECEIVING  - The Rx interface is receiving data.
  * @retval   RSDK_CSI2_DRV_STATE_LINE_MARK - The Rx lane is in MARK state
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) \ref RSDK_CSI2_UNIT_1 , 
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
  *
  * @pre   It can be called at any time, after a successful initialization, to check the current status of the interface.
@@ -808,7 +810,7 @@ rsdkCsi2LaneStatus_t RsdkCsi2GetInterfaceStatus(const rsdkCsi2UnitId_t unitId);
  * @brief          The function ask for the current status of the specific lane.
  * @details        The function return the status of the interface or specific lane at the moment of the call.
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) \ref RSDK_CSI2_UNIT_1 , 
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
  * @param[in] laneNum   - lane number, \ref rsdkCsi2LaneEnum_t
  *
@@ -832,7 +834,7 @@ rsdkCsi2LaneStatus_t RsdkCsi2GetLaneStatus(const rsdkCsi2UnitId_t unitId, const 
  *              increased after handling the Frame End interrupt request. <br>
  *              A correct \b unitId and \b vcId must be provided.
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 , 
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) \ref RSDK_CSI2_UNIT_1 , 
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
  * @param[in] vcId      - VC ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC * 2 ), the second half
  *                          of the interval is for MetaData frames counters
@@ -846,18 +848,18 @@ uint32_t RsdkCsi2GetFramesCounter(const rsdkCsi2UnitId_t unitId, const rsdkCsi2V
 /**
  * @brief       Procedure to get the real buffer length for a line/chirp.
  * @details     The procedure compute the necessary length according to the input parameters.
- * \if (S32R45_DOCS || S32R294_DOCS)
+ * \if (S32R45_DOCS)
  * @note        Because the length include the line/chirp statistics, autoStatistics must be 1 even only one channel
  *              in the entire Virtual Channel need the autostatistic computation.
  * \endif
  *
  * @param[in]   dataType        Type of data to receive, normally \ref RSDK_CSI2_DATA_TYPE_RAW12 for radar
  * @param[in]   nrChannels      Number of channels, 1 ... 8; usually this number is
- *                              the number of active antennas \if (S32R45_DOCS || S32R294_DOCS) ,
+ *                              the number of active antennas \if (S32R45_DOCS) ,
  *                              multiply by 2 if complex (Re & Im) acquisition \endif
  * @param[in]   samplesPerChirp Samples per chirp and channel
- * @param[in]   autoStatistics  \if (S32R45_DOCS || S32R294_DOCS) The driver must calculate the statistics per chirp
- *                              (1) or not (0) \else Must be 0 for \b S32R294 / \b S32R372. \endif
+ * @param[in]   autoStatistics  \if (S32R45_DOCS) The driver must calculate the statistics per chirp
+ *                              (1) or not (0)\endif
  *
  * @return      The necessary memory amount for one line (chirp) if not 0. <br>
  *              Wrong input parameter if 0.
@@ -872,7 +874,7 @@ uint32_t    RsdkCsi2GetBufferRealLineLen(const rsdkCsi2DataStreamType_t dataType
  * @details     The procedure set for the specified unit and interrupt ID a new callback pointer
  * @note        The callback pointer is checked only to not be NULL
  *
- * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS || S32R294_DOCS) \ref RSDK_CSI2_UNIT_1 ,
+ * @param[in] unitId    - unit : rsdkCsi2UnitID_t &isin; [ \if (S32R45_DOCS) \ref RSDK_CSI2_UNIT_1 ,
                                                                     \endif \ref RSDK_CSI2_MAX_UNITS )
  * @param[in] irqId     - interrupt ID &isin; [ \ref RSDK_CSI2_VC_0 , \ref RSDK_CSI2_MAX_VC )
  * @param[in] pCallback - pointer to the new callback

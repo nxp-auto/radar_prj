@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -63,11 +63,8 @@ extern "C"{
 /*==================================================================================================
 *                                  GLOBAL VARIABLE DECLARATIONS
 ==================================================================================================*/
-  #if defined(linux)
+
     extern void Cte_IrqHandler(void);
-  #elif defined (__ZEPHYR__)
-    void Cte_IrqHandler(const void *pParams);
-  #endif
 
 
 /*==================================================================================================

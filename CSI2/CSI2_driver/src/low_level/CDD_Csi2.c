@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -226,7 +226,11 @@ extern "C"{
 *                                    LOCAL FUNCTION PROTOTYPES
 ==================================================================================================*/
 
-#if (CSI2_DEV_ERROR_DETECT == STD_ON)
+
+
+
+
+#if defined(CSI2_DEV_ERROR_DETECT) && (CSI2_DEV_ERROR_DETECT == STD_ON)
 static Std_ReturnType Csi2_CheckBaseParams(const Csi2_UnitIdType unitId, const Csi2_SetupParamsType *pCsi2SetupParam);
 static Std_ReturnType Csi2_CheckVCParam(const Csi2_VCParamsType *pVC, uint8 *pAutoStat);
 static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
@@ -473,23 +477,23 @@ static Std_ReturnType Csi2_CheckSetupParams(const Csi2_UnitIdType      unitId,
                     break;
                 }
             }  /* for   */
-            if(pCsi2SetupParam->pCallback[(uint8)RSDK_CSI2_RX_ERR_IRQ_ID] == (Csi2_IsrCbType)NULL_PTR)
-            {
-                rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_NULL_ERR_CB_PTR, (uint8)CSI2_API_ID_SETUP,
-                                                        (uint8)CSI2_E_DRV_NULL_ERR_CB_PTR);
-                CSI2_HALT_ON_ERROR;
-            }
-#if !defined(linux)
-            else
-            {
-                if(pCsi2SetupParam->irqExecCore != RSDK_CURRENT_CORE)
-                {
-                    rez = CSI2_REPORT_ERROR(RSDK_CSI2_DRV_ERR_INVALID_CORE_NR, (uint8)CSI2_API_ID_SETUP,
-                                                        (uint8)CSI2_E_DRV_ERR_INVALID_CORE_NR);
-                    CSI2_HALT_ON_ERROR;
-                }
-            }
-#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #if (CSI2_AUTO_DC_COMPENSATION == STD_ON)
             if (rez == (Std_ReturnType)E_OK)
             {
@@ -670,52 +674,63 @@ static uint32 Csi2_GetOutBytesPerSample(const Csi2_DataStreamType dataType)
 static Std_ReturnType Csi2_RegsMap(const Csi2_UnitIdType unitId, volatile GENERIC_CSI2_Type **pRegs)
 {
     Std_ReturnType rez = (Std_ReturnType)E_OK;
-#if defined(linux)
+
         *pRegs = (volatile GENERIC_CSI2_Type*)gpRsdkCsi2Device[unitId]->pMemMapVirtAddr;
-#else
-        switch (unitId)
-        {
-            case CSI2_UNIT_0:
-                /*
-                * @section Csi2_c_REF_4
-                * Violates MISRA C-2012 Advisory Rule 11.4,
-                * #A conversion should not be performed between a pointer to object and an integer type
-                * Some initialization need to be done for pointers.
-                */
-                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_0;
-                break;
-            case CSI2_UNIT_1:
-                /*
-                * @section Csi2_c_REF_4
-                * Violates MISRA C-2012 Advisory Rule 11.4,
-                * #A conversion should not be performed between a pointer to object and an integer type
-                * Some initialization need to be done for pointers.
-                */
-                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_1;
-                break;
-            case CSI2_UNIT_2:
-                /*
-                * @section Csi2_c_REF_4
-                * Violates MISRA C-2012 Advisory Rule 11.4,
-                * #A conversion should not be performed between a pointer to object and an integer type
-                * Some initialization need to be done for pointers.
-                */
-                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_2;
-                break;
-            case CSI2_UNIT_3:
-                /*
-                * @section Csi2_c_REF_4
-                * Violates MISRA C-2012 Advisory Rule 11.4,
-                * #A conversion should not be performed between a pointer to object and an integer type
-                * Some initialization need to be done for pointers.
-                */
-                *pRegs = (volatile GENERIC_CSI2_Type *)IP_MIPICSI2_3;
-                break;
-            default:
-                rez = RSDK_CSI2_DRV_WRG_UNIT_ID;
-                break;
-        }  /* switch    */
-#endif  /* #if defined(linux)   */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     return rez;
 }
 /* Csi2_RegsMap *************************/
@@ -804,14 +819,12 @@ static uint8 Csi2_SetOffsetMan(Csi2_VCDriverStateType *pVCDrvState, const Csi2_V
     uint32 i;
     uint32 numChannel;
     uint8  statFlag;                            /* channel statistics required                      */
-    uint8  mask;
     uint8  hasComplex;                          /* indicator for real/complex channels              */
     uint16 dcRef;                               /* DC reference                                     */
 
     statFlag = 0;                               /* statistics status (0 = not necessary)            */
     if (pVCparams != (Csi2_VCParamsType*)NULL_PTR)  /* only if the pointer is defined               */
     {
-        mask = 1;                               /* mask for auto update for DC                      */
         numChannel = (uint32)Csi2_GetChannelNum(pVCDrvState);
         if (numChannel == pVCparams->channelsNum)
         {
@@ -845,7 +858,6 @@ static uint8 Csi2_SetOffsetMan(Csi2_VCDriverStateType *pVCDrvState, const Csi2_V
             pVCDrvState->statDC[i].reqChannelDC = (sint16)dcRef;
             dcRef <<= 4u;
             pVCDrvState->statDC[i].channelDC = (sint16)dcRef;
-            mask <<= 1u;
         }  /* for */
     }      /* if(pVCparams != NULL_PTR) */
     /* return a centralized situation for statistics    */
@@ -1444,12 +1456,13 @@ static void DfsTilt(void)
     uint32_t regVal, i, testVal = (1u << 2u);
     volatile DFS_Type *pDfs;
 
-#ifdef linux
+
     /* assume unit 0 is already initialized                                                             */
     pDfs = (volatile DFS_Type *)(volatile void *)gpRsdkCsi2Device[0]->pMemMapVirtDfs;
-#else
-    pDfs = (volatile DFS_Type *)IP_PERIPH_DFS;
-#endif /* linux                                    */
+
+
+
+
     regVal = pDfs->PORTRESET;
     regVal |= testVal;
     pDfs->PORTRESET = regVal;                               /* step 2 - Gate the MIPI_CSI_TXRX_LI_CLK   */
@@ -1480,44 +1493,12 @@ static void Csi2_SetGpio(volatile GENERIC_CSI2_Type *pRegs, const uint8 csi2VC,
                         const Csi2_VCParamsType *pVCparams)
 {
     uint32  mask1, maskE;                  /* masks for GPIO1 & Enable                 */
-    uint32  eraseMask, eraseMaskE;         /* erase masks for the same as above        */
 
     if (pVCparams != (Csi2_VCParamsType*)NULL_PTR)
     {
         /* initialize the masks                                                         */
-        mask1 = (uint32)pVCparams->gpio1Mask;
-        maskE = (uint32)pVCparams->gpio2EnaMask;
-        maskE <<= 12u;
-        maskE |= (uint32)pVCparams->gpio1EnaMask;
-        eraseMask = 0xff;
-        eraseMaskE = 0x7007;
-        /* get the final usable masks, according the VC                                 */
-        switch (csi2VC)
-        {
-            case (uint8)CSI2_VC_0:          /* for VC_0 the masks remains as is         */
-                break;
-            case (uint8)CSI2_VC_1:          /* shifts for VC_1                          */
-                mask1 <<= 8u;
-                maskE <<= 3u;
-                eraseMask <<= 8u;
-                eraseMaskE <<= 3u;
-                break;
-            case (uint8)CSI2_VC_2:          /* shifts for VC_2                          */
-                mask1 <<= 16u;
-                maskE <<= 6u;
-                eraseMask <<= 16u;
-                eraseMaskE <<= 6u;
-                break;
-            default:                        /* shifts for VC_3                          */
-                mask1 <<= 24u;
-                maskE <<= 9u;
-                eraseMask <<= 24u;
-                eraseMaskE <<= 9u;
-                break;
-        }
-        /* set all targeted bits to 0                                                   */
-        pRegs->TRIGGER_GPIO1 &= eraseMask;
-        pRegs->TRIGGEREN_GPIO &= eraseMaskE;
+        maskE = ((uint32)pVCparams->gpio1EnaMask) << (csi2VC * 3u);
+        mask1 = ((uint32)pVCparams->gpio1Mask) << (csi2VC * 8u);
         /* set the required values                                                      */
         pRegs->TRIGGER_GPIO1 |= mask1;
         pRegs->TRIGGEREN_GPIO |= maskE;
@@ -1542,44 +1523,12 @@ static void Csi2_SetSdma(volatile GENERIC_CSI2_Type *pRegs, const uint8 csi2VC,
                         const Csi2_VCParamsType *pVCparams)
 {
     uint32 mask1, maskE;                    /* masks for SDMA1 & Enable                 */
-    uint32 eraseMask, eraseMaskE;           /* erase masks for the same as above        */
     if (pVCparams != (Csi2_VCParamsType*)NULL_PTR)
     {
         /* initialize the masks                                                         */
-        mask1 = (uint32)pVCparams->sdma1Mask;
-        maskE = (uint32)pVCparams->sdma2EnaMask;
-        maskE <<= 12u;
-        maskE |= (uint32)pVCparams->sdma1EnaMask;
-        eraseMask = 0xff;
-        eraseMaskE = 0x7007;
-        /* get the final usable masks, according the VC                                 */
-        switch (csi2VC)
-        {
-            case (uint8)CSI2_VC_0:
-                break;
-            case (uint8)CSI2_VC_1:
-                mask1 <<= 8u;
-                maskE <<= 3u;
-                eraseMask <<= 8u;
-                eraseMaskE <<= 3u;
-                break;
-            case (uint8)CSI2_VC_2:
-                mask1 <<= 16u;
-                maskE <<= 6u;
-                eraseMask <<= 16u;
-                eraseMaskE <<= 6u;
-                break;
-            default:
-                mask1 <<= 24u;
-                maskE <<= 9u;
-                eraseMask <<= 24u;
-                eraseMaskE <<= 9u;
-                break;
-        }
-        /* set all targeted bits to 0                                                   */
-        pRegs->TRIGGER_SDMA1 &= eraseMask;
-        pRegs->TRIGGEREN_SDMA &= eraseMaskE;
-        /* set the required values                                                      */
+        maskE = ((uint32)pVCparams->sdma1EnaMask) << (csi2VC * 3u);
+        mask1 = ((uint32)pVCparams->sdma1Mask) << (csi2VC * 8u);
+        /* set the values                                                               */
         pRegs->TRIGGER_SDMA1 |= mask1;
         pRegs->TRIGGEREN_SDMA |= maskE;
     }
@@ -1605,7 +1554,7 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
     Std_ReturnType                      rez;
     Csi2_DriverParamsType *             pDriverState;
     Csi2_UnitIdType                     usedUnit = csi2UnitNum;
-#if (CSI2_AUTO_DC_COMPENSATION == STD_ON) || (CSI2_SAF85XX_PHY_USED == STD_ON)
+#if (CSI2_AUTO_DC_COMPENSATION == STD_ON) || (CSI2_SAF85XX_PHY_USED == STD_ON) || (CSI2_SAF86XX_PHY_USED == STD_ON)
     uint32                              i;
 #endif
 #if ((CSI2_GPIO_USED == STD_ON) || (CSI2_SDMA_USED == STD_ON))
@@ -1653,7 +1602,8 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
     }
     if (rez == (Std_ReturnType)E_OK)
     {
-#ifdef linux
+
+
         if(pDriverState->driverState != CSI2_DRIVER_STATE_NOT_INITIALIZED)
         {
             for(i =  0; i < (uint32_t)RSDK_CSI2_MAX_VC; i++)
@@ -1666,7 +1616,7 @@ static Std_ReturnType Csi2_ModuleSetup(const Csi2_UnitIdType csi2UnitNum, const 
                 }
             }
         }
-#endif
+
         pDriverState->driverState = CSI2_DRIVER_STATE_NOT_INITIALIZED;  /* unit not setup                           */
         rez = Csi2_RegsMap(usedUnit, &pRegs);                           /* get the  registry pointer for the unit   */
         if (rez == (Std_ReturnType)E_OK)
@@ -2115,10 +2065,10 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
     #if (CSI2_METADATA_DATA_USAGE == STD_ON)
         Csi2_MetaDataParamsType *pStaticMdParams;
     #endif
-    #ifdef linux
+
         Csi2_VCDriverStateType  *pVcDriverState;
         uint64_t     dataRange;
-    #endif
+
 #endif
 #if (CSI2_FRAMES_COUNTER_USED == STD_ON)
     volatile uint32         *pFramesCntr;
@@ -2211,7 +2161,7 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
         }
 #endif /* (CSI2_POWER_ON_OFF_USAGE == STD_ON)   */
         rez = Csi2_ModuleSetup(unitId, setupParamPtr);
-#ifdef linux
+
         if(rez == (Std_ReturnType)E_OK)
         {
             /* initialization of the data buffer virtual pointers  */
@@ -2228,7 +2178,12 @@ Std_ReturnType Csi2_Setup(const Csi2_UnitIdType unitId, const Csi2_SetupParamsTy
                 }
             }
         }
-#endif
+
+
+
+
+
+
 
 #if (CSI2_DEV_ERROR_DETECT == STD_ON)
     }

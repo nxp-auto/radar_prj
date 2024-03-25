@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -75,12 +75,9 @@ extern "C"{
 ==================================================================================================*/
 #include "CDD_Cte.h"
 #include "Cte_Specific.h"
-    #ifndef linux
-        #include <string.h>
-        #include <stdint.h>
-    #else
+
         #include "rsdk_cte_driver_module.h"
-    #endif
+
     #include "rsdk_status.h"
     #include "S32R45_CTE.h"
     #include "S32R45_SRC_1.h"
@@ -278,7 +275,9 @@ static Std_ReturnType Cte_SignalDefsCheck(Cte_SingleOutputDefType *signalsPtr)
                 }
                 else
                 {
-                    rez = (uint8)((defSPT != (uint8)pwSignals->signalType) ? RSDK_CTE_DRV_SIG_OUT_DIF_TYPE : RSDK_SUCCESS);
+
+                    rez = (defSPT != (uint8)pwSignals->signalType) ? RSDK_CTE_DRV_SIG_OUT_DIF_TYPE : RSDK_SUCCESS;
+
                 }
             }
         }
@@ -1241,11 +1240,9 @@ Std_ReturnType Cte_Setup(const Cte_SetupParamsType *cteInitParamsPtr, uint64 *lu
     Std_ReturnType  rez;
     uint8           cteClockDivider;            /* the clock divider        */
     uint32          len;
-    #if defined(linux)
+
+
         uint32          mask;
-    #else
-        volatile SRC_1_Type * pSrc_1;
-    #endif
 
     /* set the driver status to NOT_INITIALIZED     */
     gsDriverData.cteDriverStatus = (uint8_t)CTE_DRIVER_STATE_NOT_INIT;
@@ -1261,14 +1258,11 @@ Std_ReturnType Cte_Setup(const Cte_SetupParamsType *cteInitParamsPtr, uint64 *lu
     }
     if (gspCTEPtr == NULL_PTR)
     {
-#ifndef linux
-        gspCTEPtr = IP_CTE;
-#else
         if(gpRsdkCteDevice != NULL_PTR)
         {
             gspCTEPtr = (volatile CTE_Type*)gpRsdkCteDevice->pMemMapVirtAddr;
         }
-#endif
+
         if (gspCTEPtr == NULL_PTR)
         {
             rez = CTE_REPORT_ERROR(RSDK_CTE_DRV_NOT_INITIALIZED, CTE_E_PARAM_POINTER, CTE_SETUP_PARAM_CHECK);
@@ -1338,21 +1332,12 @@ Std_ReturnType Cte_Setup(const Cte_SetupParamsType *cteInitParamsPtr, uint64 *lu
                     /* set bit for Slave mode       */
                     CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_MA_SL_ST_MASK, CTE_CNTRL_MA_SL_ST(0u));
                     /* set the appropriate registry values for the Slave mode       */
-#ifdef linux
+
+
                     mask = (uint32)cteInitParamsPtr->cteMode.workingMode - (uint32_t)RSDK_CTE_SLAVE_EXTERNAL;
                     mask += (uint32)cteInitParamsPtr->cteMode.cteWorkingParam1.cteCsi2Vc << 1u;
                     mask += (uint32)cteInitParamsPtr->cteMode.cteWorkingParam0.cteCsi2Unit << 3u;
                     ((volatile SRC_1_Type*)gpRsdkCteDevice->pSrc_1)->CTE_CTRL_REG = mask;
-#else
-                    pSrc_1 = IP_SRC_1;
-                    CTE_SET_REGISTRY32(&pSrc_1->CTE_CTRL_REG, SRC_1_CTE_CTRL_REG_IN_CTE_MASK,
-                            SRC_1_CTE_CTRL_REG_IN_CTE(
-                                    (uint32)cteInitParamsPtr->cteMode.workingMode - (uint32)RSDK_CTE_SLAVE_EXTERNAL));
-                    CTE_SET_REGISTRY32(&pSrc_1->CTE_CTRL_REG, SRC_1_CTE_CTRL_REG_MIPICSI2_ID_MASK,
-                          SRC_1_CTE_CTRL_REG_MIPICSI2_ID((uint32)cteInitParamsPtr->cteMode.cteWorkingParam0.cteCsi2Unit));
-                    CTE_SET_REGISTRY32(&pSrc_1->CTE_CTRL_REG, SRC_1_CTE_CTRL_REG_VC_ID_MASK,
-                            SRC_1_CTE_CTRL_REG_VC_ID((uint32_t)cteInitParamsPtr->cteMode.cteWorkingParam1.cteCsi2Vc));
-#endif /* #ifdef linux  */
 
                     CTE_SET_REGISTRY32(&gspCTEPtr->CNTRL, CTE_CNTRL_RFS_DLY_MASK,
                             CTE_CNTRL_RFS_DLY((uint32)cteInitParamsPtr->cteMode.cteWorkingParam0.cteInternalRfsDelay));

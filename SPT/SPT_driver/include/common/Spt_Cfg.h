@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -25,9 +25,9 @@ extern "C"{
 #include "rsdk_toolchain_helper.h"
 #include "rsdk_osenv.h"
 
-#if !defined(RSDK_OSENV_SA)
-#error "RSDK_OSENV_SA not defined! Please include rsdk_osenv.h before using this macro"
-#endif
+
+
+
 
 #if defined(TRACE_ENABLE)
 #include "trace.h"

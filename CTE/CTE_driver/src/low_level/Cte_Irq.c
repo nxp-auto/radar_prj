@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -75,12 +75,9 @@ extern "C"{
 ==================================================================================================*/
 #include "Cte_Irq.h"
 #include "Cte_Specific.h"
-    #if !defined(linux)
-        #include <string.h>
-        #include <stdint.h>
-    #else
+
         #include "rsdk_cte_driver_module.h"
-    #endif
+
     #include "rsdk_status.h"
     #include "S32R45_CTE.h"
 
@@ -133,9 +130,9 @@ extern "C"{
  * @details Low level interrupt handler for CTE driver.
  *
  */
-#if !defined(RSDK_AUTOSAR) && !defined(linux)
-static
-#endif
+
+
+
 void Cte_IrqHandler(
 #ifdef __ZEPHYR__
     const void *pParams
@@ -177,17 +174,17 @@ Std_ReturnType Cte_IrqInit(const Cte_SetupParamsType *cteInitParamsPtr)
     Std_ReturnType rez = (Std_ReturnType)E_OK;
 
     gspCTEPtr->INTEN = 0u;             /* mask all irq sources         */
-#if !defined(linux) && !defined(RSDK_AUTOSAR)       /* for Linux/ASR, the irq are registered in other place     */
-    if (RsdkGlueIrqHandlerRegister(Cte_IrqHandler, CTE_IRQ_NUMBER,
-            (rsdkCoreId_t)cteInitParamsPtr->irqExecCore, cteInitParamsPtr->irqPriority) != IRQ_REGISTER_SUCCESS)
-    {
-        rez = RSDK_CTE_DRV_IRQ_REG_FAILED;
-    }
-#endif
+
+
+
+
+
+
+
     if(((uint32)cteInitParamsPtr->cteIrqEvents != 0u)
-#if !defined(linux) && !defined(RSDK_AUTOSAR)
-        && (rez == (Std_ReturnType)E_OK)
-#endif
+
+
+
         )
     {                       /* events callback requested        */
         gspCTEPtr->INTEN = (uint32)cteInitParamsPtr->cteIrqEvents;

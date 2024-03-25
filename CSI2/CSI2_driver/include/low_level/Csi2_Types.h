@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -115,8 +115,8 @@ extern "C"{
 #define CSI2_MAX_VAL_SIGNED            0x7ff8      /**< Definition for maximum signed sample value              */
 
 /*<!-- Frequency limits for each platform   ------------------ -->                                              */
-#define CSI2_MAX_RX_FREQ               2500u       /**< Max. 2.5Gbps input data for \b S32R45/S32R294           */
-#define CSI2_MIN_RX_FREQ               80u         /**< Min. 80Mbps input data for \b S32R45/S32R294            */
+#define CSI2_MAX_RX_FREQ               2500u       /**< Max. 2.5Gbps input data for \b S32R45                   */
+#define CSI2_MIN_RX_FREQ               80u         /**< Min. 80Mbps input data for \b S32R45                    */
 
 /*<!-- Some specific statistics definitions ------------------ -->                                              */
 #define CSI2_OFFSET_AUTOCOMPUTE       0x7fff       /**< Definition for auto computing offset for incoming data  */
@@ -466,9 +466,9 @@ typedef enum {
     CSI2_E_DRV_BUF_NUM_LINES_ERR,        /**< The VC buffer must have at least 2 lines */
     CSI2_E_DRV_ADC_STAT_FOR_EXTERN,      /**< Incorrect request for ADC data header/footer request and
                                              * external source  */
-    CSI2_E_DRV_ERR_UNIT_0_MUST_BE_FIRST, /**< Error for S32R45 platform : initialize unit_0 before unit_1 */
-    CSI2_E_DRV_ERR_UNIT_1_MUST_BE_FIRST, /**< Error for S32R294 platform : initialize unit_1 before unit_0 */
-    CSI2_E_DRV_ERR_UNIT_2_MUST_BE_FIRST, /**< Error for S32R45 platform : initialize unit_2 before unit_3 */
+    CSI2_E_DRV_ERR_UNIT_0_MUST_BE_FIRST, /**< Error : initialize unit_0 before unit_1 */
+    CSI2_E_DRV_ERR_UNIT_1_MUST_BE_FIRST, /**< Error : initialize unit_1 before unit_0 */
+    CSI2_E_DRV_ERR_UNIT_2_MUST_BE_FIRST, /**< Error : initialize unit_2 before unit_3 */
     CSI2_E_DRV_ERR_INVALID_INT_NR,       /**< Incorrect IRQ nr used */
     CSI2_E_DRV_ERR_INVALID_CORE_NR,      /**< Incorrect core nr used */
     CSI2_E_DRV_ERR_IRQ_HANDLER_REG,      /**< Irq handler registration error */
@@ -499,7 +499,7 @@ typedef enum {
     CSI2_E_DRV_STATE_ON,                 /**< The driver status is ON. */
 
     /* errors reported only for AUTOSAR environment     */
-    CSI2_E_PARAM_POINTER_NULL,           /**< The provided pointer parameter is NULL                */
+    CSI2_E_PARAM_POINTER_NULL            /**< The provided pointer parameter is NULL                */
 
 }Csi2_DetailedErrorType;
 
@@ -647,7 +647,7 @@ typedef struct {
     uint16      expectedNumLines;               /**< Expected number of lines/chirps per frame                      */
     uint16      bufNumLines;                    /**< Available number of complete length lines/chirps (including chirp
                                                  * statistics to be received in buffer, at least 1<br>
-                                                 * \if (S32R45_DOCS || S32R294_DOCS) @note For internal software
+                                                 * \if (S32R45_DOCS) @note For internal software
                                                  * reasons, (\ref expectedNumLines % \ref bufNumLines ) must not be
                                                  * \b 1 \endif                                                      */
     uint16      bufLineLen;                     /**< The available line length in buffer, per line (16 bytes aligned)
@@ -762,13 +762,13 @@ typedef struct {
                                                      * Virtual Channel of the appropriate RadarData.                 */
 #endif
     Csi2_IsrCbType          pCallback[MIPICSI2_1_INT2_IRQn - MIPICSI2_1_INT0_IRQn + 1u]; 
-                            /**< \if (S32R45_DOCS || S32R294_DOCS) * the necessary callbacks : <br>
+                            /**< \if (S32R45_DOCS) * the necessary callbacks : <br>
                                                  * <table>
                             * <tr><td>errors in receive path</td><td>\ref RSDK_CSI2_RX_ERR_IRQ_ID</td></tr>
                             * <tr><td>errors in protocol & packet level</td><td>\ref RSDK_CSI2_PATH_ERR_IRQ_ID</td></tr>
                             * <tr><td>events</td><td>\ref RSDK_CSI2_EVENTS_IRQ_ID</td></tr>
-                            * \if (S32R45_DOCS || S32R294_DOCS) <tr><td>turnaround and tx errors/events</td><td>
-                            * \ref RSDK_CSI2_TX_ERR_IRQ_ID (for \b S32R45/S32R294 only) </td></tr> \endif
+                            * \if (S32R45_DOCS) <tr><td>turnaround and tx errors/events</td><td>
+                            * \ref RSDK_CSI2_TX_ERR_IRQ_ID (for \b S32R45 only) </td></tr> \endif
                             * </table>
                              * At least first callback pointer (\ref RSDK_CSI2_RX_ERR_IRQ_ID) must be not NULL.
                              * When an error is signaled, the appropriate callback is used to signal the occurrence and
@@ -777,10 +777,11 @@ typedef struct {
                              * signal appeared, the \ref RSDK_CSI2_EVENTS_IRQ_ID callback is used, if specified; if not,
                              * \ref RSDK_CSI2_RX_ERR_IRQ_ID callback will be used.                                  
                              \endif                                                                                 */
-#if !defined(linux)
-    rsdkCoreId_t                irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
-    uint8_t                     irqPriority;    /**< Priority for the interrupt request execution                   */
-#endif
+
+
+
+
+
 } Csi2_SetupParamsType;
 
 
@@ -796,9 +797,9 @@ typedef struct {
                                                 /* "various parameters concerning input data for outputDataMode"    */
     uint16      lastReceivedBufLine;            /* the last buffer line written by the interface                    */
     uint16      lastReceivedChirpLine;          /* the last chirp line received                                     */
-#ifdef linux
+
     void        *pVirtData;                     // virtual memory pointer to buf data, from kernel
-#endif
+
     Csi2_VCParamsType       *vcParamsPtr;       /* pointer to actual VC setup params                                */
 #if (CSI2_STATISTIC_DATA_USAGE == STD_ON)
     Csi2_ChFrameStatType    statDC[CSI2_MAX_CHANNEL];      /* statistics for DC computation for all channels        */

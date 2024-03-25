@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -130,7 +130,7 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
     llInitParams.cteMode            = *(Cte_ModeDefinitionType*)&pParams->cteMode;
     llInitParams.cteClockFrecq      = pParams->cteClockFrecq;
     llInitParams.repeatCount        = pParams->repeatCount;
-    llInitParams.cteIrqEvents       = pParams->cteIrqEvents;
+    llInitParams.cteIrqEvents       = (Cte_IrqDefinitionType)pParams->cteIrqEvents;
     llInitParams.pCteCallback       = &Callback;                 // use the kernel callback
     // signal definitions
     if(pParams->lenSigDef0 == 0u)
@@ -197,7 +197,7 @@ static uint32_t CteLinuxKernelInit(rsdkCteLinuxTransfer_t *pParams, uint64_t *pU
             {
                 llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j] = *(Cte_ActionType*)&pParams->timeTable1[k].actions[j];
             }
-            llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j].outputSignal = RSDK_CTE_OUTPUT_MAX;
+            llInitParams.timeTable0Ptr->eventsPtr[i].eventActionsPtr[j].outputSignal = (Cte_OutputType)RSDK_CTE_OUTPUT_MAX;
             j++;
             pBuf += j * sizeof(rsdkCteAction_t);
         }

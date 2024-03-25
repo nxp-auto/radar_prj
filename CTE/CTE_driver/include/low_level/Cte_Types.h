@@ -21,9 +21,10 @@ extern "C"{
 //   clang-format off
     #include "typedefs.h"
     #include "rsdk_cte_driver_api.h"
-    #ifndef linux
-        #include "rsdk_glue_irq_register_api.h"
-    #endif
+
+
+
+
 #include "Cte_Cfg.h"
     #include "S32R45_CTE.h"
 
@@ -60,7 +61,7 @@ extern "C"{
 
 #define E_OK        RSDK_SUCCESS
 #define E_NOT_OK    RSDK_ERROR
-#define NULL_PTR    0U
+
 
 /*==================================================================================================
 *                                              ENUMS
@@ -373,10 +374,11 @@ typedef struct {
                                                   tables mode will be used.                                         */
     Cte_IrqDefinitionType   cteIrqEvents;   /**< The requested combination of interrupt sequence to be used     */
     Cte_IsrCbType           pCteCallback;   /**< The application callback to be used for the requested events   */
-#if !defined(linux)
-    int8                    irqExecCore;    /**< Processor core to execute the irq code. Usually the current core.*/
-    uint8                   irqPriority;    /**< Priority for the interrupt request execution                   */
-#endif
+
+
+
+
+
 } Cte_SetupParamsType;
 
 /** @} */

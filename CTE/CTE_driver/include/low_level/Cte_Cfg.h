@@ -1,5 +1,5 @@
 /*
-* Copyright 2022-2023 NXP
+* Copyright 2022-2024 NXP
 *
 * SPDX-License-Identifier: BSD-3-Clause
 */
@@ -80,7 +80,11 @@ extern "C"{
 #define CTE_GET_VALUE                          10u     /* error when calling a get function                */
 
 /* error report management      */
-    #define CTE_REPORT_ERROR(a,b,c)  rez = (a)
+
+
+
+    #define CTE_REPORT_ERROR(a,b,c)    (a)
+
 
 
 #if (CTE_DEV_HALT_ON_ERROR == STD_ON)
